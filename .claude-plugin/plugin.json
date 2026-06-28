@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "ai-mentor",
+  "description": "Describe your engineering problem, get the right AI workflow. Ranked, verified recommendations with ready-to-paste prompts that teach you why each approach works — not just how.",
+  "author": {
+    "name": "Guillaume Lepage",
+    "url": "https://github.com/glepage"
+  },
+  "keywords": ["ai-workflow", "mentoring", "productivity", "developer-experience"],
+  "repository": "https://github.com/glepage/ai-mentor",
+  "license": "Apache-2.0"
+}

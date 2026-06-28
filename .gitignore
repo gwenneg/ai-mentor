@@ -1,0 +1,3 @@
+# Ignore Claude Code internals, keep skills
+.claude/*
+!.claude/skills/
