@@ -14,30 +14,35 @@ jobs:
         name: Extract tag
         run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
-      - name: Create release
+      - name: Validate annotated tag
         env:
-          GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.tag.outputs.value }}
         run: |
-          if gh release view "$TAG" 2>/dev/null; then
-            echo "Release $TAG already exists — skipping"
-            exit 0
+          # Only annotated tags are supported — lightweight tags provide no signing guarantee.
+          TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
+          if [ "$TYPE" != "tag" ]; then
+            echo "Error: $TAG is not an annotated tag (type='$TYPE')"
+            exit 1
           fi
-          gh release create "$TAG" --title "$TAG" --generate-notes
+
+      - id: release
+        name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          URL=$(gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Dispatch to claude-ichiba
         env:
           ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
-          SHA: ${{ github.sha }}
-          TAG: ${{ steps.tag.outputs.value }}
+          RELEASE: ${{ steps.release.outputs.url }}
         run: |
+          # Dispatch the full release URL — claude-ichiba resolves the plugin name, tag, and SHA from it.
           curl -fsSL -X POST \
             -H "Authorization: token $ICHIBA_PAT" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/gwenneg/claude-ichiba/dispatches" \
-            -d "$(jq -n \
-              --arg plugin "ai-mentor" \
-              --arg tag "$TAG" \
-              --arg sha "$SHA" \
-              '{event_type: "plugin-release", client_payload: {plugin: $plugin, tag: $tag, sha: $sha}}')"
+            -d "$(jq -n --arg release "$RELEASE" '{event_type: "plugin-release", client_payload: {release: $release}}')"
