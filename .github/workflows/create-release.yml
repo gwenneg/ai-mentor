@@ -20,17 +20,13 @@ jobs:
           TAG: ${{ steps.tag.outputs.value }}
         run: |
           # Only annotated tags are supported — lightweight tags provide no signing guarantee.
-          # Retry to handle the brief lag between tag push and GitHub REST API indexing.
-          set +e
-          for i in 1 2 3; do
-            TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
-            EC=$?
-            [ $EC -eq 0 ] && break
-            echo "Attempt $i failed (exit $EC, type='$TYPE')"
-            [ $i -lt 3 ] && sleep 5
-          done
-          set -e
-          [ "$TYPE" != "tag" ] && echo "Error: $TAG is not an annotated tag" && exit 1
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")
+          echo "Response: $RESPONSE"
+          TYPE=$(echo "$RESPONSE" | jq -r '.object.type // empty')
+          [ "$TYPE" != "tag" ] && echo "Error: $TAG is not an annotated tag (type='$TYPE')" && exit 1
 
       - id: release
         name: Create release
