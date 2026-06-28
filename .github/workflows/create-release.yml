@@ -24,10 +24,11 @@ jobs:
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")
-          echo "Response: $RESPONSE"
           TYPE=$(echo "$RESPONSE" | jq -r '.object.type')
-          echo "Type: $TYPE"
-          [ "$TYPE" != "tag" ] && echo "Error: $TAG is not an annotated tag (type='$TYPE')" && exit 1
+          if [ "$TYPE" != "tag" ]; then
+            echo "Error: $TAG is not an annotated tag (type='$TYPE')"
+            exit 1
+          fi
 
       - id: release
         name: Create release
