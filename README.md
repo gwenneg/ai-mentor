@@ -11,11 +11,27 @@ Describe your engineering problem, get the right AI workflow. Ranked, verified r
 - Covers Claude Code (primary), OpenCode, Cursor, and aider
 - Every approach backed by verified official sources
 
-## Installation
+## Install
 
-```bash
-claude plugin install glepage/ai-mentor
+ai-mentor is distributed through a Claude Code [plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces) — no cloning or file editing. In Claude Code:
+
 ```
+/plugin marketplace add gwenneg/claude-ichiba
+/plugin install ai-mentor@claude-ichiba
+/reload-plugins
+```
+
+## Staying up to date
+
+Auto-update is off and Claude Code sends no new-version notification — **watch this repo → Releases only**. To update ([plugin docs](https://code.claude.com/docs/en/discover-plugins)):
+
+```
+/plugin marketplace update
+/plugin update ai-mentor@claude-ichiba
+/reload-plugins
+```
+
+Releases are pinned to an immutable commit SHA so work-in-progress on `main` never reaches you.
 
 ## Usage
 
