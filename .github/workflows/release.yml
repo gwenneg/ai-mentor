@@ -1,32 +1,31 @@
-name: Create Release
+name: Release
 
 on:
   push:
     tags: ['v*']
 
 jobs:
-  create-release:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - id: tag
-        name: Extract tag
-        run: echo "value=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
-      - name: Validate annotated tag
+      - id: tag
+        name: Validate and extract tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.tag.outputs.value }}
         run: |
+          TAG="${GITHUB_REF#refs/tags/}"
           # Only annotated tags are supported — lightweight tags provide no signing guarantee.
           TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
           if [ "$TYPE" != "tag" ]; then
             echo "Error: $TAG is not an annotated tag (type='$TYPE')"
             exit 1
           fi
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
 
-      - id: release
+      - id: create-release
         name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,7 +37,7 @@ jobs:
       - name: Dispatch to claude-ichiba
         env:
           ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
-          RELEASE: ${{ steps.release.outputs.url }}
+          RELEASE: ${{ steps.create-release.outputs.url }}
         run: |
           # Dispatch the full release URL — claude-ichiba resolves the plugin name, tag, and SHA from it.
           curl -fsSL -X POST \
