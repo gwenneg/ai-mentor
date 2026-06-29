@@ -20,11 +20,7 @@ jobs:
           TAG: ${{ steps.tag.outputs.value }}
         run: |
           # Only annotated tags are supported — lightweight tags provide no signing guarantee.
-          RESPONSE=$(curl -s \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")
-          TYPE=$(echo "$RESPONSE" | jq -r '.object.type')
+          TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
           if [ "$TYPE" != "tag" ]; then
             echo "Error: $TAG is not an annotated tag (type='$TYPE')"
             exit 1
@@ -36,7 +32,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.tag.outputs.value }}
         run: |
-          URL=$(gh release create "$TAG" --title "$TAG" --generate-notes)
+          URL=$(gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Dispatch to claude-ichiba
