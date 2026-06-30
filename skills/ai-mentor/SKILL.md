@@ -12,7 +12,7 @@ description: >-
   asks which AI approach to use for a specific engineering problem.
 argument-hint: [your problem, e.g. "debug a flaky test"]
 allowed-tools:
-  - Read(${CLAUDE_SKILL_DIR}/**)
+  - Read(${CLAUDE_PLUGIN_ROOT}/**)
 ---
 
 # AI Mentor
