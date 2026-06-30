@@ -11,6 +11,8 @@ description: >-
   mentions AI workflows, agentic coding, autonomous development, or
   asks which AI approach to use for a specific engineering problem.
 argument-hint: [your problem, e.g. "debug a flaky test"]
+allowed-tools:
+  - Read(~/.claude/plugins/cache/claude-ichiba/ai-mentor/**)
 ---
 
 # AI Mentor
