@@ -105,58 +105,65 @@ Use `AskUserQuestion` to calibrate depth:
   2. **Comfortable** — description: "A few options with trade-offs — I already use plan mode and basic skills"
   3. **Advanced** — description: "Everything — composition patterns, edge cases, advanced techniques"
 
-This determines how many approaches to show and how much detail:
+This determines how many approaches to show and how much detail to put in the cards:
 
-| Level | Approaches shown | Detail level |
-|-------|-----------------|-------------|
-| Getting started | 1-2 (top ranked) | Full explanation, step-by-step, emphasize "why it works" |
-| Comfortable | 3-4 | Brief setup, focus on trade-offs and when to pick each |
-| Advanced | All relevant | Composition patterns, edge cases, advanced techniques |
+| Level | Table rows | Cards shown | Card detail |
+|-------|-----------|------------|-------------|
+| Getting started | Top 2 only | 1-2 | Full "why it works" + extra setup note for the top pick |
+| Comfortable | Top 3-4 | 3-4 | Standard card (why + tradeoffs) |
+| Advanced | All relevant | All | Add a **Compose with:** line showing how to chain this approach with others |
 
 ---
 
 ## Phase 3: Present Recommendations
 
-Read the relevant goal file from `goals/`. Present approaches in this format:
+Read the relevant goal file from `goals/`. Present approaches using this two-part format:
+
+**Part 1 — Quick Pick table** (always first, always present):
 
 ```
 ## [Category]: Recommended Approaches
 
-### 1. [Approach Name] — [one-line pitch]
-**Level:** Beginner/Intermediate/Advanced | **Tools:** Claude Code / OpenCode / Any
+| # | Approach | Best when… | Level |
+|---|----------|-----------|-------|
+| 1 | [Name] | [one specific trigger condition] | Beginner |
+| 2 | [Name] | [one specific trigger condition] | Intermediate |
+| 3 | [Name] | [one specific trigger condition] | Advanced |
 
-[2-3 sentences: what it does for THIS specific problem, not a generic description]
+Read on for details, or just say the number to go deeper on one.
+```
 
-**Try it now:**
-> [A concrete prompt the developer can paste into Claude Code right now.
->  This must be specific to their problem, not a generic template.]
+**Part 2 — Approach cards** (one per approach, tight format):
 
-**Why this works:** [1-2 sentences explaining the underlying principle —
-this is the educational content that makes them better, not just faster]
-
-**Pros:** [2-3 short bullets]
-**Cons:** [1-2 short bullets — be honest]
-
-**Sources:** [list the sources from the approach file's ## Sources section as inline links]
-
+```
 ---
 
-### 2. [Next Approach] — [one-line pitch]
-...
+### 1. [Approach Name]
+`[Beginner/Intermediate/Advanced]` · `[Claude Code / OpenCode / Any]`
+
+[1-2 sentences: what it does for THIS specific problem. Be concrete, not generic.]
+
+> **Try it now:** [A concrete prompt the developer can paste right now — specific to their problem, not a template. Keep it under 4 lines.]
+
+**Why it works:** [1 sentence — the underlying principle that makes them smarter, not just faster.]
+
+**Tradeoffs:** [short phrase — what you gain] / [short phrase — what you give up]
+
+[Source title](url) · [Source title](url)
 ```
+
+Keep each card scannable: one blockquote for the prompt, one sentence each for why/tradeoffs, no nested bullets. The table does the scanning work so the cards can focus on depth.
 
 After presenting the catalog approaches, consider whether additional approaches exist beyond the catalog that could help with this specific problem. If so, add a clearly separated section:
 
 ```
+---
+
 ## Beyond the Catalog
 
-These approaches are not yet part of the reviewed catalog. They may be relevant
-but have not been vetted for accuracy.
+*These approaches are not yet part of the reviewed catalog — unvetted, but potentially relevant.*
 
-### [Approach Name] — [one-line pitch]
-**Level:** ... | **Tools:** ...
-
-[2-3 sentences explaining what it does and why it might help.]
+**[Approach Name]** `[Level]` · `[Tools]` — [1-2 sentences on what it does and why it might help.]
 
 Want me to research this further before you try it?
 ```
@@ -196,7 +203,7 @@ If the developer wants more detail on a specific approach, read the correspondin
 - Never dismiss the developer's current approach — acknowledge what they already know and build on it
 - When an approach is specific to a tool (Claude Code, OpenCode), say so clearly with a tool badge
 - Adapt your language to the experience level — no jargon for beginners, no over-explaining for advanced users
-- The "Why this works" section is not optional — every recommendation must teach something
+- The "Why it works" line is not optional — every recommendation must teach something, not just list steps
 - Always present catalog (static) approaches before beyond-the-catalog (generated) ones
 - Never include "Try it now" prompts for unvetted suggestions — offer to research first
 - If a problem falls outside all 20 goal categories, handle it with generated recommendations but note the lower confidence level
