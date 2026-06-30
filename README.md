@@ -26,8 +26,7 @@ ai-mentor is distributed through a Claude Code [plugin marketplace](https://code
 Auto-update is off and Claude Code sends no new-version notification — **watch this repo → Releases only**. To update ([plugin docs](https://code.claude.com/docs/en/discover-plugins)):
 
 ```
-/plugin marketplace update
-/plugin update ai-mentor@claude-ichiba
+/plugin marketplace update claude-ichiba
 /reload-plugins
 ```
 
