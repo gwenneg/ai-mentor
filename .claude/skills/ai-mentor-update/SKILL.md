@@ -26,8 +26,9 @@ Then ask the user which steps to run:
 > 1. **Structural audit** — check all files against templates, cross-references, staleness
 > 2. **Content verification** — web-search claims in files against current tool docs
 > 3. **Recent tool changes** — search changelogs for new features and breaking changes
+> 4. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `approaches/plugins.md`
 >
-> You can pick any combination (e.g. "all", "1 and 3", "just 2").
+> You can pick any combination (e.g. "all", "1 and 3", "just 4").
 
 Wait for the user's response, then run the selected steps in order.
 
@@ -213,9 +214,59 @@ Present the suggested actions and ask the user which ones to apply. For confirme
 
 ---
 
+## Step 5 — Plugin catalog sync
+
+*Skip this step if the user did not select it.*
+
+Fetch the current plugin list from `anthropics/claude-plugins-official` using the GitHub API:
+
+```
+gh api repos/anthropics/claude-plugins-official/contents/plugins | python3 -c "import json,sys; [print(d['name']) for d in json.load(sys.stdin) if d['type']=='dir']"
+gh api repos/anthropics/claude-plugins-official/contents/external_plugins | python3 -c "import json,sys; [print(d['name']) for d in json.load(sys.stdin) if d['type']=='dir']"
+```
+
+Extract the plugin names currently documented in `skills/ai-mentor/approaches/plugins.md` by reading the file and collecting all backtick-wrapped names in the `## Official Claude Code Plugins` section.
+
+Compare the two lists:
+
+- **New plugins** — present in the repo but not mentioned in `approaches/plugins.md`
+- **Removed plugins** — mentioned in `approaches/plugins.md` but no longer in the repo
+
+For each new plugin, fetch its description:
+
+```
+gh api repos/anthropics/claude-plugins-official/contents/plugins/<name>/.claude-plugin/plugin.json
+```
+
+Decode the base64 content and extract the `description` field.
+
+### Output
+
+```
+## Plugin Catalog Sync
+
+**Source:** anthropics/claude-plugins-official (fetched today)
+
+### New plugins (not yet in approaches/plugins.md)
+- `<name>` (Anthropic-built / External) — <description>
+  → Suggested table row: | `<name>` | <short description> | `goals/<goal>.md` |
+
+### Removed plugins (in approaches/plugins.md but no longer in repo)
+- `<name>` — remove from the relevant table
+
+### No changes
+(if lists match)
+```
+
+Ask the user which additions and removals to apply. For confirmed changes, edit `approaches/plugins.md` and update its `*Last reviewed*` date to today.
+
+The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
+
+---
+
 ## Evidence and confidence rules
 
-Every proposed change in Steps 3 and 4 must include inline evidence: the source URL **and** a direct quote from that source supporting the change. Not "according to the docs" — the actual text. The user must be able to verify any claim in seconds.
+Every proposed change in Steps 3 and 4 must include inline evidence (Step 5 is exempt — the GitHub API response is the authoritative source): the source URL **and** a direct quote from that source supporting the change. Not "according to the docs" — the actual text. The user must be able to verify any claim in seconds.
 
 ### Source tiers
 
