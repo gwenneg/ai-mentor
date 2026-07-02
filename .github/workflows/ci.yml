@@ -10,11 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       - name: Structural audit (deterministic, no LLM)
-        run: python3 scripts/structural_audit.py
+        run: bash scripts/structural_audit.sh
 
   plugin-validate:
     runs-on: ubuntu-latest

@@ -36,16 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: Plugin catalog drift check (plain script)
         id: catalog
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 scripts/check_plugin_catalog.py | tee catalog-drift.txt
+        run: bash scripts/check_plugin_catalog.sh | tee catalog-drift.txt
 
       - uses: actions/setup-node@v4
         with:

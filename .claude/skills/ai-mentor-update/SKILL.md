@@ -29,7 +29,7 @@ All paths below are relative to the repo root.
 
 Auto-mode overrides, in addition to skipping every question below:
 
-- **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs `scripts/structural_audit.py` as a deterministic gate — prefer reporting over creative fixing.
+- **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs `scripts/structural_audit.sh` as a deterministic gate — prefer reporting over creative fixing.
 - **Step 3**: process the N oldest-verified files with no per-file pause. Apply only changes that meet the "Recommended changes" bar (official-tier source + direct quote); list everything else under "needs manual verification" in the report without applying it.
 - **Step 4**: use the `--days` window; same evidence bar as Step 3.
 - **Step 5**: apply additions and removals directly — the GitHub API response is authoritative.
