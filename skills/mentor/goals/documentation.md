@@ -15,6 +15,7 @@ You need to write or improve documentation — API references, architecture deci
 | Updating API docs after code changes | MCP context | Pull the actual code and existing docs together |
 | Creating a new onboarding guide from scratch | Deep research + Plan mode | Research what good onboarding looks like, then outline |
 | Documenting multiple modules or services in parallel | Beyond the Catalog (see /ai-mentor) | Fan-out or subagent approaches can parallelize doc generation |
+| Docs need diagrams, dashboards, or sharing beyond the repo | Visual artifacts | A rendered page communicates structure that linear text can't |
 
 **Hidden gem:** Custom Skills — a `/gen-api-doc` command makes regenerating docs cheaper than letting them drift.
 
@@ -109,6 +110,29 @@ When you generate the same type of documentation repeatedly — API references a
 - Skills need updating when documentation standards evolve
 
 **Deeper:** See `approaches/custom-skills.md`
+
+---
+
+### 5. Visual Artifacts — Publish docs as a rendered, shareable page
+**Level:** Beginner
+
+Some documentation is spatial: architecture overviews, onboarding maps, request-flow diagrams. The built-in Artifact tool renders an HTML or Markdown page to a private claude.ai URL you can open in a browser, iterate on conversationally, and share with teammates who were never in the session. The repo keeps the Markdown source of truth; the artifact is the readable, shareable view of it.
+
+**Try it now:**
+> Read `docs/architecture.md` and the service directories under `src/services/`. Publish an artifact: an architecture overview with a dependency diagram at the top, one card per service (purpose, entry points, key files), and a "gotchas" section. Keep the Markdown source in `docs/` — the artifact is the rendered view I'll share with the team.
+
+**Why this works:** A document's format should match its structure. Diagrams and cards carry relationships that linear Markdown flattens, and a stable URL turns documentation from a file people must find into a link people actually open.
+
+**Pros:**
+- Layout and diagrams communicate structure that prose can't
+- A stable link survives the session and is shareable with the whole team
+- Iterating is conversational — the same URL updates on each revision
+
+**Cons:**
+- Publishing uploads content to claude.ai hosting — check policy for sensitive material
+- The page is a view, not the source of truth — keep the Markdown in the repo
+
+**Deeper:** See `approaches/visual-artifacts.md`
 
 ---
 

@@ -1,9 +1,11 @@
 # Built-in Review Skills
-*Last reviewed: 2026-07-01*
+*Last reviewed: 2026-07-02*
 
 ## What It Is
 
 Built-in Review Skills are ready-to-use commands in Claude Code that analyze your code changes for bugs, security issues, and simplification opportunities. You run a slash command — `/code-review`, `/security-review`, or `/simplify` — and Claude systematically reviews your diff using structured analysis. No prompt engineering needed: the skills encode expert review strategies so you get consistent, thorough reviews every time.
+
+Two companion skills close the loop from the behavior side: `/verify` exercises a change end-to-end in the running application to confirm it actually does what it's supposed to (driving the affected flow, not just the tests), and `/run` launches the project's app so you can see a change working for real.
 
 ## Why It Works
 
@@ -14,6 +16,7 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 - Self-reviewing your own changes before pushing — catch bugs your eyes skipped after hours of writing the code
 - Reviewing a teammate's PR when you want a structured first pass before doing your own read-through
 - Post-refactoring cleanup — run `/simplify` after a large restructuring to catch missed deduplication
+- Confirming a nontrivial change actually works before committing — `/verify` drives the affected flow end-to-end instead of trusting typecheck and unit tests alone
 - CI integration — run reviews automatically on every PR via GitHub Actions
 
 ## When NOT to Use It
@@ -21,6 +24,7 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 - Reviewing changes you have not made yet — these skills analyze the current diff, not hypothetical code
 - As a substitute for human review on critical paths — use them as a first pass, not the only pass
 - On massive diffs (500+ files) without narrowing scope — the review quality degrades at extreme scale
+- Running `/verify` on diffs with no runtime surface (docs-only or test-only changes) — there is no behavior to observe
 
 ## How It Works
 
@@ -38,6 +42,7 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 ### Composing with Other Approaches (Intermediate)
 
 - **Review then simplify**: Run `/code-review` first to catch bugs, then `/simplify` to clean up the code. This ensures correctness before optimization — fixing a bug in already-simplified code is harder.
+- **Review then verify**: `/code-review` reads the code; `/verify` observes the behavior. Static review catches bugs that would never reproduce in a quick manual test, while verification catches integration failures no diff reader can see. Together they cover failure modes neither catches alone.
 - **Subagent changes then review**: After spawning subagents to make parallel changes, run `/code-review` on each worktree branch to verify the agents' work before merging.
 - **Plan Mode then review**: Use Plan Mode to design and execute a change, then immediately run `/security-review` to catch security implications the plan did not consider.
 

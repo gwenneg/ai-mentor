@@ -43,6 +43,8 @@ Your machine is a bottleneck: one checkout, one environment, and it goes to slee
 - **Parallel fleets**: fire several `--remote` tasks back to back — independent sandboxes, no shared state, no coordination cost beyond reviewing the PRs.
 - **Tuned environments**: configure cloud environments with setup scripts (cached between runs), environment variables, and network access levels — the default "Trusted" allowlist covers package registries and common dev domains; use Custom to add your own hosts or Full for unrestricted access.
 - **Mobile-first supervision**: dispatch from the terminal before a commute, answer the one clarifying question from your phone, review the finished PR when you arrive.
+- **Remote Control — the local-machine counterpart**: when the task needs your local environment (filesystem, MCP servers, local credentials), run `/remote-control` in a running session or `claude remote-control` in server mode, then continue that session from claude.ai/code or the Claude mobile app. The session keeps executing on your machine — the phone is a window into it, and nothing moves to the cloud. Enable mobile push notifications in `/config` ("Push when Claude decides" / "Push when actions required") to get pinged when it finishes or needs a decision.
+- **Slack dispatch**: with the Claude app installed in your workspace and a repo connected at claude.ai/code, mentioning `@Claude` with a coding task in a channel creates a cloud session that gathers context from the thread, posts progress updates, and offers "View Session" and "Create PR" buttons when done — delegation without leaving the conversation where the bug was reported.
 
 ## Common Pitfalls
 
@@ -62,3 +64,5 @@ Monday morning, three PRs wait for review. One has a red CI check — you run `/
 ## Sources
 
 - [Use Claude Code on the web](https://code.claude.com/docs/en/claude-code-on-the-web) — Official docs for cloud sessions, environments, --remote, /teleport, and auto-fix PRs
+- [Remote Control](https://code.claude.com/docs/en/remote-control) — Official docs for continuing local sessions from a phone or browser, plus mobile push notifications
+- [Claude Code in Slack](https://code.claude.com/docs/en/slack) — Official docs for delegating coding tasks from Slack channels

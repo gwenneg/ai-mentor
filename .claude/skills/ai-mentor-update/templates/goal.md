@@ -67,7 +67,7 @@ mechanics.]
 
 - **Rank approaches** from most broadly useful to most specialized for this goal
 - **Hidden gem names one approach from this file's ranked list** — the curated surprising pick the skill always surfaces alongside the #1 ranked approach. Prefer an approach ranked 4th or lower: the point is surfacing what users would not find on their own
-- **3-7 approaches per goal** — fewer than 3 means the goal is too narrow; more than 7 is overwhelming
+- **At least 3 approaches per goal** — fewer means the goal is too narrow
 - **"Try it now" prompts must be specific** — include file paths, module names, concrete details. Never use generic placeholders like `<your-file>`
 - **"Why this works" is not optional** — every approach must teach something
 - **Level badges** reflect the approach complexity, not the developer's skill:

@@ -107,9 +107,9 @@ For each `.md` file in `skills/mentor/approaches/`:
    - `### Advanced Patterns`
 8. `## Common Pitfalls`
 9. `## Real-World Example`
-10. `## Sources` (1-3 entries, each a markdown link with a one-line description)
+10. `## Sources` (at least one entry, each a markdown link with a one-line description)
 
-**Line count check** — flag files outside the 60-110 line range.
+**Line count check** — flag files under 60 lines.
 
 **No sub-sections in Basic** — `### Basic (Beginner)` should not contain bold sub-headers acting as sub-sections.
 

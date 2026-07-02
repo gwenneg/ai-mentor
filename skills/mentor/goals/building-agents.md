@@ -92,7 +92,7 @@ When the prototype earns productization, the `agent-sdk-dev` official plugin sca
 ### 4. Subagent Delegation — The architecture pattern for multi-agent systems
 **Level:** Advanced
 
-If your agent's job decomposes — research then draft then verify, or one worker per data source — the orchestrator-worker pattern from subagent delegation is the architecture to copy: a coordinator with the big picture, workers with clean contexts and narrow briefs, summaries flowing back up. Study how it behaves in Claude Code before you re-implement it in your own system.
+If your agent's job decomposes — research then draft then verify, or one worker per data source — the orchestrator-worker pattern from subagent delegation is the architecture to copy: a coordinator with the big picture, workers with clean contexts and narrow briefs, summaries flowing back up. Study how it behaves in Claude Code before you re-implement it in your own system. When you do build it, the Agent SDK's structured outputs (JSON Schema, Zod, or Pydantic) turn each worker's report into validated, type-safe data instead of free text — the handoff contract your orchestrator can actually rely on.
 
 **Try it now:**
 > Simulate my planned agent architecture with subagents before I build it: an orchestrator that takes a customer complaint, delegates to one worker to search the docs for relevant policy and another to search recent tickets for precedent, then synthesizes a response. Run it on this example complaint and show me each worker's brief and output — I want to see where the handoffs lose information.

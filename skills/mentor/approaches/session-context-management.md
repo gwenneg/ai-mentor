@@ -43,6 +43,7 @@ Context windows are finite, and response quality degrades as they fill with stal
 - **Named session workflows**: `/rename` sessions as you go and resume any of them by name with `/resume <name>` — turning sessions into durable, addressable workstreams rather than one anonymous scrollback.
 - **Recovering from a premature `/clear`**: `/rewind` can restore the conversation from before a `/clear` (v2.1.191+), so clearing is no longer irreversible.
 - **Compaction-aware task ordering**: settle decisions early ("we're using approach B") and let details accumulate after — compaction preserves conclusions better than meandering deliberation, so a session that decides-then-executes compacts cleanly while a session that deliberates forever compacts into mush.
+- **Extended 1M-token context**: for sessions that legitimately need huge context — sprawling monorepos, massive migration diffs — append `[1m]` to the model: `/model opus[1m]` or `/model sonnet[1m]` (Sonnet 5 runs the 1M window natively on the Anthropic API; Opus availability varies by plan). A bigger window is not a substitute for curation — noise degrades quality at any size — but it raises the ceiling when the working set is genuinely large.
 
 ## Common Pitfalls
 
@@ -63,3 +64,4 @@ Mid-afternoon, a teammate pings you about an unrelated production question. Inst
 
 - [Claude Code commands reference](https://code.claude.com/docs/en/commands) — Official reference for /context, /compact, /btw, /clear, /branch, /rewind, and /resume
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory) — What survives compaction and how CLAUDE.md re-injection works
+- [Model configuration](https://code.claude.com/docs/en/model-config) — Official docs for the [1m] extended context window and per-plan availability

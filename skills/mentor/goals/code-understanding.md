@@ -17,6 +17,7 @@ The traditional approach — read files, ask a colleague, read more files — wo
 | Reviewing a PR in an unfamiliar module | Plan mode | Map the module's structure before judging the change |
 | Legacy code with no documentation or original authors | Plan mode + MCP context | Combine code analysis with whatever written history exists |
 | Large codebase — need to trace how components connect | LSP self-correction | Compiler-precise "go to definition" and "find references" |
+| Sharing what you learned with the team | Visual artifacts | An architecture map at a URL beats terminal scrollback |
 
 **Hidden gem:** LSP Self-Correction — compiler-backed go-to-definition and find-references beat text search for tracing how components actually connect.
 
@@ -156,3 +157,26 @@ Deep codebase exploration is exactly the kind of session that saturates a contex
 - Requires noticing the saturation before quality visibly drops
 
 **Deeper:** See `approaches/session-context-management.md`
+
+---
+
+### 7. Visual Artifacts — Turn the exploration into a shareable map
+**Level:** Beginner
+
+An exploration session produces understanding that normally dies in the terminal scrollback. The built-in Artifact tool renders your findings — a request-flow diagram, module cards, a gotchas list — as a web page at a stable claude.ai URL. One engineer's afternoon of tracing becomes a map the whole team can open in a browser.
+
+**Try it now:**
+> We just traced the payment flow through `services/payment-gateway/`. Publish an artifact: a request-flow diagram from the API route to the processor call, one card per module with its role and key files, and a section on the two undocumented retry paths we found. I'll share the link in the team channel.
+
+**Why this works:** Understanding a codebase is a graph, not a list — a rendered diagram preserves the connections you traced, and a stable URL converts a private investigation into team knowledge.
+
+**Pros:**
+- The map outlives the session and onboards the next engineer
+- Diagrams show relationships that prose summaries flatten
+- Complements Project Memory: CLAUDE.md orients Claude, the artifact orients humans
+
+**Cons:**
+- The map is a snapshot — regenerate it after significant refactors
+- Publishing uploads content to claude.ai hosting — check policy for proprietary code
+
+**Deeper:** See `approaches/visual-artifacts.md`
