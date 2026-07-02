@@ -1,5 +1,5 @@
 # Subagent Delegation
-*Last reviewed: 2026-07-01*
+*Last reviewed: 2026-07-02*
 
 ## What It Is
 
@@ -42,7 +42,7 @@ For example: "Review this PR for both correctness bugs and security issues." Cla
 
 ### Advanced Patterns
 
-- **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to be enabled): Multiple Claude instances share a task list and can send peer messages to coordinate. Unlike simple subagents (which report to a parent), team members are peers that pick up tasks and collaborate. This is useful for complex multi-step workflows where agents need to react to each other's findings.
+- **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to be enabled): Multiple Claude instances share a task list and message each other directly via `SendMessage`. Unlike simple subagents (which report to a parent), team members are peers: tasks can declare dependencies, and teammates self-claim the next unblocked task when they finish one. Best for work requiring discussion — competing debugging hypotheses, multi-lens reviews — at a significantly higher token cost than subagents.
 - **Agent View monitoring**: When running 5-30 parallel subagents, use Agent View to monitor all sessions from one screen. You can see each agent's progress, intervene if one gets stuck, and track overall completion.
 - **Typed subagents**: Choose agent types based on the task — `Explore` for read-only code search (faster, cannot edit), `Plan` for architecture design (cannot edit), or general-purpose for tasks that require both reading and writing.
 
@@ -75,4 +75,5 @@ Claude synthesizes all three reports into a unified review with prioritized find
 ## Sources
 
 - [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs for creating and using custom subagents
+- [Agent Teams](https://code.claude.com/docs/en/agent-teams) — Official docs for coordinating peer Claude instances with shared tasks and inter-agent messaging
 - [Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system) — Anthropic engineering blog on orchestrator-worker multi-agent architecture

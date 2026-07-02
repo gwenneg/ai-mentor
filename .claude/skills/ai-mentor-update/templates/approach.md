@@ -85,7 +85,7 @@ like something that actually happened, not a contrived demo.]
 - [Source title](URL) — [1-line description of what this covers]
 - [Source title](URL) — [1-line description of what this covers]
 
-[1-3 official external sources. Prefer official documentation
+[At least one official external source. Prefer official documentation
 (Anthropic docs, tool docs, maintainer sites) over blog posts
 or community content. These are the references the content was
 verified against.]
@@ -93,11 +93,11 @@ verified against.]
 
 ## Rules
 
-- **60-110 lines** per file — long enough to be useful, short enough to fit in a context window alongside other files
+- **At least 60 lines** per file — long enough to be useful; keep it focused so it fits in a context window alongside other files
 - **"Why It Works" teaches a principle** — not "it saves time" but the specific cognitive or process insight that makes the approach effective
 - **Real-World Example must feel real** — specific file names, realistic module names, a plausible problem with a concrete resolution
 - **Common Pitfalls come from experience** — describe mistakes developers actually make, not obvious warnings
-- **`## Sources` lists 1-3 official external links** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
+- **`## Sources` lists at least one official external link** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
 - **No extra sections** beyond the template — keep the structure consistent across all approach files
 - **No sub-sections within "Basic (Beginner)"** — if the approach has distinct modes (e.g., "using" vs. "setting up"), pick the most common one for Basic and put variations in Advanced Patterns
 - **`*Last reviewed: YYYY-MM-DD*`** on line 2 — update whenever the file is reviewed or modified

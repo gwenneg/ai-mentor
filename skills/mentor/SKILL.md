@@ -215,7 +215,8 @@ Every card's **Do it now** line must be one of these, chosen by what the approac
 - **Custom skills** — create `.claude/skills/<name>/SKILL.md`, remind them to run `/reload-skills`
 - **MCP context** — add the server entry to `.mcp.json` (show it first)
 - **Headless mode / CI** — write the workflow YAML or the exact `claude -p` command into their pipeline
-- **Built-in review skills** — offer to run `/code-review` or `/security-review` on their diff right now
+- **Built-in review skills** — offer to run `/code-review`, `/security-review`, or `/verify` on their diff right now
+- **Visual artifacts** — write the HTML/Markdown page and publish it with the Artifact tool, then hand over the link
 - **Plan-mode-style analysis** — offer to start the structured read-only investigation immediately and present a plan
 - **Fan-out / subagents** — draft the decomposition and offer to run it (only run multi-agent orchestration if they explicitly accept)
 

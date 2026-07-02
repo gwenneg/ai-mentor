@@ -1,5 +1,5 @@
 # Checkpoints and Rewind
-*Last reviewed: 2026-07-01*
+*Last reviewed: 2026-07-02*
 
 ## What It Is
 
@@ -36,7 +36,7 @@ Experimentation is how good software gets built, but experimentation requires ch
 
 - **Checkpoints plus Plan Mode**: Use Plan Mode to outline an approach, execute it, then evaluate the result. If the execution reveals a flaw in the plan, rewind the code but keep the plan context. Refine the plan and re-execute — each iteration is informed by the previous attempt.
 - **Checkpoints plus worktree isolation**: In a worktree, checkpoints give you two levels of undo: rewind within the session for fine-grained rollback, or discard the entire worktree for a complete reset. Use checkpoints for "that last edit was wrong" and worktree discard for "this whole approach was wrong."
-- **Checkpoint forking for A/B comparison**: After reaching a checkpoint, fork the conversation to explore an alternative. Both branches share the same starting point but diverge in implementation. Compare the results without manually re-creating the initial state.
+- **Checkpoint forking for A/B comparison**: After reaching a checkpoint, run `/branch try-alternative` to create a copy of the conversation and switch into it, leaving the original intact (from the CLI: `claude --continue --fork-session`). Both branches share the same starting point but diverge in implementation; forks are grouped under their root session in the `/resume` picker, so comparing results is a session switch away.
 
 ### Advanced Patterns
 

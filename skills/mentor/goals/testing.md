@@ -16,6 +16,7 @@ You need more tests, better tests, or faster tests. Maybe coverage is too low an
 | Test code has type errors that waste test-run cycles | LSP self-correction | Catch type mismatches before waiting for the test runner |
 | Inherited a codebase with zero tests | Plan mode | Design a test strategy before writing anything |
 | Writing tests to prevent a specific bug from recurring | Autonomous loops | Set "this test passes" as the goal and iterate |
+| Tests pass but you're not sure the feature actually works | Built-in verify skill | /verify drives the real flow, not just the test suite |
 
 **Hidden gem:** Hooks — a PreToolUse hook that blocks edits to fixtures stops the AI from "fixing" a failing test by changing the expected output.
 
@@ -186,3 +187,26 @@ When you inherit a codebase with zero tests or need to add a comprehensive test 
 - The plan is only as good as your understanding of the codebase's risk areas
 
 **Deeper:** See `approaches/plan-mode.md`
+
+---
+
+### 8. Built-in Verify & Review Skills — Prove the change works, not just passes
+**Level:** Beginner
+
+A test suite can pass while the feature is broken — mocked dependencies, assertions that can never fail, coverage of the wrong path. The built-in `/verify` skill exercises a change end-to-end by driving the affected flow in the running application, and `/code-review` on test code catches the tests that pass by definition. Both ship with Claude Code; there is nothing to install or configure.
+
+**Try it now:**
+> We just added stacked-discount support to `src/services/pricing/discount-engine.ts` and the unit tests pass. Run /verify: start the dev server, create an order through the API with two stacked discounts, and confirm the returned total matches a hand-computed value — not just that the test suite is green.
+
+**Why this works:** Tests encode your expectations; verification observes actual behavior. The gap between "the tests pass" and "the feature works" is exactly where mocked-away integration bugs live, and driving the real flow is the only way to close it.
+
+**Pros:**
+- Catches integration failures that mocked unit tests structurally cannot
+- Zero setup — `/verify` and `/code-review` are built into Claude Code
+- Reviewing test code surfaces assertions that could never fail
+
+**Cons:**
+- Needs a runnable app or flow to drive — nothing to observe on pure library code without an entry point
+- Slower than a unit test run — use it before committing, not after every edit
+
+**Deeper:** See `approaches/built-in-review-skills.md`

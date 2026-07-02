@@ -67,14 +67,14 @@ EOF
     [ "$matched" -eq 1 ] || issue "$f" "Hidden gem '$gem' does not match any ranked approach"
   fi
 
-  # Numbering sequential, entry count 3-7
+  # Numbering sequential, at least 3 entries
   local nums expected n_entries
   nums="$(grep -E '^### [0-9]+\.' "$f" | sed -E 's/^### ([0-9]+)\..*/\1/' | tr '\n' ' ')"
   n_entries="$(printf '%s' "$nums" | wc -w | tr -d ' ')"
   expected="$(seq 1 "$n_entries" | tr '\n' ' ')"
   [ "$nums" = "$expected" ] || issue "$f" "approach numbering not sequential: $nums"
-  if [ "$n_entries" -lt 3 ] || [ "$n_entries" -gt 7 ]; then
-    issue "$f" "$n_entries approach entries (expected 3-7)"
+  if [ "$n_entries" -lt 3 ]; then
+    issue "$f" "$n_entries approach entries (expected at least 3)"
   fi
 
   # Per-entry required fields in order (entries = blocks between '---' after the ranked header)
@@ -133,12 +133,12 @@ check_approach() {
 
   local n srcs
   n="$(wc -l < "$f" | tr -d ' ')"
-  if [ "$n" -lt 60 ] || [ "$n" -gt 110 ]; then
-    issue "$f" "$n lines (expected 60-110)"
+  if [ "$n" -lt 60 ]; then
+    issue "$f" "$n lines (expected at least 60)"
   fi
   srcs="$(awk '/^## Sources$/{s=1;next} s' "$f" | grep -cE '^- \[[^]]+\]\(https?://')"
-  if [ "$srcs" -lt 1 ] || [ "$srcs" -gt 3 ]; then
-    issue "$f" "$srcs Sources entries (expected 1-3)"
+  if [ "$srcs" -lt 1 ]; then
+    issue "$f" "$srcs Sources entries (expected at least 1)"
   fi
 }
 
