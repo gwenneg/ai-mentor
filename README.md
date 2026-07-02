@@ -5,10 +5,12 @@ Describe your engineering problem, get the right AI workflow. Ranked, verified r
 ## What it does
 
 - Matches engineering problems to ranked AI workflow approaches
-- Adapts recommendations to your experience level (getting started, comfortable, advanced)
+- Grounds every "try it now" prompt in your actual repo — real file paths, real test commands, your existing setup
+- Always shows a **safe pick** and a **surprising pick** — including the approach you'd never have thought to try
+- Offers to set the approach up on the spot: hooks written, agent files created, commands ready to paste
+- Adapts to your experience level without interrupting you with questions
 - Teaches the *why* behind each approach, not just the mechanics
-- Provides concrete "try it now" prompts for every recommendation
-- Covers Claude Code (primary), OpenCode, Cursor, and aider
+- Built for Claude Code — every approach is grounded in current Claude Code features
 - Every approach backed by verified official sources
 
 ## Install
@@ -37,15 +39,15 @@ Releases are pinned to an immutable commit SHA so work-in-progress on `main` nev
 ### Describe your problem
 
 ```
-/ai-mentor debug a flaky test
-/ai-mentor review a large PR
-/ai-mentor refactor authentication across 30 files
+/ai-mentor:mentor debug a flaky test
+/ai-mentor:mentor review a large PR
+/ai-mentor:mentor refactor authentication across 30 files
 ```
 
 ### Guided discovery
 
 ```
-/ai-mentor
+/ai-mentor:mentor
 ```
 
 The skill asks what you're working on, identifies the best-matching goal, calibrates to your experience level, and presents ranked approaches.
@@ -78,12 +80,16 @@ The skill can also be invoked automatically by Claude when it detects you're wor
 | DevOps | Terraform, Kubernetes, Docker, cloud infrastructure |
 | Tech debt | Code quality audits, cleanup prioritization |
 | Accessibility | WCAG compliance, screen readers, keyboard navigation |
+| Building AI agents | Agent design, prototyping, Agent SDK products |
+| Building MCP integrations | MCP servers, exposing internal tools to AI |
+| Building skills & plugins | Packaging team workflows, marketplace distribution |
+| Building LLM features | AI product features, prompt engineering, evals |
 
 ## AI workflow approaches
 
-Each approach file covers: what it is, why it works, when to use it (and when not to), beginner through advanced usage, tool support, common pitfalls, a real-world example, and verified official sources.
+Each approach file covers: what it is, why it works, when to use it (and when not to), beginner through advanced usage, common pitfalls, a real-world example, and verified official sources.
 
-Approaches include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Multi-Provider, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Plugins, and Custom Agents.
+Approaches include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Model & Effort Selection, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Official Plugins, Custom Plugins, Custom Agents, Project Memory & Context Docs, Session & Context Management, Background Agents, Scheduled & Recurring Agents, Cloud Sessions & Remote Work, and Permissions & Safe Autonomy.
 
 ## License
 

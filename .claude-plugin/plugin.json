@@ -1,6 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "ai-mentor",
+  "displayName": "AI Mentor",
   "description": "Describe your engineering problem, get the right AI workflow. Ranked, verified recommendations with ready-to-paste prompts that teach you why each approach works — not just how.",
   "author": {
     "name": "Gwenneg Lepage",

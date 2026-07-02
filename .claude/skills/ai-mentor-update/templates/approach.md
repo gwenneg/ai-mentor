@@ -64,18 +64,6 @@ description of how they combine and what the combination achieves.]
 or non-obvious applications. These are for developers who already
 use the basic approach and want to push further.]
 
-## Tool Support
-
-| Tool | Support | Notes |
-|------|---------|-------|
-| Claude Code | Native/Partial/None | [specific details] |
-| OpenCode | Native/Partial/None | [specific details] |
-| Cursor | Native/Partial/None | [specific details] |
-| aider | Native/Partial/None | [specific details] |
-
-[Always include all four tools. Use "Native" for built-in support,
-"Partial" for limited or plugin-based support, "None" for no support.]
-
 ## Common Pitfalls
 
 - **[Pitfall name]**: [1-2 sentences describing the mistake and
@@ -105,10 +93,9 @@ verified against.]
 
 ## Rules
 
-- **80-120 lines** per file — long enough to be useful, short enough to fit in a context window alongside other files
+- **60-110 lines** per file — long enough to be useful, short enough to fit in a context window alongside other files
 - **"Why It Works" teaches a principle** — not "it saves time" but the specific cognitive or process insight that makes the approach effective
 - **Real-World Example must feel real** — specific file names, realistic module names, a plausible problem with a concrete resolution
-- **Tool Support table is always present** — even if most tools show "None," this sets expectations
 - **Common Pitfalls come from experience** — describe mistakes developers actually make, not obvious warnings
 - **`## Sources` lists 1-3 official external links** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
 - **No extra sections** beyond the template — keep the structure consistent across all approach files
