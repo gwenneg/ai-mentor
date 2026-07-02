@@ -96,5 +96,5 @@ The runtime spawns agents in batches, each migrating one file in its own worktre
 
 ## Sources
 
-- [Claude Code Common Workflows](https://docs.anthropic.com/en/docs/claude-code/common-workflows) — Official docs on workflow patterns and fan-out orchestration
+- [Claude Code Common Workflows](https://code.claude.com/docs/en/common-workflows) — Official docs on workflow patterns and fan-out orchestration
 - [Building a C Compiler with Claude](https://www.anthropic.com/engineering/building-c-compiler) — Anthropic engineering blog demonstrating parallel fan-out patterns

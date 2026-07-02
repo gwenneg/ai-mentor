@@ -74,5 +74,5 @@ The report arrives as a structured comparison with a recommendation section: Day
 
 ## Sources
 
-- [Claude Code Slash Commands](https://docs.anthropic.com/en/docs/claude-code/slash-commands) — Official docs for skills and slash commands including /deep-research
+- [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills and slash commands including /deep-research
 - [Claude Code Expertise](https://www.anthropic.com/research/claude-code-expertise) — Anthropic research on how Claude Code is used in practice

@@ -74,5 +74,5 @@ Total time: about three minutes, seven iterations. You run `git diff` and review
 
 ## Sources
 
-- [Claude Code Interactive Mode](https://docs.anthropic.com/en/docs/claude-code/interactive-mode) — Official docs covering /goal command and autonomous behavior
+- [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode) — Official docs covering /goal command and autonomous behavior
 - [Enabling Claude Code to Work More Autonomously](https://www.anthropic.com/news/enabling-claude-code-to-work-more-autonomously) — Anthropic blog on goal-oriented autonomous execution

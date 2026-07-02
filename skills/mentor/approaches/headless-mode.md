@@ -87,6 +87,6 @@ The first week, the team notices Claude is flagging style issues they do not car
 
 ## Sources
 
-- [Claude Code Headless Mode](https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-headless) — Official docs for running Claude Code non-interactively
-- [Claude Code GitHub Actions](https://docs.anthropic.com/en/docs/claude-code/github-actions) — CI/CD integration with GitHub Actions
-- [Claude Code CLI Reference](https://docs.anthropic.com/en/docs/claude-code/cli-reference) — CLI reference covering -p flag and non-interactive options
+- [Claude Code Headless Mode](https://code.claude.com/docs/en/headless) — Official docs for running Claude Code non-interactively
+- [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions) — CI/CD integration with GitHub Actions
+- [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference) — CLI reference covering -p flag and non-interactive options

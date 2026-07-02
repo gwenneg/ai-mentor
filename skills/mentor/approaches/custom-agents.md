@@ -98,5 +98,5 @@ Now any developer on the team can invoke this agent when they need a migration. 
 
 ## Sources
 
-- [Claude Code Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) — Official docs for creating custom agent definitions in .claude/agents/
-- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices) — Anthropic engineering guide with agent composition patterns
+- [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs for creating custom agent definitions in .claude/agents/
+- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Anthropic engineering guide with agent composition patterns

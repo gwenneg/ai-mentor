@@ -73,5 +73,5 @@ You approve, and Claude implements the interface, updates the test, and updates 
 
 ## Sources
 
-- [Claude Code Interactive Mode](https://docs.anthropic.com/en/docs/claude-code/interactive-mode) — Official docs covering plan mode toggle and structured planning
-- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices) — Anthropic engineering guide with plan mode workflow patterns
+- [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode) — Official docs covering plan mode toggle and structured planning
+- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Anthropic engineering guide with plan mode workflow patterns

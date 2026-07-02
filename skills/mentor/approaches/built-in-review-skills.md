@@ -83,4 +83,4 @@ Claude applies the extraction automatically. You run `/security-review` as a fin
 
 ## Sources
 
-- [Claude Code Slash Commands](https://docs.anthropic.com/en/docs/claude-code/slash-commands) — Official docs for skills including built-in /code-review and /security-review
+- [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills including built-in /code-review and /security-review

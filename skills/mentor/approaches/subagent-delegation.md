@@ -74,5 +74,5 @@ Claude synthesizes all three reports into a unified review with prioritized find
 
 ## Sources
 
-- [Claude Code Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) — Official docs for creating and using custom subagents
+- [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs for creating and using custom subagents
 - [Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system) — Anthropic engineering blog on orchestrator-worker multi-agent architecture

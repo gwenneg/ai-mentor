@@ -74,5 +74,5 @@ All 22 tests pass. The rewind cost ten seconds; the flawed first attempt taught 
 
 ## Sources
 
-- [Claude Code Interactive Mode](https://docs.anthropic.com/en/docs/claude-code/interactive-mode) — Official docs covering /rewind and checkpoint options
-- [Claude Code IDE Integrations](https://docs.anthropic.com/en/docs/claude-code/ide-integrations) — VS Code checkpoint UI and rewind controls
+- [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode) — Official docs covering /rewind and checkpoint options
+- [Claude Code IDE Integrations](https://code.claude.com/docs/en/ide-integrations) — VS Code checkpoint UI and rewind controls

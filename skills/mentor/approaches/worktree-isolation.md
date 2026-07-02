@@ -73,5 +73,5 @@ After Claude finishes, you run `npm test` in the worktree directory. Three tests
 
 ## Sources
 
-- [Claude Code Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) — Official docs covering worktree isolation mode for subagents
-- [Claude Code IDE Integrations](https://docs.anthropic.com/en/docs/claude-code/ide-integrations) — VS Code integration docs covering the --worktree flag
+- [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs covering worktree isolation mode for subagents
+- [Claude Code IDE Integrations](https://code.claude.com/docs/en/ide-integrations) — VS Code integration docs covering the --worktree flag

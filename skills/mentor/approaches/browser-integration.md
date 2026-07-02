@@ -74,5 +74,5 @@ Total debugging time: under two minutes. Without the browser, this would have re
 
 ## Sources
 
-- [Claude Code MCP](https://docs.anthropic.com/en/docs/claude-code/mcp) — Official docs for configuring MCP servers including Playwright
+- [Claude Code MCP](https://code.claude.com/docs/en/mcp) — Official docs for configuring MCP servers including Playwright
 - [Playwright MCP Server](https://github.com/microsoft/playwright-mcp) — Official Microsoft Playwright MCP server repository

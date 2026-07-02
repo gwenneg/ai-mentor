@@ -80,6 +80,6 @@ You ask Claude to pull the requirements one more time and verify each acceptance
 
 ## Sources
 
-- [Claude Code MCP](https://docs.anthropic.com/en/docs/claude-code/mcp) — Official docs for connecting Claude Code to external tools via MCP
-- [Model Context Protocol](https://docs.anthropic.com/en/docs/agents-and-tools/mcp) — General MCP protocol overview and architecture
+- [Claude Code MCP](https://code.claude.com/docs/en/mcp) — Official docs for connecting Claude Code to external tools via MCP
+- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro) — General MCP protocol overview and architecture
 - [MCP Reference Servers](https://github.com/modelcontextprotocol/servers) — Official repository of MCP server implementations

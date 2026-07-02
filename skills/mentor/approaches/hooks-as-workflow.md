@@ -80,5 +80,5 @@ Claude adds both hooks to `.claude/settings.json`. Now every time you edit billi
 
 ## Sources
 
-- [Claude Code Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) — Hooks reference covering all hook events, matchers, and exit codes
-- [Claude Code Hooks Guide](https://docs.anthropic.com/en/docs/claude-code/hooks-guide) — Practical guide for automating workflows with hooks
+- [Claude Code Hooks](https://code.claude.com/docs/en/hooks) — Hooks reference covering all hook events, matchers, and exit codes
+- [Claude Code Hooks Guide](https://code.claude.com/docs/en/hooks-guide) — Practical guide for automating workflows with hooks

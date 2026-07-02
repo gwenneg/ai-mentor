@@ -84,5 +84,5 @@ What used to take 25-30 minutes and a review for forgotten steps now takes 2 min
 
 ## Sources
 
-- [Claude Code Slash Commands](https://docs.anthropic.com/en/docs/claude-code/slash-commands) — Official docs for creating custom skills in .claude/skills/ directories
-- [Claude Code Tutorials](https://docs.anthropic.com/en/docs/claude-code/tutorials) — Common workflow tutorials including skill creation patterns
+- [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for creating custom skills in .claude/skills/ directories
+- [Claude Code Common Workflows](https://code.claude.com/docs/en/common-workflows) — Common workflow tutorials including skill creation patterns

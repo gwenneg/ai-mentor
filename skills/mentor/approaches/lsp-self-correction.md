@@ -73,5 +73,5 @@ You run `go build ./...` to confirm — clean build, no warnings. You run `go te
 
 ## Sources
 
-- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices) — Anthropic engineering guide explaining the agentic feedback loop with LSP diagnostics
+- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Anthropic engineering guide explaining the agentic feedback loop with LSP diagnostics
 - [Claude Code Expertise](https://www.anthropic.com/research/claude-code-expertise) — Research on Claude Code usage patterns including iterative self-correction
