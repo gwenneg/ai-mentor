@@ -26,7 +26,7 @@ Then ask the user which steps to run:
 > 1. **Structural audit** — check all files against templates, cross-references, staleness
 > 2. **Content verification** — web-search claims in files against current tool docs
 > 3. **Recent tool changes** — search changelogs for new features and breaking changes
-> 4. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `approaches/plugins.md`
+> 4. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `references/official-plugins.md`
 >
 > You can pick any combination (e.g. "all", "1 and 3", "just 4").
 
@@ -42,17 +42,18 @@ Read `templates/goal.md` and `templates/approach.md` from this skill's directory
 
 ### Goal files
 
-For each `.md` file in `skills/ai-mentor/goals/`:
+For each `.md` file in `skills/mentor/goals/`:
 
 **Section order check** — verify these sections exist in this order:
 1. `# [Title]`
 2. `*Last reviewed: YYYY-MM-DD*` (line 2)
 3. `## When You're Here`
 4. `## Quick Decision Guide` (with a 3-column table)
-5. `## Approaches (Ranked)`
+5. `**Hidden gem:**` line (must name an approach that appears in this file's ranked list)
+6. `## Approaches (Ranked)`
 
 **Approach entry check** — each `### N. Name — pitch` entry must have exactly these fields in order:
-1. `**Level:**` and `**Tools:**` on the same line
+1. `**Level:**` badge line
 2. Description paragraph
 3. `**Try it now:**` with a blockquote
 4. `**Why this works:**`
@@ -68,7 +69,7 @@ Flag any extra fields (`Also try`, `Tip`, `Real-world example`, `When to combine
 
 ### Approach files
 
-For each `.md` file in `skills/ai-mentor/approaches/`:
+For each `.md` file in `skills/mentor/approaches/`:
 
 **Section order check** — verify these sections exist in this order:
 1. `# [Title]`
@@ -81,12 +82,11 @@ For each `.md` file in `skills/ai-mentor/approaches/`:
    - `### Basic (Beginner)`
    - `### Composing with Other Approaches (Intermediate)`
    - `### Advanced Patterns`
-8. `## Tool Support` (table with Claude Code, OpenCode, Cursor, aider)
-9. `## Common Pitfalls`
-10. `## Real-World Example`
-11. `## Sources` (1-3 entries, each a markdown link with a one-line description)
+8. `## Common Pitfalls`
+9. `## Real-World Example`
+10. `## Sources` (1-3 entries, each a markdown link with a one-line description)
 
-**Line count check** — flag files outside the 80-120 line range.
+**Line count check** — flag files outside the 60-110 line range.
 
 **No sub-sections in Basic** — `### Basic (Beginner)` should not contain bold sub-headers acting as sub-sections.
 
@@ -138,15 +138,15 @@ For each file in scope, use web search to verify claims against current tool doc
 
 ### For approach files, check:
 
-- **Feature accuracy**: Does the tool actually support what's described? Has the feature been renamed, changed, or removed?
+- **Feature accuracy**: Does Claude Code actually support what's described? Has the feature been renamed, changed, or removed?
 - **Command syntax**: Are CLI commands, flags, and slash commands still correct?
-- **Tool Support table**: Is each tool's support level (Native/Partial/None) still accurate for Claude Code, OpenCode, Cursor, and aider?
-- **Missing features**: Are there significant new features related to this approach that the file doesn't mention?
+- **Missing features**: Are there significant new Claude Code features related to this approach that the file doesn't mention?
 - **"How It Works" accuracy**: Are the step-by-step instructions still correct?
 
 ### For goal files, also check:
 
 - **Approach rankings**: Is the most broadly useful approach ranked first?
+- **Hidden gem**: Does it still name the most non-obvious high-value approach for this goal, and does that approach still appear in the ranked list?
 - **Missing approaches**: Cross-check against all approach files — is any relevant approach missing from this goal?
 - **"Try it now" prompts**: Do they use current syntax and realistic file paths?
 - **Quick Decision Guide**: Does the table cover the main scenarios for this goal?
@@ -177,20 +177,12 @@ Ask the user:
 
 Wait for the user's response. Use the provided number or default to 30.
 
-Search for changes to AI coding tools published within that window.
-
-| Tool | What to search for |
-|------|--------------------|
-| Claude Code | Changelog, release notes, new features, CLI changes, new slash commands, hooks updates, agent/workflow changes |
-| OpenCode | GitHub releases, new features, plugin system changes, LSP updates |
-| Cursor | Changelog, new AI features, MCP support changes |
-| aider | GitHub releases, new features, model support changes |
+Search for Claude Code changes published within that window: the changelog, release notes, new features, CLI changes, new slash commands and bundled skills, hooks updates, and agent/workflow changes. Target the official changelog (`anthropics/claude-code` on GitHub), the Claude Code docs, and Anthropic blog posts.
 
 For each change found, identify which approach and goal files it affects:
 
 - A new feature → may need a new approach file or updates to existing ones
 - A changed command or flag → "Try it now" prompts and "Basic (Beginner)" sections may be wrong
-- A tool gaining/losing support for a feature → Tool Support tables need updating
 - A renamed or removed feature → content may reference something that no longer exists
 - A new capability category → may warrant a new goal file
 
@@ -225,12 +217,12 @@ gh api repos/anthropics/claude-plugins-official/contents/plugins | python3 -c "i
 gh api repos/anthropics/claude-plugins-official/contents/external_plugins | python3 -c "import json,sys; [print(d['name']) for d in json.load(sys.stdin) if d['type']=='dir']"
 ```
 
-Extract the plugin names currently documented in `skills/ai-mentor/approaches/plugins.md` by reading the file and collecting all backtick-wrapped names in the `## Official Claude Code Plugins` section.
+Extract the plugin names currently documented in `skills/mentor/references/official-plugins.md` by reading the file and collecting all backtick-wrapped names in its tables.
 
 Compare the two lists:
 
-- **New plugins** — present in the repo but not mentioned in `approaches/plugins.md`
-- **Removed plugins** — mentioned in `approaches/plugins.md` but no longer in the repo
+- **New plugins** — present in the repo but not mentioned in `references/official-plugins.md`
+- **Removed plugins** — mentioned in `references/official-plugins.md` but no longer in the repo
 
 For each new plugin, fetch its description:
 
@@ -247,18 +239,18 @@ Decode the base64 content and extract the `description` field.
 
 **Source:** anthropics/claude-plugins-official (fetched today)
 
-### New plugins (not yet in approaches/plugins.md)
+### New plugins (not yet in references/official-plugins.md)
 - `<name>` (Anthropic-built / External) — <description>
   → Suggested table row: | `<name>` | <short description> | `goals/<goal>.md` |
 
-### Removed plugins (in approaches/plugins.md but no longer in repo)
+### Removed plugins (in references/official-plugins.md but no longer in repo)
 - `<name>` — remove from the relevant table
 
 ### No changes
 (if lists match)
 ```
 
-Ask the user which additions and removals to apply. For confirmed changes, edit `approaches/plugins.md` and update its `*Last reviewed*` date to today.
+Ask the user which additions and removals to apply. For confirmed changes, edit `references/official-plugins.md` and update its `*Last synced*` date to today.
 
 The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
 

@@ -1,0 +1,64 @@
+# Cloud Sessions & Remote Work
+*Last reviewed: 2026-07-02*
+
+## What It Is
+
+Cloud Sessions run Claude Code on Anthropic-managed infrastructure instead of your machine. You hand off a task from your terminal with `claude --remote`, from claude.ai/code in a browser, or from the Claude mobile app; the session clones your repo into a sandboxed cloud environment and works there. Sessions persist when you close your laptop, you can monitor them from your phone, and `--teleport` pulls any cloud session back into your terminal to continue locally.
+
+## Why It Works
+
+Your machine is a bottleneck: one checkout, one environment, and it goes to sleep when you do. Cloud sessions decouple the work from the workstation — tasks run in parallel sandboxes that don't compete for your CPU or your working copy, keep going after you leave, and are reachable from whatever device you have. The handoff pattern also enforces a healthy division of labor: you do the judgment-heavy part (planning, reviewing) where interaction is cheap, and ship the execution-heavy part to an environment where autonomy is safe by construction.
+
+## When to Use It
+
+- Well-scoped tasks you want off your machine: "fix this bug, run the tests, open a PR" while you keep working locally
+- Several independent tasks at once — each `claude --remote` creates its own parallel cloud session
+- Keeping a PR healthy without babysitting it: auto-fix responds to CI failures and review comments as they arrive
+- Working away from your desk — kick off or steer sessions from the mobile app
+
+## When NOT to Use It
+
+- Work depending on local state: uncommitted changes (the cloud clones from GitHub, not your disk), local databases, devices, or credentials that don't belong in a cloud environment
+- Tight interactive loops where you steer every step — the value is autonomy; constant intervention negates it
+- Repositories your organization hasn't cleared for cloud execution (Owners can disable web sessions org-wide)
+
+## How It Works
+
+### Basic (Beginner)
+
+1. Push your branch (the cloud clones from GitHub, so local-only commits won't be there), then hand off: `claude --remote "Fix the authentication bug in src/auth/login.ts"`.
+2. The session provisions a cloud environment, clones your current repo at your current branch, and starts working. The CLI shows a live setup checklist (v2.1.195+); messages you type while it provisions are queued.
+3. Check progress with `/tasks` in your terminal, or open the session at claude.ai/code or in the mobile app to steer it like any conversation.
+4. When it finishes, review the changes and create the PR from the web session.
+5. Want it back on your machine? Run `/teleport` (or `claude --teleport`) and pick the session — it continues in your terminal with context intact. Handoff from CLI is one-way: you can pull cloud sessions down, and `--remote` starts *new* cloud sessions; the Desktop app can push an existing local session to the web.
+
+### Composing with Other Approaches (Intermediate)
+
+- **Plan locally, execute remotely**: collaborate on the plan in local plan mode, commit the plan file, push, then `claude --remote "Execute the migration plan in docs/migration-plan.md"` — your judgment on strategy, cloud autonomy on execution.
+- **Cloud sessions plus code review**: `/autofix-pr` on a PR branch spawns a web session that watches the PR — pushing fixes for clear CI failures and review comments, asking you first when a request is ambiguous or architecturally significant.
+- **Cloud plans with ultraplan**: draft and review a plan in a web session while you keep working; comment on sections in the browser, then execute remotely or send the plan back to your terminal.
+
+### Advanced Patterns
+
+- **Parallel fleets**: fire several `--remote` tasks back to back — independent sandboxes, no shared state, no coordination cost beyond reviewing the PRs.
+- **Tuned environments**: configure cloud environments with setup scripts (cached between runs), environment variables, and network access levels — the default "Trusted" allowlist covers package registries and common dev domains; use Custom to add your own hosts or Full for unrestricted access.
+- **Mobile-first supervision**: dispatch from the terminal before a commute, answer the one clarifying question from your phone, review the finished PR when you arrive.
+
+## Common Pitfalls
+
+- **Forgetting to push first**: the most common failure — the cloud VM clones from GitHub, so a handoff referencing local-only commits starts from stale code.
+- **Auto-fix in automation-heavy repos**: Claude replies to review threads under your GitHub account (labeled as Claude Code). If PR comments trigger automation like Atlantis or Terraform Cloud, a reply can run privileged workflows — review your repo's comment triggers before enabling auto-fix.
+- **Expecting conflict resolution**: GitHub emits no webhook when the base branch advances into conflict, so auto-fix can't react to merge conflicts — open the session and ask for a rebase.
+- **Under-provisioned environments**: a session without your setup script or required env vars fails in ways that look like model failure. If the task needs dependencies installed, configure the environment before dispatching.
+
+## Real-World Example
+
+Friday, 4pm: three bug tickets left, none hard, all tedious. You push your branch and dispatch each as its own cloud session — `claude --remote "Fix the null-avatar crash in ProfileCard (ticket #841): reproduce via the failing test in tests/profile.test.tsx, fix, and make the suite pass"` — and two more like it.
+
+On the train, the mobile app shows two sessions done and one asking whether to also fix the same pattern it found in `TeamCard`. You reply "yes, same fix" from your phone.
+
+Monday morning, three PRs wait for review. One has a red CI check — you run `/autofix-pr` on its branch and the watching session picks up the flaky-test failure, fixes the race in the test setup, and pushes. You review three green PRs before standup. The tedious work happened on infrastructure that doesn't have weekends.
+
+## Sources
+
+- [Use Claude Code on the web](https://code.claude.com/docs/en/claude-code-on-the-web) — Official docs for cloud sessions, environments, --remote, /teleport, and auto-fix PRs
