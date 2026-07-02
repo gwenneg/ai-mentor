@@ -3,7 +3,9 @@ name: ai-mentor-update
 description: >-
   Maintenance skill for the ai-mentor plugin. Audits structure, verifies
   content accuracy against current tool docs, and detects recent tool
-  changes. Each step is optional — the user picks what to run.
+  changes. Each step is optional — the user picks what to run, or passes
+  --auto for a non-interactive run (CI).
+argument-hint: [--auto 2,3,5 --files 5 --days 30]
 disable-model-invocation: true
 ---
 
@@ -12,6 +14,27 @@ disable-model-invocation: true
 You are a content maintenance tool for the ai-mentor plugin. Your job is to keep the goal and approach files structurally consistent, factually accurate, and up to date.
 
 All paths below are relative to the repo root.
+
+---
+
+## Modes
+
+**Interactive (default):** follow the steps as written, asking the user at each decision point.
+
+**Non-interactive (`--auto`):** when `$ARGUMENTS` contains `--auto`, never ask a question and never wait for input — there is no user present (this mode runs headless in CI). Parse from the arguments:
+
+- `--auto <steps>` — comma-separated step numbers to run, using the Step headings below (2 = structural audit, 3 = content verification, 4 = recent tool changes, 5 = plugin catalog sync), e.g. `--auto 2,3,5`
+- `--files N` — Step 3 scope: process the N oldest-verified files (default: 5)
+- `--days N` — Step 4 lookback window in days (default: 30)
+
+Auto-mode overrides, in addition to skipping every question below:
+
+- **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs `scripts/structural_audit.py` as a deterministic gate — prefer reporting over creative fixing.
+- **Step 3**: process the N oldest-verified files with no per-file pause. Apply only changes that meet the "Recommended changes" bar (official-tier source + direct quote); list everything else under "needs manual verification" in the report without applying it.
+- **Step 4**: use the `--days` window; same evidence bar as Step 3.
+- **Step 5**: apply additions and removals directly — the GitHub API response is authoritative.
+- **Never** run `git commit`, `git push`, or create branches — the calling workflow owns git.
+- **Final output**: end with a single markdown report (the caller uses it as a PR body) with two sections: **Changes applied** (file, change, source URL, supporting quote) and **Not applied** (finding + why it needs a human). If nothing changed, say so explicitly.
 
 ---
 
@@ -30,7 +53,7 @@ Then ask the user which steps to run:
 >
 > You can pick any combination (e.g. "all", "1 and 3", "just 4").
 
-Wait for the user's response, then run the selected steps in order.
+Wait for the user's response, then run the selected steps in order. *(Auto mode: skip the question — the steps come from `--auto`.)*
 
 ---
 
@@ -117,7 +140,7 @@ Present the audit results:
 [List each issue with file path, issue type, and details]
 ```
 
-If there are structural issues, ask the user whether to fix them now or continue. Apply confirmed fixes before proceeding.
+If there are structural issues, ask the user whether to fix them now or continue. Apply confirmed fixes before proceeding. *(Auto mode: apply only unambiguous fixes, report the rest.)*
 
 ---
 
@@ -132,7 +155,7 @@ Ask the user:
 > - **All files** — check every goal and approach file (oldest-reviewed first)
 > - **Specific file** — enter a path, e.g. `approaches/plan-mode.md` or `goals/debugging.md`
 
-Wait for the user's response.
+Wait for the user's response. *(Auto mode: skip the question — process the `--files` N oldest-verified files.)*
 
 For each file in scope, use web search to verify claims against current tool documentation. Target official sources: tool documentation, changelogs, GitHub releases, official blogs.
 
@@ -163,7 +186,7 @@ For each file with issues:
 
 Ask the user which fixes to apply. For each confirmed fix, edit the file and update its `*Last reviewed*` date to today.
 
-If processing all files, ask after each file whether to continue to the next one or stop.
+If processing all files, ask after each file whether to continue to the next one or stop. *(Auto mode: no per-file pause; apply Recommended-bar fixes directly and collect the rest for the report.)*
 
 ---
 
@@ -175,7 +198,7 @@ Ask the user:
 
 > How far back should I search? (default: 30 days)
 
-Wait for the user's response. Use the provided number or default to 30.
+Wait for the user's response. Use the provided number or default to 30. *(Auto mode: use `--days`, default 30, without asking.)*
 
 Search for Claude Code changes published within that window: the changelog, release notes, new features, CLI changes, new slash commands and bundled skills, hooks updates, and agent/workflow changes. Target the official changelog (`anthropics/claude-code` on GitHub), the Claude Code docs, and Anthropic blog posts.
 
@@ -202,7 +225,7 @@ For each change found, identify which approach and goal files it affects:
 - [ ] Consider new goal file for [new capability]
 ```
 
-Present the suggested actions and ask the user which ones to apply. For confirmed updates to existing files, make the edits and update `*Last reviewed*` dates. For new files, scaffold them using the templates from this skill's `templates/` directory.
+Present the suggested actions and ask the user which ones to apply *(auto mode: apply official-tier-backed updates, report the rest)*. For confirmed updates to existing files, make the edits and update `*Last reviewed*` dates. For new files, scaffold them using the templates from this skill's `templates/` directory.
 
 ---
 
@@ -250,7 +273,7 @@ Decode the base64 content and extract the `description` field.
 (if lists match)
 ```
 
-Ask the user which additions and removals to apply. For confirmed changes, edit `references/official-plugins.md` and update its `*Last synced*` date to today.
+Ask the user which additions and removals to apply *(auto mode: apply all — the API is authoritative)*. For confirmed changes, edit `references/official-plugins.md` and update its `*Last synced*` date to today.
 
 The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
 
