@@ -23,6 +23,7 @@ Some information is spatial, not linear. A dependency graph, an incident timelin
 - Content that must live in the repo — commit the Markdown; publish the artifact as a *view* of it, not the source of truth
 - Sensitive material — publishing sends content to claude.ai hosting; check your team's policy before rendering internal data
 - Headless and CI contexts where nobody clicks links — write a file instead
+- Enterprise setups on Amazon Bedrock, Google Vertex AI, or Microsoft Foundry — artifacts require the Anthropic API and a claude.ai sign-in; on those providers Claude writes a local HTML file instead of publishing
 
 ## How It Works
 
@@ -32,7 +33,7 @@ Some information is spatial, not linear. A dependency graph, an incident timelin
 2. Ask Claude to render it: "Publish this architecture summary as an artifact — one section per service, with a dependency diagram at the top."
 3. Claude writes a self-contained HTML file, publishes it, and returns a `claude.ai` link. Open it in your browser.
 4. Iterate in conversation: "make the timeline horizontal", "collapse the low-severity findings". Claude edits the file and redeploys to the same URL.
-5. Share the link when you're happy — artifacts are private by default until you choose otherwise.
+5. Share the link when you're happy. Artifacts are private to you by default, and the URL alone grants nothing — viewers must be signed in to claude.ai. On Team and Enterprise plans you can share with specific people or everyone in your organization, never outside it (there is no public option); on Pro and Max plans artifacts stay private to you entirely.
 
 ### Composing with Other Approaches (Intermediate)
 
