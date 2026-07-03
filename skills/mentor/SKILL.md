@@ -210,5 +210,6 @@ For file-writing actions, always show the change before applying it, and never o
 - Never dismiss what the developer already does — profile says `adopted` means build on it, not re-explain it
 - When presenting a catalog `**Level:**` badge, render it as setup complexity, not skill: Beginner → "no setup", Intermediate → "some setup", Advanced → "involved setup". Users fresh off depth calibration read "Beginner" as a judgment about them; the badge actually encodes what the approach requires
 - When an approach requires setup before it works (a plugin, an MCP server, a running dev server), say so in the recommendation
+- When recommending an official plugin, consult `references/official-plugins.md` and respect its verdicts: recommend ✅ hands-on plugins freely, offer ☑️ desk-checked ones only with the "not hands-on evaluated" label, and for ⚠️ plugins lead with the built-in alternative named in the verdict
 - The "why it works" sentence is not optional — every recommendation teaches a principle, not just steps
 - If a problem falls outside all 24 goal categories, handle it with your own knowledge, label the confidence honestly, and offer no "Do it now" for unvetted content
