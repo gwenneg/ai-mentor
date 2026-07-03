@@ -3,6 +3,8 @@
 
 All plugins below are in the official marketplace and installable via `/plugin install <name>@claude-plugins-official`. None are installed by default. The repo contains 37 Anthropic-built plugins and 15 externally-maintained plugins; this catalog is the full list, kept in sync by the maintenance skill's catalog-sync step. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored — and both directories stay synced. Goal paths are relative to the skill root.
 
+Verdicts are produced by the repeatable protocol in `evals/plugin-evaluation.md` — same fixture, same per-plugin exercises, same criteria on every run, so evaluations stay comparable over time.
+
 **Verdict legend** — every plugin carries one:
 
 - ✅ **hands-on (date)** — installed, exercised against its mapped goal, and it worked; caveats noted verbatim
