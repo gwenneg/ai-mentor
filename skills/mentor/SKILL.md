@@ -114,6 +114,11 @@ If 2-3 goals could match, pick the primary and note the secondary at the end. If
 
 Spend a handful of quick tool calls (under five) making the recommendation concrete: verify files they named, find the real test/build/lint commands (`package.json`, `Makefile`, `pyproject.toml`, CI config), note the stack, and check what's already configured — never recommend setting up something that exists. Catalog prompts use fictional example paths; never show them verbatim.
 
+Two grounding rules that make or break the prompt you write:
+
+- **Embed exact values, not just paths.** A prompt that names the failing test, quotes the constant, or states the observed behavior ("fails 1 in 5 CI runs") outperforms one that only points at a file. Read enough of the target to write it that way — the routing section's exemplar line shows the expected shape.
+- **Respect the repo boundary.** If the problem is about a *different* repo than the one you're in, say so explicitly, write the prompt portable (placeholders plus "adjust to your test command"), and never import this repo's CLAUDE.md rules, file names, or conventions into it. Grounding in the wrong repo is worse than no grounding.
+
 ### Recommend
 
 Read the matched goal's section in `routing.md` (one file, all goals — read once, use the matched section). Choose **the move**: the section's #1 ranked approach, unless the evidence points elsewhere — or unless the profile says they already use it, in which case build on it and take the next-best they don't know. The section's "why it fits" line is curated judgment — use it to frame the pitch, then ground the substance in the approach file and the repo. Choose **the surprise**: the highest-ranked approach from their ignorance map that's relevant to this goal; fall back to the section's `**Hidden gem:**` line only when the profile is empty. Never skip the surprise — it's the reason this plugin exists.
