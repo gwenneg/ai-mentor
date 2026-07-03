@@ -79,34 +79,34 @@ Profile mechanics (full schema: `references/profile-schema.md`): statuses `shown
 
 ### Classify
 
-Match the problem against the goal files:
+Classify the problem against the goal categories:
 
-| Goal file | Signals |
+| Goal | Signals |
 |-----------|---------|
-| `debugging.md` | errors, stack traces, flaky tests, crashes, "doesn't work" |
-| `code-review.md` | PR, review, diff, merge request, quality, "look at this code" |
-| `refactoring.md` | refactor, rename, restructure, cleanup, codemod, "across files" |
-| `greenfield.md` | new feature, build, create, design, prototype, "from scratch" |
-| `testing.md` | test, coverage, E2E, unit test, integration test, "add tests" |
-| `code-understanding.md` | "how does this work", architecture, legacy, "new to this codebase" |
-| `research.md` | compare, investigate, research, evaluate, "which library", due diligence |
-| `migration.md` | upgrade, migrate, update dependency, framework version, API change |
-| `documentation.md` | document, API docs, README, architecture doc, onboarding guide |
-| `ci-automation.md` | automate, pipeline, CI, CD, scheduled, "run on every PR", GitHub Actions |
-| `performance.md` | slow, latency, memory, optimize, benchmark, profiling, bundle size |
-| `security.md` | vulnerability, CVE, audit, hardening, auth bypass, injection, compliance |
-| `incident-response.md` | outage, production down, error spike, rollback, incident, postmortem |
-| `onboarding.md` | new hire, team rotation, environment setup, "first week", dev setup |
-| `dependency-management.md` | dependency, library evaluation, supply chain, deprecated, "should I update" |
-| `api-design.md` | endpoint, schema, REST, GraphQL, gRPC, versioning, contract, "design the API" |
-| `release-management.md` | release, changelog, version bump, deployment, "cut a release", tag |
-| `devops.md` | Terraform, Kubernetes, Docker, infrastructure, cloud, Helm, "deploy to" |
-| `tech-debt.md` | tech debt, code quality, audit, cleanup priority, "what should we fix" |
-| `accessibility.md` | a11y, WCAG, screen reader, keyboard navigation, ARIA, contrast |
-| `building-agents.md` | "build an agent", Agent SDK, "AI teammate", autonomous worker as a product, agent architecture |
-| `building-mcp-integrations.md` | "MCP server", "connect Claude/AI to our tools", "expose our API to AI", connector, integration for AI |
-| `building-skills-plugins.md` | "create a skill", "build a plugin", "package our workflow", marketplace, share automation with the team |
-| `llm-features.md` | "add AI to our product", Claude API, prompt engineering, chatbot, summarization feature, RAG, LLM evals |
+| `debugging` | errors, stack traces, flaky tests, crashes, "doesn't work" |
+| `code-review` | PR, review, diff, merge request, quality, "look at this code" |
+| `refactoring` | refactor, rename, restructure, cleanup, codemod, "across files" |
+| `greenfield` | new feature, build, create, design, prototype, "from scratch" |
+| `testing` | test, coverage, E2E, unit test, integration test, "add tests" |
+| `code-understanding` | "how does this work", architecture, legacy, "new to this codebase" |
+| `research` | compare, investigate, research, evaluate, "which library", due diligence |
+| `migration` | upgrade, migrate, update dependency, framework version, API change |
+| `documentation` | document, API docs, README, architecture doc, onboarding guide |
+| `ci-automation` | automate, pipeline, CI, CD, scheduled, "run on every PR", GitHub Actions |
+| `performance` | slow, latency, memory, optimize, benchmark, profiling, bundle size |
+| `security` | vulnerability, CVE, audit, hardening, auth bypass, injection, compliance |
+| `incident-response` | outage, production down, error spike, rollback, incident, postmortem |
+| `onboarding` | new hire, team rotation, environment setup, "first week", dev setup |
+| `dependency-management` | dependency, library evaluation, supply chain, deprecated, "should I update" |
+| `api-design` | endpoint, schema, REST, GraphQL, gRPC, versioning, contract, "design the API" |
+| `release-management` | release, changelog, version bump, deployment, "cut a release", tag |
+| `devops` | Terraform, Kubernetes, Docker, infrastructure, cloud, Helm, "deploy to" |
+| `tech-debt` | tech debt, code quality, audit, cleanup priority, "what should we fix" |
+| `accessibility` | a11y, WCAG, screen reader, keyboard navigation, ARIA, contrast |
+| `building-agents` | "build an agent", Agent SDK, "AI teammate", autonomous worker as a product, agent architecture |
+| `building-mcp-integrations` | "MCP server", "connect Claude/AI to our tools", "expose our API to AI", connector, integration for AI |
+| `building-skills-plugins` | "create a skill", "build a plugin", "package our workflow", marketplace, share automation with the team |
+| `llm-features` | "add AI to our product", Claude API, prompt engineering, chatbot, summarization feature, RAG, LLM evals |
 
 If 2-3 goals could match, pick the primary and note the secondary at the end. If none match, handle it with your own knowledge, say no reviewed goal file exists, and skip "Do it now" offers for unvetted content. If the developer asks what the catalog contains ("show me everything"), list all approaches with one line each instead.
 
@@ -114,9 +114,15 @@ If 2-3 goals could match, pick the primary and note the secondary at the end. If
 
 Spend a handful of quick tool calls (under five) making the recommendation concrete: verify files they named, find the real test/build/lint commands (`package.json`, `Makefile`, `pyproject.toml`, CI config), note the stack, and check what's already configured — never recommend setting up something that exists. Catalog prompts use fictional example paths; never show them verbatim.
 
+Two grounding rules that make or break the prompt you write:
+
+- **Embed exact values, not just paths.** A prompt that names the failing test, quotes the constant, or states the observed behavior ("fails 1 in 5 CI runs") outperforms one that only points at a file. Read enough of the target to write it that way — the routing section's exemplar line shows the expected shape.
+- **Live environment beats exemplar shape.** The exemplar teaches the prompt's *form*; the session's live signals — connected MCP tools, running services, the actual observed failure — outrank it. When a live capability can make the move concrete today, ground in that reality, not in the exemplar's fiction.
+- **Respect the repo boundary.** If the problem is about a *different* repo than the one you're in, say so explicitly, write the prompt portable (placeholders plus "adjust to your test command"), and never import this repo's CLAUDE.md rules, file names, or conventions into it. Grounding in the wrong repo is worse than no grounding.
+
 ### Recommend
 
-Read the matched goal file. Choose **the move**: the goal's #1 ranked approach, unless the evidence points elsewhere — or unless the profile says they already use it, in which case build on it and take the next-best they don't know. Choose **the surprise**: the highest-ranked approach from their ignorance map that's relevant to this goal; fall back to the goal's `**Hidden gem:**` line only when the profile is empty. Never skip the surprise — it's the reason this plugin exists.
+Read the matched goal's section in `routing.md` (one file, all goals — read once, use the matched section). Choose **the move**: the section's #1 ranked approach, unless the evidence points elsewhere — or unless the profile says they already use it, in which case build on it and take the next-best they don't know. The section's "why it fits" line is curated judgment — use it to frame the pitch, then ground the substance in the approach file and the repo. Choose **the surprise**: the highest-ranked approach from their ignorance map that's relevant to this goal; fall back to the section's `**Hidden gem:**` line only when the profile is empty. Never skip the surprise — it's the reason this plugin exists.
 
 Respond in this shape, compact, no card walls:
 
@@ -125,7 +131,7 @@ Respond in this shape, compact, no card walls:
 3. **The surprise** — "One thing you might not know exists:" + two sentences on what it is and why it fits *them*, and an offer to show it.
 4. **One closing line**: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
 
-On "more": show the goal file's ranked list as a compact table (name, best-when, level), excluding nothing — this is the full-catalog escape hatch. On a specific approach name: deep-dive by reading `approaches/<name>.md` — full explanation, setup steps, composition, pitfalls, real example.
+On "more": show the routing section's ranked table (approach, setup, best-when), excluding nothing — this is the full-catalog escape hatch. On a specific approach name: deep-dive by reading `approaches/<name>.md` — full explanation, setup steps, composition, pitfalls, real example.
 
 Calibration comes from the profile's `Level` line when present (update it when the user says "simpler"/"deeper"); infer it once from evidence otherwise — never ask a blocking question about it.
 
