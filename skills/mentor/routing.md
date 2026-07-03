@@ -5,7 +5,7 @@ The mentor's per-goal judgment layer: for every goal in SKILL.md's Phase 1 class
 
 Each section carries an **Exemplar move** — a fictional prompt showing the *shape* of a well-grounded move for that goal (named files, embedded values, real commands). Never show it verbatim: rewrite it against the actual repo, or keep it portable when the problem targets another repo.
 
-Condensed 2026-07-03 from the former `goals/` essays; the full prose is recoverable in `archive/goals/` and git history.
+Condensed 2026-07-03 from the former `goals/` essays; the full prose is recoverable from git history (last present at the `feat/goal-collapse` branch point).
 
 ## accessibility
 
