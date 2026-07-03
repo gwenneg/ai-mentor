@@ -38,8 +38,8 @@ check_order() { # $1 = file, remaining args = sections in required order
 }
 
 check_date_line() { # $1 = file
-  sed -n '2p' "$1" | grep -qE '^\*Last (reviewed|verified): [0-9]{4}-[0-9]{2}-[0-9]{2}\*' \
-    || issue "$1" "line 2 must be '*Last reviewed: YYYY-MM-DD*'"
+  sed -n '2p' "$1" | grep -qE '^\*Last verified: [0-9]{4}-[0-9]{2}-[0-9]{2}\*' \
+    || issue "$1" "line 2 must be '*Last verified: YYYY-MM-DD*'"
 }
 
 lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }

@@ -1,5 +1,5 @@
 # Checkpoints and Rewind
-*Last reviewed: 2026-07-02*
+*Last verified: 2026-06-27*
 
 ## What It Is
 

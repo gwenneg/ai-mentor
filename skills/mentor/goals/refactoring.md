@@ -1,5 +1,5 @@
 # Refactoring & Large-Scale Changes
-*Last reviewed: 2026-07-02*
+*Last verified: 2026-06-27*
 
 ## When You're Here
 

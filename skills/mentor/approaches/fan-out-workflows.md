@@ -1,5 +1,5 @@
 # Fan-Out Workflows (Orchestration)
-*Last reviewed: 2026-07-01*
+*Last verified: 2026-06-27*
 
 ## What It Is
 

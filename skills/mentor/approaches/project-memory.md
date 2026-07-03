@@ -1,5 +1,5 @@
 # Project Memory & Context Docs
-*Last reviewed: 2026-07-02*
+*Last verified: 2026-07-02*
 
 ## What It Is
 
