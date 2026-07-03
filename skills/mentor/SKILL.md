@@ -117,6 +117,7 @@ Spend a handful of quick tool calls (under five) making the recommendation concr
 Two grounding rules that make or break the prompt you write:
 
 - **Embed exact values, not just paths.** A prompt that names the failing test, quotes the constant, or states the observed behavior ("fails 1 in 5 CI runs") outperforms one that only points at a file. Read enough of the target to write it that way — the routing section's exemplar line shows the expected shape.
+- **Live environment beats exemplar shape.** The exemplar teaches the prompt's *form*; the session's live signals — connected MCP tools, running services, the actual observed failure — outrank it. When a live capability can make the move concrete today, ground in that reality, not in the exemplar's fiction.
 - **Respect the repo boundary.** If the problem is about a *different* repo than the one you're in, say so explicitly, write the prompt portable (placeholders plus "adjust to your test command"), and never import this repo's CLAUDE.md rules, file names, or conventions into it. Grounding in the wrong repo is worse than no grounding.
 
 ### Recommend

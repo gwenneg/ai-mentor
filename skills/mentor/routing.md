@@ -141,6 +141,7 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 | 5 | [Browser Integration](approaches/browser-integration.md) | Advanced | UI renders incorrectly but logic seems right | UI bugs live in the gap between data and rendering; visual debugging observes the actual output |
 | 6 | [Hooks](approaches/hooks-as-workflow.md) | Intermediate | A failing test should run after every single edit | Each edit is an experiment and the test result its observation; hooks remove the delay between them |
 | 7 | [Checkpoints & Rewind](approaches/checkpoints-rewind.md) | Beginner | Want to try multiple fix hypotheses without losing progress | Checkpoints make each hypothesis zero-cost to try and abandon, so you test more hypotheses faster |
+| 8 | [Headless Mode](approaches/headless-mode.md) | Intermediate | Failure only reproduces in CI, never locally | Environment-dependent bugs must be debugged in the environment that produces them — run the investigation inside the CI job itself |
 
 ## dependency-management
 
