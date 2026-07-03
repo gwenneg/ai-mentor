@@ -5,7 +5,7 @@
 
 Something is on fire in production. Maybe error rates are spiking, a service is completely down, data is coming back wrong, or your security team just flagged suspicious activity. Incident response overlaps with debugging, but the context changes everything: you're operating on live systems, under time pressure, and your users are actively affected. Every minute matters.
 
-The instinct is to start reverting deploys or restarting services. AI doesn't replace your judgment here — it accelerates the data gathering, hypothesis testing, and coordination that eat up most of your incident timeline. The goal is to reduce mean time to resolution without introducing new damage along the way.
+The instinct is to start reverting deploys or restarting services. AI doesn't replace your judgment here — it accelerates the data gathering, hypothesis testing, and coordination that eat up most of your incident timeline. The goal is to reduce mean time to resolution without introducing new damage along the way. One preparation tip worth doing before any incident: runbook steps can embed `claude-cli://` deep links (e.g. `claude-cli://open?repo=acme/payments&q=<url-encoded diagnostic prompt>`) so whoever is on call opens Claude Code in the affected service's repo with the investigation prompt pre-filled — one click from alert to triage, and nothing sends until they press Enter.
 
 ## Quick Decision Guide
 
@@ -159,3 +159,26 @@ When an incident could be caused by the database layer, the API layer, or the in
 - Synthesis step still requires human judgment
 
 **Deeper:** See `approaches/subagent-delegation.md`
+
+---
+
+### 7. Channels — Alerts arrive where the context already lives
+**Level:** Advanced
+
+Channels push external events — error-tracker webhooks, deploy notifications, chat messages — into a Claude Code session that's already running. For incident response this inverts the cold-start problem: instead of opening a fresh session and reconstructing state, the alert lands in the session that was just working on the affected service, with the code and recent history loaded. Two-way channels (Telegram, Discord, iMessage) also let you steer the investigation from your phone while the work runs on your machine.
+
+**Try it now:**
+> Set up the Telegram channel: /plugin install telegram@claude-plugins-official, configure the bot token with /telegram:configure, then relaunch as `claude --channels plugin:telegram@claude-plugins-official` in the payments service repo. When the on-call alert fires, message the bot: "Payment webhook error rate just spiked — check whether it correlates with today's deploy and report what changed."
+
+**Why this works:** Incident triage speed is dominated by context assembly — a channel delivers the event into a session where that assembly already happened, and the reply path makes the fix steerable from wherever you are.
+
+**Pros:**
+- The alert arrives with repo context already loaded — no cold start
+- Steer investigation and approve next steps from chat, away from your desk
+- Sender allowlists gate who can push events into your session
+
+**Cons:**
+- Research preview: requires v2.1.80+, Anthropic auth, and admin enablement on Team/Enterprise plans
+- Events only arrive while the session is open — an always-on setup needs a persistent session
+
+**Deeper:** See `approaches/channels.md`

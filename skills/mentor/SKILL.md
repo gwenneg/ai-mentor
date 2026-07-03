@@ -48,9 +48,15 @@ Five principles govern every interaction:
 
 ---
 
-## Phase 0 — Load state (silent, every invocation)
+## Phase 0 — Load state (every invocation)
 
-Do this before responding, without narrating it:
+Open with **one sentence** saying what you're about to do and why, so the file reads that follow are never unexplained — then do the checks without further narration (no play-by-play of individual files). Match the sentence to the mode, e.g.:
+
+- Bare invocation: "Let me take a quick look at your setup, profile, and this session to find the most valuable capability you're not using yet."
+- Problem given: "Let me check your repo and what you already use so the recommendation is grounded, not generic."
+- Auto-triggered: the permission question (Phase 3) is the announcement — add nothing else.
+
+Then, silently:
 
 1. **Read the profile** at `~/.ai-mentor/profile.md`. If it doesn't exist, this is a first meeting — you'll create it in this session and tell the user once: "I keep a profile at `~/.ai-mentor/profile.md` so I never re-teach you things — it's yours to edit or delete."
 2. **Read `references/adoption-signals.md`** from the plugin, then check setup signals. Harvest from context first — the loaded CLAUDE.md, the available skills and plugins, and the connected MCP tools are already visible without a single tool call. Then fill gaps with the Read/Glob/Grep tools only (never Bash — read-only tools inside the project and the pre-allowed paths are guaranteed prompt-free; Bash is not): project `.claude/`, `.mcp.json`, CI workflows, and the user-level `~/.claude/settings.json`, `~/.claude/agents/`, `~/.claude/skills/`. Keep it under ~6 checks.
@@ -202,6 +208,7 @@ For file-writing actions, always show the change before applying it, and never o
 - Never block on a calibration or clarification question when evidence can answer it; one light question maximum per session
 - When auto-triggered, always ask permission before teaching, at most once per session
 - Never dismiss what the developer already does — profile says `adopted` means build on it, not re-explain it
+- When presenting a catalog `**Level:**` badge, render it as setup complexity, not skill: Beginner → "no setup", Intermediate → "some setup", Advanced → "involved setup". Users fresh off depth calibration read "Beginner" as a judgment about them; the badge actually encodes what the approach requires
 - When an approach requires setup before it works (a plugin, an MCP server, a running dev server), say so in the recommendation
 - The "why it works" sentence is not optional — every recommendation teaches a principle, not just steps
 - If a problem falls outside all 24 goal categories, handle it with your own knowledge, label the confidence honestly, and offer no "Do it now" for unvetted content

@@ -1,0 +1,66 @@
+# Channels
+*Last verified: 2026-07-03*
+
+## What It Is
+
+Channels push events from outside systems into your already-running Claude Code session — chat messages, CI results, monitoring alerts, webhooks — so Claude can react to things that happen while you're not at the terminal. A channel is an MCP server with push capability, installed as a plugin and opted in per session with `claude --channels plugin:<name>@claude-plugins-official`. Channels can be two-way: Claude reads the inbound event and replies through the same channel, like a chat bridge. Telegram, Discord, and iMessage plugins ship in the research preview, plus a localhost `fakechat` demo, and you can build your own for systems without one.
+
+## Why It Works
+
+Every other remote integration either spawns a fresh session (Claude Code on the web, Slack) or waits to be asked (a standard MCP server Claude queries mid-task). Channels fill the gap between them: the event arrives in the session that already has your files open and remembers what you were debugging. That context is the whole value — a CI failure webhook landing in the session that just touched the failing code gets triaged with everything loaded, instead of by a cold-started agent reconstructing state. And because the reply path runs through the same channel, your phone becomes a steering wheel for work executing on your real machine against your real files.
+
+## When to Use It
+
+- Reacting to external events mid-task: CI failures, error-tracker alerts, deploy notifications arriving where the investigation context already lives
+- Asking Claude something from your phone via Telegram, Discord, or iMessage while the work runs on your machine
+- Long-running local sessions you want steerable from chat without cloud execution
+- Incident response where alerts should land in a session already attached to the affected repo
+
+## When NOT to Use It
+
+- Delegating self-contained async work — a cloud session (Claude Code on the web) fits better than keeping a local session alive
+- Steering an in-progress session interactively — Remote Control gives you the full session UI; channels give you a message pipe
+- Enterprise setups on Amazon Bedrock, Google Vertex AI, or Microsoft Foundry — channels require Anthropic authentication and are unavailable there
+- Anything unattended without thinking through permissions — a paused permission prompt stalls the session until someone answers it
+
+## How It Works
+
+### Basic (Beginner)
+
+1. Install a channel plugin: `/plugin install telegram@claude-plugins-official` (Discord and iMessage work the same way; the prebuilt plugins require [Bun](https://bun.sh)). Run `/reload-plugins` to activate its configure command.
+2. Configure credentials — for Telegram, create a bot via BotFather and run `/telegram:configure <token>`.
+3. Restart with the channel enabled: `claude --channels plugin:telegram@claude-plugins-official`. Events only arrive while the session is open; for an always-on setup, run Claude in a persistent terminal or background process.
+4. Pair your account: message the bot, get a pairing code, run `/telegram:access pair <code>`, then lock access down with `/telegram:access policy allowlist`.
+5. Message the bot from your phone. The event arrives in your session as a channel message; Claude does the work locally and replies through the channel — you see the tool call in the terminal, the answer appears in the chat.
+
+### Composing with Other Approaches (Intermediate)
+
+- **Channels plus background agents**: a persistent background session with a channel attached is a standing worker you can message from anywhere — dispatch from chat in the morning, get the result in the same thread.
+- **Channels plus hooks and permissions**: unattended reactions need pre-decided boundaries — allowlist the safe inner loop so a webhook-triggered fix doesn't stall on a prompt nobody is present to approve. Channel servers that declare the permission-relay capability can forward prompts to the chat so you approve remotely.
+- **Channels plus incident runbooks**: wire the error tracker's webhook into the session attached to the affected service; the alert arrives with the repo open and the recent context intact.
+
+### Advanced Patterns
+
+- **Webhook receiver**: build a small channel server that accepts webhooks from CI, deploy pipelines, or monitoring, and forwards them as channel events — the channels reference documents the contract (capability declaration, notification events, reply tools, sender gating).
+- **Sender gating as security boundary**: every approved channel maintains a sender allowlist; unknown senders are silently dropped. Anyone on the allowlist of a permission-relaying channel can approve tool use in your session — only allowlist people you'd trust at your keyboard.
+- **Organization rollout**: on Team/Enterprise plans channels are blocked until an Owner enables `channelsEnabled`; `allowedChannelPlugins` in managed settings restricts which plugins may register, including internal ones from a private marketplace.
+
+## Common Pitfalls
+
+- **Expecting delivery to a closed session**: events only arrive while the session runs. A channel is not a queue — messages sent while Claude Code is closed don't replay when it opens.
+- **Forgetting `--channels` is per-session**: installing the plugin isn't enough, and being in `.mcp.json` isn't either; a server must be named in `--channels` at launch to push messages.
+- **Unattended sessions hitting permission prompts**: the session pauses until someone responds. Decide the permission story first (allowlist rules, permission relay, or an isolated environment) before treating a channel session as autonomous.
+- **Over-trusting the allowlist**: pairing your own account is the intended default. Adding teammates to a permission-relaying channel gives them approval authority over your session — that's a role, not a convenience.
+
+## Real-World Example
+
+Your error tracker pages you at lunch: payment webhooks are failing. This morning's session — still open on your machine — was working in that exact service. The tracker's webhook, wired to a custom channel server, has already pushed the alert into the session.
+
+From your phone, you message the session through Telegram: "Look at that webhook alert — is it related to the retry change from this morning?" Claude reads the alert payload, greps the code it touched two hours ago, reproduces the failing signature check against the staging endpoint, and replies in the thread: the new retry sends a stale timestamp on the second attempt; one-line fix in `src/payments/webhook.ts`; tests pass locally.
+
+You reply "commit it on a branch and open a draft PR." Claude does, and posts the PR link in the chat. Total incident time: eleven minutes, none of them at a desk — and the diagnosis quality came from the session's morning context, which a cold cloud session wouldn't have had.
+
+## Sources
+
+- [Push events into a running session with channels](https://code.claude.com/docs/en/channels) — Official docs: setup, supported plugins, security, enterprise controls
+- [Channels reference](https://code.claude.com/docs/en/channels-reference) — The channel contract for building your own: events, reply tools, sender gating, permission relay

@@ -1,0 +1,62 @@
+name: Prepare release
+
+# Opens the version-bump PR that must precede a release tag, because main is
+# branch-protected (no direct pushes) and the marketplace pins releases to a
+# commit SHA — so a version, if used, must be in the tree at the tagged commit.
+# Adopting the plugin.json version field at all is opt-in: this workflow is the
+# only thing that writes it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 0.7.0 — no leading v)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate version format
+        run: echo "${{ inputs.version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'
+
+      - name: Set version in plugin.json
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          path = ".claude-plugin/plugin.json"
+          with open(path) as f:
+              manifest = json.load(f)
+          manifest["version"] = os.environ["VERSION"]
+          # Keep version near the top for readability: rebuild with name/displayName first.
+          ordered = {k: manifest[k] for k in ("name", "displayName", "version") if k in manifest}
+          ordered.update({k: v for k, v in manifest.items() if k not in ordered})
+          with open(path, "w") as f:
+              json.dump(ordered, f, indent=2)
+              f.write("\n")
+          EOF
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: Open version-bump PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="release/v${VERSION}"
+          git checkout -b "$BRANCH"
+          git add .claude-plugin/plugin.json
+          git commit -m "release: v${VERSION}"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "release: v${VERSION}" \
+            --body "$(printf 'Version bump for the v%s release.\n\nAfter merging, tag the merge commit to trigger the release workflow:\n\n```\ngit fetch origin main && git tag -a v%s -m "v%s" origin/main && git push origin v%s\n```\n\nThe release workflow verifies that the tag matches plugin.json before publishing.' "$VERSION" "$VERSION" "$VERSION" "$VERSION")"

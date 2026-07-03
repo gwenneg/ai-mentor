@@ -25,6 +25,25 @@ jobs:
           fi
           echo "value=$TAG" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Version consistency guard
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          # If plugin.json declares a version, it must match the tag being
+          # released — the marketplace serves the tree at this commit, so a
+          # mismatch would ship a lying manifest. Inert while the version
+          # field is absent (adopting it is opt-in via prepare-release.yml).
+          MANIFEST_VERSION=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json')).get('version', ''))")
+          TAG_VERSION="${TAG#v}"
+          if [ -n "$MANIFEST_VERSION" ] && [ "$MANIFEST_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: plugin.json version ($MANIFEST_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+
       - id: create-release
         name: Create release
         env:

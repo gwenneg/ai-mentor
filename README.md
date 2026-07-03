@@ -1,17 +1,19 @@
 # ai-mentor
 
-Describe your engineering problem, get the right AI workflow. Ranked, verified recommendations with ready-to-paste prompts that teach you why each approach works — not just how.
+Learn the Claude Code capabilities you didn't know existed. ai-mentor is a discovery mentor: it reads your setup and your session, remembers what you already use, and teaches you the highest-leverage thing you're missing — one demonstrated move at a time, grounded in your actual repo.
 
 ## What it does
 
-- Matches engineering problems to ranked AI workflow approaches
-- Grounds every "try it now" prompt in your actual repo — real file paths, real test commands, your existing setup
-- Always shows a **safe pick** and a **surprising pick** — including the approach you'd never have thought to try
-- Offers to set the approach up on the spot: hooks written, agent files created, commands ready to paste
-- Adapts to your experience level without interrupting you with questions
-- Teaches the *why* behind each approach, not just the mechanics
-- Built for Claude Code — every approach is grounded in current Claude Code features
-- Every approach backed by verified official sources
+- **Finds your unknown unknowns** — computes the gap between what Claude Code offers and what you demonstrably use (your hooks, agents, plugins, MCP config, session habits), and teaches from the top of that gap
+- **Diagnoses instead of interrogating** — reads the conversation and your repo before recommending; no questionnaires
+- **One move, demonstrated** — a diagnosis, one recommended move with a ready-to-paste prompt built from your real paths and commands, and an offer to set it up on the spot (say "more" for the full ranked list)
+- **One personalized surprise, every time** — each interaction carries a capability you didn't know to ask about, chosen for *you*, not from a static list
+- **Never repeats itself** — a local profile records what you've been shown, adopted, or declined; nothing is taught twice, and a "no" is remembered
+- **Teaches the why** — every recommendation names the principle that makes it work, backed by verified official sources
+
+## The profile
+
+The mentor keeps one small markdown file at `~/.ai-mentor/profile.md`: one line per capability (shown / adopted / declined). It's machine-local, never committed, never uploaded, and yours to edit or delete — a hand edit always wins over anything the mentor inferred. It requires no setup and no permission prompts.
 
 ## Install
 
@@ -25,7 +27,7 @@ ai-mentor is distributed through a Claude Code [plugin marketplace](https://code
 
 ## Staying up to date
 
-Auto-update is off and Claude Code sends no new-version notification — **watch this repo → Releases only**. To update ([plugin docs](https://code.claude.com/docs/en/discover-plugins)):
+Third-party marketplaces have auto-update disabled by default ([plugin docs](https://code.claude.com/docs/en/discover-plugins#configure-auto-updates)). Either enable it once — `/plugin` → **Marketplaces** → `claude-ichiba` → **Enable auto-update** — and Claude Code will refresh at startup and notify you when the plugin updates, or update manually:
 
 ```
 /plugin marketplace update claude-ichiba
@@ -36,7 +38,7 @@ Releases are pinned to an immutable commit SHA so work-in-progress on `main` nev
 
 ## Usage
 
-### Describe your problem
+### Problem mode — you have something to solve
 
 ```
 /ai-mentor:mentor debug a flaky test
@@ -44,17 +46,19 @@ Releases are pinned to an immutable commit SHA so work-in-progress on `main` nev
 /ai-mentor:mentor refactor authentication across 30 files
 ```
 
-### Guided discovery
+You get a diagnosis grounded in your repo, one recommended move with a ready-to-run prompt, and one capability you probably didn't know about. Say "more" for the full ranked list, or name any approach to go deeper.
+
+### Growth mode — teach me something
 
 ```
 /ai-mentor:mentor
 ```
 
-The skill asks what you're working on, identifies the best-matching goal, calibrates to your experience level, and presents ranked approaches.
+No problem needed. The mentor checks your setup and profile, then teaches the single highest-leverage capability you're not using — or follows up on the last thing it showed you, or surfaces what shipped since you last checked.
 
 ### Auto-triggered
 
-The skill can also be invoked automatically by Claude when it detects you're working on a task that has a known AI workflow approach.
+Ask anything mentor-shaped in a normal session — "what's the best way to use AI for this?" — and Claude invokes the mentor itself. If it notices you grinding through something a capability would remove, it may offer to help: permission first, at most once per session, and a "no thanks" is remembered.
 
 ## Problem categories
 
@@ -89,7 +93,7 @@ The skill can also be invoked automatically by Claude when it detects you're wor
 
 Each approach file covers: what it is, why it works, when to use it (and when not to), beginner through advanced usage, common pitfalls, a real-world example, and verified official sources.
 
-Approaches include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Model & Effort Selection, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Official Plugins, Custom Plugins, Custom Agents, Project Memory & Context Docs, Session & Context Management, Background Agents, Scheduled & Recurring Agents, Cloud Sessions & Remote Work, and Permissions & Safe Autonomy.
+Approaches include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Model & Effort Selection, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Official Plugins, Custom Plugins, Custom Agents, Project Memory & Context Docs, Session & Context Management, Background Agents, Scheduled & Recurring Agents, Cloud Sessions & Remote Work, Permissions & Safe Autonomy, Visual Artifacts, and Channels.
 
 ## License
 

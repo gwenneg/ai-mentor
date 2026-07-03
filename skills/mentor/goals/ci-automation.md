@@ -177,3 +177,26 @@ For CI pipelines that need domain-specific review — security scanning that kno
 - Over-specified agents can produce false positives that erode developer trust
 
 **Deeper:** See `approaches/custom-agents.md`
+
+---
+
+### 8. Channels — Push CI events into your live session
+**Level:** Advanced
+
+Where headless mode runs Claude *inside* the pipeline, channels run the pipeline's events *into your session*: a webhook-receiver channel forwards CI failures, deploy statuses, or error-tracker alerts to the Claude Code session you already have open on the relevant repo. The failure gets triaged with your working context loaded — and if you're away, a two-way chat channel (Telegram, Discord, iMessage) lets you read the diagnosis and approve the fix from your phone.
+
+**Try it now:**
+> Our CI posts webhook notifications on failed builds. Build a small channel server following the channels reference (capability declaration, notification event, reply tool) that accepts those webhooks and forwards them into my session, so a red build on `main` shows up here with the job name and failing step while I still have the branch context loaded.
+
+**Why this works:** Reacting to CI needs the context that produced the change; pushing the event to the session that made the change beats cold-starting an agent that has to rediscover everything.
+
+**Pros:**
+- CI failures triaged with the authoring session's context intact
+- Complements headless mode instead of replacing it — push events in, or run Claude in the pipe
+- Custom channel servers cover any system that can send a webhook
+
+**Cons:**
+- Research preview with per-session opt-in (`--channels`) — not fire-and-forget infrastructure yet
+- Building a custom webhook channel is a small development project of its own
+
+**Deeper:** See `approaches/channels.md`
