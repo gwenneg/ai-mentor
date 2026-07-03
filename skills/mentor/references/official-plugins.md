@@ -6,7 +6,7 @@
      feature, maintenance/provenance, context cost of its hooks/skills) and add a Recommended tier. The mentor
      skill should then suggest only evaluated-valuable plugins and treat the rest as listed-for-completeness. -->
 
-All plugins below are in the official marketplace and installable via `/plugin install <name>@claude-plugins-official`. None are installed by default. The repo contains 37 Anthropic-built plugins and 15 externally-maintained plugins; this catalog is the full list, kept in sync by the maintenance skill's catalog-sync step. Goal paths are relative to the skill root.
+All plugins below are in the official marketplace and installable via `/plugin install <name>@claude-plugins-official`. None are installed by default. The repo contains 37 Anthropic-built plugins and 15 externally-maintained plugins; this catalog is the full list, kept in sync by the maintenance skill's catalog-sync step. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored — and both directories stay synced. Goal paths are relative to the skill root.
 
 ## Anthropic-built plugins
 

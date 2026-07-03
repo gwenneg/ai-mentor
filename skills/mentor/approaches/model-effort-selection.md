@@ -43,6 +43,7 @@ No single model configuration is best at everything. Deep reasoning models at hi
 - **Per-agent model overrides**: Custom agent definitions accept a `model` field in frontmatter (`opus`, `sonnet`, `haiku`), and ad-hoc subagents can override the model per invocation. A fan-out workflow can run its finder agents cheap and its verifier agents strong.
 - **Effort-tiered workflows**: In orchestrated workflows, set the effort per stage — low for mechanical extraction stages, max for the adversarial verification stage where missed reasoning means false positives slip through.
 - **Cost-aware budgeting**: Watch `/usage` during long sessions. If a session is burning budget on routine turns, drop the model or effort and save the expensive configuration for the tasks where quality measurably differs.
+- **Advisor pairing** (experimental, Anthropic API only, v2.1.98+): instead of switching models, keep a fast main model and set a stronger advisor with `/advisor opus` (or `advisorModel` in settings). Claude consults the advisor at decision points — before committing to an approach, when an error keeps recurring, before declaring a task done — sending it the full conversation. Consultations bill at the advisor model's rates, but pairing a fast main with a strong advisor typically costs less than running the strong model throughout, and toggling `/advisor` doesn't invalidate the prompt cache the way `/model` does.
 
 ## Common Pitfalls
 
@@ -82,3 +83,4 @@ Third, you need DataLoader batching logic to solve the N+1 queries — the subtl
 
 - [Claude Code Model Configuration](https://code.claude.com/docs/en/model-config) — Official docs covering /model, available models, and effort levels
 - [Claude Code Fast Mode](https://code.claude.com/docs/en/fast-mode) — Official docs for fast mode on Opus
+- [Escalate hard decisions with the advisor tool](https://code.claude.com/docs/en/advisor) — Official docs for /advisor model pairing and billing

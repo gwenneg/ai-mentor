@@ -42,6 +42,7 @@ Team knowledge compounds only when it's distributable. A brilliant skill in one 
 
 - **Internal marketplace**: a git repo with a marketplace manifest is a private plugin registry — teammates run `/plugin marketplace add your-org/your-marketplace` once and install from it like any marketplace. Keep it in a private repo for internal-only distribution.
 - **Community distribution**: submit to `anthropics/claude-plugins-community` via the review pipeline; approved plugins are pinned to a commit SHA in the public catalog and CI bumps the pin as you push.
+- **Dependency constraints** (v2.1.110+): declare `dependencies` in `plugin.json` — a bare name tracks the marketplace's latest, while `{ "name": "secrets-vault", "version": "~2.1.0" }` pins a semver range so an upstream breaking release can't move the dependency under you. Resolution works off git tags named `{plugin}--v{version}`; create them with `claude plugin tag --push`. Cross-marketplace dependencies are blocked unless the root marketplace allowlists the source via `allowCrossMarketplaceDependenciesOn`.
 - **Version semantics**: without a `version` field, every commit counts as a new version (SHA fallback); with explicit semver, users only receive updates when you bump it — pick deliberately, and add `displayName` for a human-readable listing in the `/plugin` picker.
 
 ## Common Pitfalls

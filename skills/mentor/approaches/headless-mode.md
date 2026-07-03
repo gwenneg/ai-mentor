@@ -35,6 +35,7 @@ Automation requires predictability and composability. Interactive tools are powe
 
 - **Headless plus Autonomous Loops**: Run `claude -p "/goal all tests in tests/api/ pass"` in a CI job after a dependency update. The loop iterates until green, then the pipeline continues.
 - **Headless in GitHub Actions**: Trigger Claude on `pull_request` events to review the diff, post comments, and optionally push fix commits — all without a human in the loop.
+- **Headless in GitLab CI/CD** (beta, maintained by GitLab): one job in `.gitlab-ci.yml` that installs the CLI and runs `claude -p` with a masked `ANTHROPIC_API_KEY` variable — `@claude` mentions in issues and MRs can trigger it via webhook, changes flow through MRs, and Bedrock/Vertex OIDC auth works for enterprises that can't use API keys.
 - **Headless for batch operations**: Use a shell loop to run Claude on multiple files: `for f in src/api/*.ts; do claude -p "Add JSDoc comments to all exported functions in $f" --allowedTools "Edit"; done`
 
 ### Advanced Patterns
@@ -89,4 +90,5 @@ The first week, the team notices Claude is flagging style issues they do not car
 
 - [Claude Code Headless Mode](https://code.claude.com/docs/en/headless) — Official docs for running Claude Code non-interactively
 - [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions) — CI/CD integration with GitHub Actions
+- [Claude Code GitLab CI/CD](https://code.claude.com/docs/en/gitlab-ci-cd) — Beta GitLab pipeline integration maintained by GitLab
 - [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference) — CLI reference covering -p flag and non-interactive options

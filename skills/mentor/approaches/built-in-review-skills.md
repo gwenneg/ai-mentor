@@ -51,6 +51,7 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 - **CI pipeline integration**: Add Claude Code to your GitHub Actions workflow in headless mode. On every PR, it runs `/code-review --comment` and posts inline findings directly on the PR. Reviewers see AI findings alongside the diff without any manual step.
 - **Layered review strategy**: Run all three skills in sequence for critical changes: `/code-review` for correctness, `/security-review` for security (uses Opus-tier reasoning for deeper analysis), then `/simplify` to clean up. Each pass focuses on its specialty.
 - **Targeted review with context**: Before running the review, tell Claude about specific concerns: "This change modifies our rate limiter. Run /security-review with extra attention to bypass vectors." The skill uses your context to focus its analysis.
+- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits (roughly $5-20 per run after 3 free runs on Pro/Max). Requires claude.ai auth; unavailable on Bedrock/Vertex/Foundry and Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively.
 
 ## Common Pitfalls
 
@@ -89,3 +90,4 @@ Claude applies the extraction automatically. You run `/security-review` as a fin
 ## Sources
 
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills including built-in /code-review and /security-review
+- [Find bugs with ultrareview](https://code.claude.com/docs/en/ultrareview) — Official docs for /code-review ultra: cloud fleet review, pricing, and the CI subcommand
