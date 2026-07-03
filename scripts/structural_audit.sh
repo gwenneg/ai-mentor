@@ -9,7 +9,6 @@ set -u
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SKILL_DIR="$REPO/skills/mentor"
-GOALS="$SKILL_DIR/goals"
 APPROACHES="$SKILL_DIR/approaches"
 SKILL_MD="$SKILL_DIR/SKILL.md"
 
@@ -44,81 +43,83 @@ check_date_line() { # $1 = file
 
 lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-# ---------- goal files ----------
-check_goal() {
-  local f="$1"
-  check_date_line "$f"
-  check_order "$f" "## When You're Here" "## Quick Decision Guide" "**Hidden gem:**" "## Approaches (Ranked)"
+# ---------- routing table ----------
+ROUTING="$SKILL_DIR/routing.md"
 
-  # Hidden gem must name a ranked approach (containment, case-insensitive)
-  local gem_count gem headers h matched=0
-  gem_count="$(grep -c -F '**Hidden gem:**' "$f")"
-  if [ "$gem_count" -ne 1 ]; then
-    issue "$f" "expected exactly one Hidden gem line, found $gem_count"
-  else
-    gem="$(grep -F '**Hidden gem:**' "$f" | sed -e 's/.*\*\*Hidden gem:\*\* //' -e 's/ —.*//' -e 's/[[:space:]]*$//')"
-    headers="$(grep -E '^### [0-9]+\. ' "$f" | sed -e 's/^### [0-9]*\. //' -e 's/ —.*//' -e 's/[[:space:]]*$//')"
-    while IFS= read -r h; do
-      case "$(lc "$h")" in *"$(lc "$gem")"*) matched=1 ;; esac
-      case "$(lc "$gem")" in *"$(lc "$h")"*) matched=1 ;; esac
-    done <<EOF
-$headers
-EOF
-    [ "$matched" -eq 1 ] || issue "$f" "Hidden gem '$gem' does not match any ranked approach"
+check_routing() {
+  if [ ! -f "$ROUTING" ]; then
+    issue "$ROUTING" "missing routing table"
+    return
   fi
+  check_date_line "$ROUTING"
 
-  # Numbering sequential, at least 3 entries
-  local nums expected n_entries
-  nums="$(grep -E '^### [0-9]+\.' "$f" | sed -E 's/^### ([0-9]+)\..*/\1/' | tr '\n' ' ')"
-  n_entries="$(printf '%s' "$nums" | wc -w | tr -d ' ')"
-  expected="$(seq 1 "$n_entries" | tr '\n' ' ')"
-  [ "$nums" = "$expected" ] || issue "$f" "approach numbering not sequential: $nums"
-  if [ "$n_entries" -lt 3 ]; then
-    issue "$f" "$n_entries approach entries (expected at least 3)"
-  fi
-
-  # Per-entry required fields in order (entries = blocks between '---' after the ranked header)
-  awk -v file="${f#"$REPO"/}" '
-    BEGIN {
-      nf = 6
-      fields[1] = "**Level:**";           fields[2] = "**Try it now:**"
-      fields[3] = "**Why this works:**";  fields[4] = "**Pros:**"
-      fields[5] = "**Cons:**";            fields[6] = "**Deeper:** See `approaches/"
-    }
-    /^## Approaches \(Ranked\)$/ { ranked = 1; next }
-    !ranked { next }
-    /^---$/ { flush(); next }
-    {
-      if ($0 ~ /^### [0-9]+\./) { header = $0; nlines = 0 }
-      if (header != "") { nlines++; lines[nlines] = $0 }
-    }
-    function flush(   i, j, pos, found) {
-      if (header == "") return
-      pos = 0
-      for (i = 1; i <= nf; i++) {
-        found = 0
-        for (j = 1; j <= nlines; j++) if (index(lines[j], fields[i])) { found = j; break }
-        if (!found)          printf "  - %s: entry %c%s%c missing field %c%s%c\n", file, 39, header, 39, 39, fields[i], 39
-        else if (found < pos) printf "  - %s: entry %c%s%c field %c%s%c out of order\n", file, 39, header, 39, 39, fields[i], 39
-        else pos = found
+  local out
+  out="$(
+    awk -v file="${ROUTING#"$REPO"/}" '
+      /^## / {
+        if (section != "" && section != "extraction-notes") flush()
+        section = substr($0, 4); n = 0; gem = 0; next
       }
-      header = ""; nlines = 0
-    }
-    END { flush() }
-  ' "$f" | {
-    local out; out="$(cat)"
-    if [ -n "$out" ]; then printf '%s\n' "$out"; return 1; fi
-  } || ISSUES=$((ISSUES + 1))
+      section == "" || section == "extraction-notes" { next }
+      /^\*\*Hidden gem:\*\*/ { gem = 1; gemline = $0 }
+      /^\| [0-9]+ \|/ {
+        n++
+        split($0, cells, "|")
+        num = cells[2]; gsub(/ /, "", num)
+        if (num != n) { printf "section %s: row numbering not sequential at row %d\n", section, n }
+      }
+      END { if (section != "" && section != "extraction-notes") flush() }
+      function flush() {
+        if (n < 3) printf "section %s: only %d rows (expected at least 3)\n", section, n
+        if (!gem)  printf "section %s: missing Hidden gem line\n", section
+      }
+    ' "$ROUTING"
+  )"
+  if [ -n "$out" ]; then
+    printf '%s\n' "$out" | while IFS= read -r line; do
+      printf '  - %s: %s\n' "${ROUTING#"$REPO"/}" "$line"
+    done
+    ISSUES=$((ISSUES + $(printf '%s\n' "$out" | wc -l)))
+  fi
 
-  # No trailing '---' after the last entry
-  [ "$(grep -vE '^[[:space:]]*$' "$f" | tail -1)" = "---" ] \
-    && issue "$f" "trailing '---' after the last approach entry"
-
-  # All approach references resolve
+  # Every approach link resolves
   local ref
-  for ref in $(grep -oE 'approaches/[a-z0-9-]+\.md' "$f" | sort -u); do
-    [ -f "$SKILL_DIR/$ref" ] || issue "$f" "broken reference $ref"
+  for ref in $(grep -oE 'approaches/[a-z0-9-]+\.md' "$ROUTING" | sort -u); do
+    [ -f "$SKILL_DIR/$ref" ] || issue "$ROUTING" "broken reference $ref"
   done
+
+  # Every level valid
+  grep -E '^\| [0-9]+ \|' "$ROUTING" | awk -F'|' '{gsub(/ /,"",$4); print $4}' | sort -u | while read -r lvl; do
+    case "$lvl" in
+      (Beginner|Intermediate|Advanced) ;;
+      (*) printf '  - %s: invalid level %s\n' "${ROUTING#"$REPO"/}" "$lvl" ;;
+    esac
+  done | { local o; o="$(cat)"; if [ -n "$o" ]; then printf '%s\n' "$o"; ISSUES=$((ISSUES + $(printf '%s\n' "$o" | wc -l))); fi; }
+
+  # Hidden gem names a ranked approach in its own section (containment, case-insensitive)
+  local gemout
+  gemout="$(python3 - "$ROUTING" <<'PYEOF'
+import re, sys
+text = open(sys.argv[1]).read()
+sections = re.split(r"^## ", text, flags=re.M)[1:]
+for sec in sections:
+    name = sec.splitlines()[0].strip()
+    if name == "extraction-notes":
+        continue
+    gem = re.search(r"^\*\*Hidden gem:\*\* ([^—\n]+)", sec, re.M)
+    rows = re.findall(r"^\| \d+ \| \[([^\]]+)\]", sec, re.M)
+    if gem:
+        g = gem.group(1).strip().lower()
+        if not any(g in r.lower() or r.lower() in g for r in rows):
+            print(f"section {name}: Hidden gem '{gem.group(1).strip()}' does not match any ranked row")
+PYEOF
+)"
+  if [ -n "$gemout" ]; then
+    printf '%s\n' "$gemout" | while IFS= read -r line; do
+      printf '  - %s: %s\n' "${ROUTING#"$REPO"/}" "$line"
+    done
+    ISSUES=$((ISSUES + $(printf '%s\n' "$gemout" | wc -l)))
+  fi
 }
 
 # ---------- approach files ----------
@@ -147,7 +148,7 @@ check_orphans() {
   local a base
   for a in "$APPROACHES"/*.md; do
     base="approaches/$(basename "$a")"
-    grep -rqF -- "$base" "$GOALS"/ || issue "$a" "orphan: not referenced by any goal file"
+    grep -qF -- "$base" "$ROUTING" || issue "$a" "orphan: not referenced by the routing table"
   done
 }
 
@@ -217,15 +218,15 @@ check_signals() {
 # ---------- SKILL.md consistency ----------
 check_skill_md() {
   local goal_names table_names missing stale count n_goals
-  n_goals="$(ls "$GOALS"/*.md | wc -l | tr -d ' ')"
-  goal_names="$(ls "$GOALS" | sort)"
-  table_names="$(grep -oE '^\| `[a-z0-9-]+\.md` \|' "$SKILL_MD" | sed -e 's/^| `//' -e 's/` |$//' | sort)"
+  goal_names="$(grep -E '^## ' "$ROUTING" | sed 's/^## //' | grep -v '^extraction-notes$' | sort)"
+  n_goals="$(printf '%s\n' "$goal_names" | grep -c .)"
+  table_names="$(grep -oE '^\| `[a-z0-9-]+` \|' "$SKILL_MD" | sed -e 's/^| `//' -e 's/` |$//' | sort)"
 
   missing="$(comm -23 <(printf '%s\n' "$goal_names") <(printf '%s\n' "$table_names"))"
   stale="$(comm -13 <(printf '%s\n' "$goal_names") <(printf '%s\n' "$table_names"))"
   local x
-  for x in $missing; do issue "$SKILL_MD" "goal file $x missing from the Phase 1 classification table"; done
-  for x in $stale;   do issue "$SKILL_MD" "Phase 1 table row $x has no matching goal file"; done
+  for x in $missing; do issue "$SKILL_MD" "routing goal $x missing from the Phase 1 classification table"; done
+  for x in $stale;   do issue "$SKILL_MD" "Phase 1 table row $x has no matching routing section"; done
 
   for count in $(grep -oE '[0-9]+ goal categories' "$SKILL_MD" | grep -oE '^[0-9]+'); do
     [ "$count" -eq "$n_goals" ] \
@@ -234,14 +235,13 @@ check_skill_md() {
 }
 
 # ---------- main ----------
-n_goals="$(ls "$GOALS"/*.md 2>/dev/null | wc -l | tr -d ' ')"
 n_apprs="$(ls "$APPROACHES"/*.md 2>/dev/null | wc -l | tr -d ' ')"
-if [ "$n_goals" -eq 0 ] || [ "$n_apprs" -eq 0 ]; then
-  echo "FATAL: goal or approach directory empty/missing" >&2
+if [ "$n_apprs" -eq 0 ]; then
+  echo "FATAL: approach directory empty/missing" >&2
   exit 2
 fi
 
-for f in "$GOALS"/*.md;      do check_goal "$f";     done
+check_routing
 for f in "$APPROACHES"/*.md; do check_approach "$f"; done
 check_orphans
 check_ledger
@@ -249,7 +249,8 @@ check_signals
 check_skill_md
 
 n_weeks="$(grep -cE '^\| *\[' "$LEDGER" 2>/dev/null || echo 0)"
-echo "Audited $n_goals goals, $n_apprs approaches, $n_weeks processed changelogs."
+n_goals="$(grep -E '^## ' "$ROUTING" 2>/dev/null | grep -vc '^## extraction-notes$' || echo 0)"
+echo "Audited $n_goals routing goals, $n_apprs approaches, $n_weeks processed changelogs."
 if [ "$ISSUES" -gt 0 ]; then
   echo ""
   echo "$ISSUES issue(s) found (listed above)."
