@@ -70,7 +70,7 @@ For each `.md` file in `skills/mentor/goals/`:
 
 **Section order check** — verify these sections exist in this order:
 1. `# [Title]`
-2. `*Last reviewed: YYYY-MM-DD*` (line 2)
+2. `*Last verified: YYYY-MM-DD*` (line 2)
 3. `## When You're Here`
 4. `## Quick Decision Guide` (with a 3-column table)
 5. `**Hidden gem:**` line (must name an approach that appears in this file's ranked list)
@@ -97,7 +97,7 @@ For each `.md` file in `skills/mentor/approaches/`:
 
 **Section order check** — verify these sections exist in this order:
 1. `# [Title]`
-2. `*Last reviewed: YYYY-MM-DD*` (line 2)
+2. `*Last verified: YYYY-MM-DD*` (line 2)
 3. `## What It Is`
 4. `## Why It Works`
 5. `## When to Use It`
@@ -122,7 +122,7 @@ For each `.md` file in `skills/mentor/approaches/`:
 
 ### Staleness
 
-- Parse `*Last reviewed: YYYY-MM-DD*` from every file.
+- Parse `*Last verified: YYYY-MM-DD*` from every file.
 - Flag files with a date older than 90 days from today.
 
 ### Output
@@ -185,7 +185,7 @@ For each file with issues:
 - [what's wrong] → [proposed fix] (source: [URL])
 ```
 
-Ask the user which fixes to apply. For each confirmed fix, edit the file and update its `*Last reviewed*` date to today.
+Ask the user which fixes to apply. For each confirmed fix, edit the file — and because this step verifies the file's claims against current docs, update its `*Last verified*` date to today.
 
 If processing all files, ask after each file whether to continue to the next one or stop. *(Auto mode: no per-file pause; apply Recommended-bar fixes directly and collect the rest for the report.)*
 
@@ -230,7 +230,7 @@ For breaking changes the digests may not mention (renamed flags, removed feature
 - [ ] Consider new approach file for [new feature]
 ```
 
-Present the suggested actions and ask the user which ones to apply *(auto mode: process every unprocessed digest, apply only changes meeting the "Recommended changes" bar, report the rest — and always append the ledger row; if a change was found but not applied, the row says "see report")*. For updates to existing files, update their `*Last reviewed*` dates. For new files, scaffold from this skill's `templates/` directory.
+Present the suggested actions and ask the user which ones to apply *(auto mode: process every unprocessed digest, apply only changes meeting the "Recommended changes" bar, report the rest — and always append the ledger row; if a change was found but not applied, the row says "see report")*. For updates to existing files, do **not** update `*Last verified*` — a digest-driven edit verifies one claim, not the whole file's contents; only Step 3 (whole-file verification) or verified-at-birth authorship moves the date. For new files, scaffold from this skill's `templates/` directory and date them today.
 
 ---
 
@@ -314,6 +314,6 @@ Split findings into two sections:
 ## General rules
 
 - Always show proposed changes and ask before editing any file
-- Update `*Last reviewed*` dates on every file that gets modified
+- `*Last verified*` means verified, not edited: it moves only when a file's claims were checked against current official docs (Step 3) or the file was authored from verified sources. Mechanical edits, restructurings, and single-claim updates never touch it
 - Use the templates as the source of truth for structural requirements
 - When reporting issues, include the file path and line number when possible

@@ -10,7 +10,7 @@ Each approach file is the deep-dive reference for a single AI workflow technique
 
 ```markdown
 # [Approach Name]
-*Last reviewed: YYYY-MM-DD*
+*Last verified: YYYY-MM-DD*
 
 ## What It Is
 
@@ -100,5 +100,5 @@ verified against.]
 - **`## Sources` lists at least one official external link** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
 - **No extra sections** beyond the template — keep the structure consistent across all approach files
 - **No sub-sections within "Basic (Beginner)"** — if the approach has distinct modes (e.g., "using" vs. "setting up"), pick the most common one for Basic and put variations in Advanced Patterns
-- **`*Last reviewed: YYYY-MM-DD*`** on line 2 — update whenever the file is reviewed or modified
+- **`*Last verified: YYYY-MM-DD*`** on line 2 — moves ONLY when the file's claims are verified against current official docs, or at creation from verified sources; never on mechanical edits
 - **Composing patterns reference other approaches by name** — this helps developers discover related techniques

@@ -1,5 +1,5 @@
 # Model & Effort Selection
-*Last reviewed: 2026-07-01*
+*Last verified: 2026-07-01*
 
 ## What It Is
 

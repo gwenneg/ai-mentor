@@ -1,5 +1,5 @@
 # Building Skills & Plugins
-*Last reviewed: 2026-07-02*
+*Last verified: 2026-07-02*
 
 ## When You're Here
 

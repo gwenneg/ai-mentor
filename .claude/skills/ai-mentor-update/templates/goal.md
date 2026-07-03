@@ -10,7 +10,7 @@ Each goal file maps a developer's engineering goal to ranked AI workflow approac
 
 ```markdown
 # [Goal Name]
-*Last reviewed: YYYY-MM-DD*
+*Last verified: YYYY-MM-DD*
 
 ## When You're Here
 
@@ -76,4 +76,4 @@ mechanics.]
   - Advanced = requires composing multiple tools or deep expertise
 - **No extra fields** in approach entries — stick to the standard set (Level, Try it now, Why this works, Pros, Cons, Deeper). Additional context belongs in the approach file itself
 - **`---` separator** between approach entries, but not after the last one
-- **`*Last reviewed: YYYY-MM-DD*`** on line 2 — update whenever the file is reviewed or modified
+- **`*Last verified: YYYY-MM-DD*`** on line 2 — moves ONLY when the file's claims are verified against current official docs, or at creation from verified sources; never on mechanical edits
