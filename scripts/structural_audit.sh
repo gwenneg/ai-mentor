@@ -151,6 +151,69 @@ check_orphans() {
   done
 }
 
+# ---------- processed-changelog ledger ----------
+LEDGER="$SKILL_DIR/references/processed-changelogs.md"
+
+check_ledger() {
+  if [ ! -f "$LEDGER" ]; then
+    issue "$LEDGER" "missing processed-changelog ledger"
+    return
+  fi
+  sed -n '2p' "$LEDGER" | grep -qE '^\*Updated: [0-9]{4}-[0-9]{2}-[0-9]{2}\*' \
+    || issue "$LEDGER" "line 2 must be '*Updated: YYYY-MM-DD*'"
+
+  local out
+  out="$(
+    grep -E '^\| *\[' "$LEDGER" | while IFS='|' read -r _ week date outcome _; do
+      slug="$(printf '%s' "$week" | sed -E 's/^ *\[([^]]+)\].*/\1/')"
+      d="$(printf '%s' "$date" | sed 's/^ *//; s/ *$//')"
+      o="$(printf '%s' "$outcome" | sed 's/^ *//; s/ *$//')"
+      printf '%s' "$slug" | grep -qE '^[0-9]{4}-w[0-9]{2}$' \
+        || echo "row '$slug' is not a week slug like 2026-w26"
+      printf '%s' "$d" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' \
+        || echo "row '$slug' has invalid processed date '$d'"
+      [ -n "$o" ] || echo "row '$slug' has an empty outcome"
+    done
+  )"
+  if [ -n "$out" ]; then
+    printf '%s\n' "$out" | while IFS= read -r line; do
+      printf '  - %s: %s\n' "${LEDGER#"$REPO"/}" "$line"
+    done
+    ISSUES=$((ISSUES + $(printf '%s\n' "$out" | wc -l)))
+  fi
+
+  # duplicate week slugs
+  local dups
+  dups="$(grep -E '^\| *\[' "$LEDGER" | sed -E 's/^\| *\[([^]]+)\].*/\1/' | sort | uniq -d)"
+  local d
+  for d in $dups; do issue "$LEDGER" "duplicate ledger row for '$d'"; done
+}
+
+# ---------- adoption signals ----------
+SIGNALS="$SKILL_DIR/references/adoption-signals.md"
+
+check_signals() {
+  if [ ! -f "$SIGNALS" ]; then
+    issue "$SIGNALS" "missing adoption-signals table"
+    return
+  fi
+  sed -n '2p' "$SIGNALS" | grep -qE '^\*Last reviewed: [0-9]{4}-[0-9]{2}-[0-9]{2}\*' \
+    || issue "$SIGNALS" "line 2 must be '*Last reviewed: YYYY-MM-DD*'"
+
+  local approach_names signal_names missing stale x
+  approach_names="$(ls "$APPROACHES" | sed 's/\.md$//' | sort)"
+  signal_names="$(grep -E '^\| [a-z0-9-]+ \|' "$SIGNALS" | sed -E 's/^\| ([a-z0-9-]+) \|.*/\1/' | sort)"
+
+  missing="$(comm -23 <(printf '%s\n' "$approach_names") <(printf '%s\n' "$signal_names"))"
+  stale="$(comm -13 <(printf '%s\n' "$approach_names") <(printf '%s\n' "$signal_names"))"
+  for x in $missing; do issue "$SIGNALS" "approach '$x' has no adoption-signals row"; done
+  for x in $stale;   do issue "$SIGNALS" "row '$x' has no matching approach file"; done
+
+  local dups d
+  dups="$(printf '%s\n' "$signal_names" | uniq -d)"
+  for d in $dups; do issue "$SIGNALS" "duplicate signals row for '$d'"; done
+}
+
 # ---------- SKILL.md consistency ----------
 check_skill_md() {
   local goal_names table_names missing stale count n_goals
@@ -181,9 +244,12 @@ fi
 for f in "$GOALS"/*.md;      do check_goal "$f";     done
 for f in "$APPROACHES"/*.md; do check_approach "$f"; done
 check_orphans
+check_ledger
+check_signals
 check_skill_md
 
-echo "Audited $n_goals goals, $n_apprs approaches."
+n_weeks="$(grep -cE '^\| *\[' "$LEDGER" 2>/dev/null || echo 0)"
+echo "Audited $n_goals goals, $n_apprs approaches, $n_weeks processed changelogs."
 if [ "$ISSUES" -gt 0 ]; then
   echo ""
   echo "$ISSUES issue(s) found (listed above)."

@@ -13,7 +13,10 @@ when_to_use: >-
   presenting recommendations.
 argument-hint: [your problem, e.g. "debug a flaky test"]
 allowed-tools:
-  - Read(${CLAUDE_PLUGIN_ROOT}/**)
+  # The leading slash is load-bearing: ${CLAUDE_PLUGIN_ROOT} expands to an
+  # absolute path, and permission rules treat a single leading slash as
+  # project-root-relative — only '//' anchors at the filesystem root.
+  - Read(/${CLAUDE_PLUGIN_ROOT}/**)
 ---
 
 # AI Mentor

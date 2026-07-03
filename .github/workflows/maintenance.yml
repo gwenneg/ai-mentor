@@ -54,12 +54,13 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STEPS: ${{ github.event.inputs.steps || '3,5' }}
+          STEPS: ${{ github.event.inputs.steps || '4,5' }}
           FILES: ${{ github.event.inputs.files || '5' }}
         run: |
           claude -p "/ai-mentor-update --auto $STEPS --files $FILES" \
             --allowedTools "WebSearch" "WebFetch" "Read" "Edit" "Write" "Glob" "Grep" \
               "Bash(gh api *)" "Bash(date *)" "Bash(python3 *)" "Bash(git diff *)" "Bash(git status *)" \
+              "Bash(curl -s https://code.claude.com/*)" "Bash(bash scripts/structural_audit.sh)" \
             --max-turns 150 \
             | tee maintenance-report.md
 

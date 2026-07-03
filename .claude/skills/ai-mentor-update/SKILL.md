@@ -5,7 +5,7 @@ description: >-
   content accuracy against current tool docs, and detects recent tool
   changes. Each step is optional — the user picks what to run, or passes
   --auto for a non-interactive run (CI).
-argument-hint: [--auto 2,3,5 --files 5 --days 30]
+argument-hint: [--auto 4,5 --files 5]
 disable-model-invocation: true
 ---
 
@@ -23,15 +23,16 @@ All paths below are relative to the repo root.
 
 **Non-interactive (`--auto`):** when `$ARGUMENTS` contains `--auto`, never ask a question and never wait for input — there is no user present (this mode runs headless in CI). Parse from the arguments:
 
-- `--auto <steps>` — comma-separated step numbers to run, using the Step headings below (2 = structural audit, 3 = content verification, 4 = recent tool changes, 5 = plugin catalog sync), e.g. `--auto 2,3,5`
+- `--auto <steps>` — comma-separated step numbers to run, using the Step headings below (2 = structural audit, 3 = content verification, 4 = process new changelogs, 5 = plugin catalog sync), e.g. `--auto 4,5`
 - `--files N` — Step 3 scope: process the N oldest-verified files (default: 5)
-- `--days N` — Step 4 lookback window in days (default: 30)
+
+The routine weekly run is `--auto 4,5`: process new changelogs and sync the plugin catalog. Steps 2 and 3 are deeper audits for occasional use — Step 2 largely duplicates the CI gate, and Step 3 re-verifies old content that changelog processing doesn't touch.
 
 Auto-mode overrides, in addition to skipping every question below:
 
 - **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs `scripts/structural_audit.sh` as a deterministic gate — prefer reporting over creative fixing.
 - **Step 3**: process the N oldest-verified files with no per-file pause. Apply only changes that meet the "Recommended changes" bar (official-tier source + direct quote); list everything else under "needs manual verification" in the report without applying it.
-- **Step 4**: use the `--days` window; same evidence bar as Step 3.
+- **Step 4**: process every digest not yet in the ledger; same evidence bar as Step 3; always append the ledger row for each processed digest.
 - **Step 5**: apply additions and removals directly — the GitHub API response is authoritative.
 - **Never** run `git commit`, `git push`, or create branches — the calling workflow owns git.
 - **Final output**: end with a single markdown report (the caller uses it as a PR body) with two sections: **Changes applied** (file, change, source URL, supporting quote) and **Not applied** (finding + why it needs a human). If nothing changed, say so explicitly.
@@ -48,10 +49,10 @@ Then ask the user which steps to run:
 >
 > 1. **Structural audit** — check all files against templates, cross-references, staleness
 > 2. **Content verification** — web-search claims in files against current tool docs
-> 3. **Recent tool changes** — search changelogs for new features and breaking changes
+> 3. **Process new changelogs** — incorporate what's-new digests not yet listed in `references/processed-changelogs.md`
 > 4. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `references/official-plugins.md`
 >
-> You can pick any combination (e.g. "all", "1 and 3", "just 4").
+> You can pick any combination (e.g. "all", "1 and 3", "just 4"). The routine pass is 3 and 4; the others are occasional deep audits.
 
 Wait for the user's response, then run the selected steps in order. *(Auto mode: skip the question — the steps come from `--auto`.)*
 
@@ -190,42 +191,46 @@ If processing all files, ask after each file whether to continue to the next one
 
 ---
 
-## Step 4 — Detect recent tool changes
+## Step 4 — Process new changelogs
 
 *Skip this step if the user did not select it.*
 
-Ask the user:
+This is the routine maintenance path. New Claude Code capabilities are announced in the official what's-new digests, and `skills/mentor/references/processed-changelogs.md` is the ledger of which digests have already been incorporated into the catalog. The weekly digest slug (e.g. `2026-w26`) is the stable unit of processing.
 
-> How far back should I search? (default: 30 days)
+1. Fetch the digest index and collect the weekly slugs:
 
-Wait for the user's response. Use the provided number or default to 30. *(Auto mode: use `--days`, default 30, without asking.)*
+   ```
+   curl -s https://code.claude.com/docs/en/whats-new/index.md
+   ```
 
-Search for Claude Code changes published within that window: the changelog, release notes, new features, CLI changes, new slash commands and bundled skills, hooks updates, and agent/workflow changes. Target the official changelog (`anthropics/claude-code` on GitHub), the Claude Code docs, and Anthropic blog posts.
+2. Read `skills/mentor/references/processed-changelogs.md`. Any digest in the index but not in the ledger is unprocessed.
 
-For each change found, identify which approach and goal files it affects:
+3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
-- A new feature → may need a new approach file or updates to existing ones
-- A changed command or flag → "Try it now" prompts and "Basic (Beginner)" sections may be wrong
-- A renamed or removed feature → content may reference something that no longer exists
-- A new capability category → may warrant a new goal file
+   - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row.
+   - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
+
+4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and goals/y.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
+
+For breaking changes the digests may not mention (renamed flags, removed features), also skim the release-level changelog at `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md` for the same period — these matter to "Try it now" prompts even when they are not "notable".
 
 ### Output
 
 ```
-## Recent Tool Changes
+## Changelog Processing
 
-**Lookback window:** [N] days ([start date] → [today])
+**Digests processed:** [slugs] ([N] were already in the ledger)
 
-### [Tool Name]
-- [change description] → affects: [list of files]
+### [slug]
+- [change description] → [action taken / no action + why] (source: [digest URL])
 
-### Suggested Actions
+### Suggested Actions (not auto-applied)
 - [ ] Update [file] — [what to change]
 - [ ] Consider new approach file for [new feature]
-- [ ] Consider new goal file for [new capability]
 ```
 
-Present the suggested actions and ask the user which ones to apply *(auto mode: apply official-tier-backed updates, report the rest)*. For confirmed updates to existing files, make the edits and update `*Last reviewed*` dates. For new files, scaffold them using the templates from this skill's `templates/` directory.
+Present the suggested actions and ask the user which ones to apply *(auto mode: process every unprocessed digest, apply only changes meeting the "Recommended changes" bar, report the rest — and always append the ledger row; if a change was found but not applied, the row says "see report")*. For updates to existing files, update their `*Last reviewed*` dates. For new files, scaffold from this skill's `templates/` directory.
 
 ---
 
