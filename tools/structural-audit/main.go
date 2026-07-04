@@ -337,6 +337,7 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 // findRoot walks upward from dir to the first directory containing
 // skills/mentor, so the audit works from anywhere in the repo — including
 // tools/structural-audit itself, where `go -C tools/structural-audit run .` lands.
+// Keep in sync with the copy in tools/catalog-drift/main.go.
 func findRoot(dir string) (string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
