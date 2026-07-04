@@ -25,6 +25,25 @@ ai-mentor is distributed through a Claude Code [plugin marketplace](https://code
 /reload-plugins
 ```
 
+### Without a marketplace
+
+Prefer not to add a marketplace? Two supported alternatives. Both load the plugin only for sessions started with the flag, and neither auto-updates:
+
+**From a release zip** — nothing to clone; pinned to the release you pick (find the latest tag on the [releases page](https://github.com/gwenneg/ai-mentor/releases)):
+
+```
+claude --plugin-url https://github.com/gwenneg/ai-mentor/archive/refs/tags/v0.6.0.zip
+```
+
+**From a clone** — update whenever you like with `git pull`:
+
+```
+git clone https://github.com/gwenneg/ai-mentor.git
+claude --plugin-dir path/to/ai-mentor
+```
+
+To make either permanent, add the flag to a shell alias, or use the marketplace install above — it's the only path with update notifications.
+
 ## Staying up to date
 
 Third-party marketplaces have auto-update disabled by default ([plugin docs](https://code.claude.com/docs/en/discover-plugins#configure-auto-updates)). Either enable it once — `/plugin` → **Marketplaces** → `claude-ichiba` → **Enable auto-update** — and Claude Code will refresh at startup and notify you when the plugin updates, or update manually:
