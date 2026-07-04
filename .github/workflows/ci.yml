@@ -14,8 +14,10 @@ jobs:
         with:
           go-version-file: scripts/audit/go.mod
           cache: false
-      - name: Audit self-test (every check must fail the gate)
-        run: go -C scripts/audit test ./...
+      - name: Self-test the Go tools (every audit check must fail the gate)
+        run: |
+          go -C scripts/audit test ./...
+          go -C scripts/catalog test ./...
       - name: Structural audit (deterministic, no LLM)
         run: go -C scripts/audit run .
 
