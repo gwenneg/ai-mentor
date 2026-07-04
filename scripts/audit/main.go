@@ -334,10 +334,34 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 	return
 }
 
+// findRoot walks upward from dir to the first directory containing
+// skills/mentor, so the audit works from anywhere in the repo — including
+// scripts/audit itself, where `go -C scripts/audit run .` lands.
+func findRoot(dir string) (string, error) {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "skills", "mentor")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("no skills/mentor directory found here or above")
+		}
+		dir = parent
+	}
+}
+
 func main() {
-	repo := "."
+	var repo string
+	var err error
 	if len(os.Args) > 1 {
 		repo = os.Args[1]
+	} else if repo, err = findRoot("."); err != nil {
+		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+		os.Exit(2)
 	}
 	a := &auditor{skill: filepath.Join(repo, "skills", "mentor")}
 	if err := a.run(); err != nil {

@@ -17,7 +17,7 @@ jobs:
       - name: Audit self-test (every check must fail the gate)
         run: go -C scripts/audit test ./...
       - name: Structural audit (deterministic, no LLM)
-        run: bash scripts/structural_audit.sh
+        run: go -C scripts/audit run .
 
   plugin-validate:
     runs-on: ubuntu-latest

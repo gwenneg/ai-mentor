@@ -60,7 +60,7 @@ jobs:
           claude -p "/ai-mentor-update --auto $STEPS --files $FILES" \
             --allowedTools "WebSearch" "WebFetch" "Read" "Edit" "Write" "Glob" "Grep" \
               "Bash(gh api *)" "Bash(date *)" "Bash(python3 *)" "Bash(git diff *)" "Bash(git status *)" \
-              "Bash(curl -s https://code.claude.com/*)" "Bash(bash scripts/structural_audit.sh)" \
+              "Bash(curl -s https://code.claude.com/*)" "Bash(go -C scripts/audit run .)" \
             --max-turns 150 \
             | tee maintenance-report.md
 
