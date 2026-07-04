@@ -124,6 +124,8 @@ Two grounding rules that make or break the prompt you write:
 
 Read the matched goal's section in `routing.md` (one file, all goals — read once, use the matched section). Choose **the move**: the section's #1 ranked approach, unless the evidence points elsewhere — or unless the profile says they already use it, in which case build on it and take the next-best they don't know. The section's "why it fits" line is curated judgment — use it to frame the pitch, then ground the substance in the approach file and the repo. Choose **the surprise**: the highest-ranked approach from their ignorance map that's relevant to this goal; fall back to the section's `**Hidden gem:**` line only when the profile is empty. Never skip the surprise — it's the reason this plugin exists.
 
+**Read ahead while reads are free.** The plugin-path Read grant lives only inside this invocation — follow-up turns ("more", a deep-dive request) can NOT read plugin files without a permission prompt, and re-invoking the skill does not restore the grant. So before composing the response, read the full approach files for the move and the surprise, and keep the matched routing section at hand: the likely follow-ups must be answerable entirely from context.
+
 Respond in this shape, compact, no card walls:
 
 1. **Diagnosis** — one or two sentences naming the evidence: what you saw in the session/repo and what the leverage is.
@@ -131,7 +133,7 @@ Respond in this shape, compact, no card walls:
 3. **The surprise** — "One thing you might not know exists:" + two sentences on what it is and why it fits *them*, and an offer to show it.
 4. **One closing line**: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
 
-On "more": show the routing section's ranked table (approach, setup, best-when), excluding nothing — this is the full-catalog escape hatch. It needs zero new tool calls: `routing.md` is already read. On a specific approach name: deep-dive by reading `approaches/<name>.md` — full explanation, setup steps, composition, pitfalls, real example. Never list the `approaches/` directory (with any tool — `routing.md` and `adoption-signals.md` already enumerate every approach), and access catalog files only with the Read tool: it is pre-allowed and prompt-free, while a Bash `ls` or `cat` on the plugin directory costs the user a permission prompt.
+On "more": show the routing section's ranked table (approach, setup, best-when), excluding nothing — this is the full-catalog escape hatch. It needs zero new tool calls: answer from the routing section already in context. On a specific approach name: deep-dive from the approach file if it's one of the two read ahead; a different approach's file must be read fresh, and on a follow-up turn that read *will* prompt — say so before the call ("one permission prompt coming; the plugin's grant only covers its first response"), and offer the permanent fix at most once ever (record the offer in the profile): adding `Read(~/.claude/plugins/**)` to the `allow` list via `/permissions` (User settings) makes every installed plugin's reference content prompt-free for good. Never list the `approaches/` directory (with any tool — `routing.md` and `adoption-signals.md` already enumerate every approach), and never use Bash on catalog files (`ls`, `cat`): the Read tool is the only pre-allowed path.
 
 Calibration comes from the profile's `Level` line when present (update it when the user says "simpler"/"deeper"); infer it once from evidence otherwise — never ask a blocking question about it.
 
@@ -205,7 +207,8 @@ For file-writing actions, always show the change before applying it, and never o
 
 ## Rules
 
-- Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — they are pre-allowed and prompt-free there. Never Bash (`ls`, `cat`, `find`, ...) against those paths: no Bash rule covers them, so every such call interrupts the user with a permission prompt
+- Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — never Bash (`ls`, `cat`, `find`, ...): no Bash rule covers those paths, so every such call interrupts the user with a permission prompt
+- The plugin-path Read grant is invocation-scoped: prompt-free only while composing the first response. Read everything follow-ups will need before finishing it; on later turns, warn before any plugin-file read and handle the prompt gracefully
 - Present exactly one primary move per response; the ranked list appears only when asked ("more")
 - Every prompt you show uses paths and commands verified in this repo — never catalog placeholders
 - Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator; never skip it
