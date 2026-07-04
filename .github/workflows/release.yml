@@ -1,3 +1,6 @@
+# Thin caller — the release logic lives in claude-ichiba's reusable
+# plugin-release workflow (annotated-tag validation, GitHub release,
+# marketplace dispatch). Pinned to a commit SHA, never @main.
 name: Release
 
 on:
@@ -6,42 +9,8 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@2cd3f7fbe4fe0a80ff28215c513042cc83f08b1f # 2026-07-04
     permissions:
       contents: write
-    steps:
-
-      - id: tag
-        name: Validate and extract tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          # Only annotated tags are supported — lightweight tags provide no signing guarantee.
-          TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type')
-          if [ "$TYPE" != "tag" ]; then
-            echo "Error: $TAG is not an annotated tag (type='$TYPE')"
-            exit 1
-          fi
-          echo "value=$TAG" >> "$GITHUB_OUTPUT"
-
-      - id: create-release
-        name: Create release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.tag.outputs.value }}
-        run: |
-          URL=$(gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes)
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-
-      - name: Dispatch to claude-ichiba
-        env:
-          ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
-          RELEASE: ${{ steps.create-release.outputs.url }}
-        run: |
-          # Dispatch the full release URL — claude-ichiba resolves the plugin name, tag, and SHA from it.
-          curl -fsSL -X POST \
-            -H "Authorization: token $ICHIBA_PAT" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/gwenneg/claude-ichiba/dispatches" \
-            -d "$(jq -n --arg release "$RELEASE" '{event_type: "plugin-release", client_payload: {release: $release}}')"
+    secrets:
+      ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
