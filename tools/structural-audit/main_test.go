@@ -73,7 +73,7 @@ func runOn(t *testing.T, files map[string]string) []string {
 			t.Fatal(err)
 		}
 	}
-	a := &auditor{skill: filepath.Join(repo, "skills", "mentor")}
+	a := &auditor{root: repo, skill: filepath.Join(repo, skillDir)}
 	if err := a.run(); err != nil {
 		t.Fatalf("unexpected fatal: %v", err)
 	}
@@ -211,7 +211,8 @@ func TestCorruptionsAreCaught(t *testing.T) {
 }
 
 func TestEmptyApproachDirIsFatal(t *testing.T) {
-	a := &auditor{skill: filepath.Join(t.TempDir(), "skills", "mentor")}
+	repo := t.TempDir()
+	a := &auditor{root: repo, skill: filepath.Join(repo, skillDir)}
 	if err := a.run(); err == nil {
 		t.Error("empty approach directory should be fatal")
 	}

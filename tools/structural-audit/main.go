@@ -5,7 +5,7 @@
 // is found, 2 on a fatal setup problem. No network, no LLM — safe as a PR
 // gate. Stdlib only.
 //
-// Usage: go run . <repo-root>
+// Usage: go -C tools/structural-audit run . [repo-root]
 package main
 
 import (
@@ -13,8 +13,15 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
+)
+
+const (
+	datePat          = `\d{4}-\d{2}-\d{2}`
+	minGoalRows      = 3
+	minApproachLines = 60
 )
 
 var (
@@ -24,20 +31,31 @@ var (
 	reSource   = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger   = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek     = regexp.MustCompile(`^\d{4}-w\d{2}$`)
-	reDate     = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
-	reSignal   = regexp.MustCompile("^\\| ([a-z0-9-]+) \\|")
+	reDate     = regexp.MustCompile(`^` + datePat + `$`)
+	reDateTail = regexp.MustCompile(`^` + datePat + `\*`)
+	reSignal   = regexp.MustCompile(`^\| ([a-z0-9-]+) \|`)
 	reSkillRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount    = regexp.MustCompile(`(\d+) goal categories`)
 )
 
-var approachSections = []string{
-	"## What It Is", "## Why It Works", "## When to Use It", "## When NOT to Use It",
-	"## How It Works", "### Basic (Beginner)",
-	"### Composing with Other Approaches (Intermediate)", "### Advanced Patterns",
-	"## Common Pitfalls", "## Real-World Example", "## Sources",
-}
+var (
+	skillDir = filepath.Join("skills", "mentor")
+
+	levels = []string{"Beginner", "Intermediate", "Advanced"}
+
+	// routing.md sections that are not goal categories
+	nonGoalSections = map[string]bool{"extraction-notes": true}
+
+	approachSections = []string{
+		"## What It Is", "## Why It Works", "## When to Use It", "## When NOT to Use It",
+		"## How It Works", "### Basic (Beginner)",
+		"### Composing with Other Approaches (Intermediate)", "### Advanced Patterns",
+		"## Common Pitfalls", "## Real-World Example", "## Sources",
+	}
+)
 
 type auditor struct {
+	root                     string // repo root; issue paths print relative to it
 	skill                    string // skills/mentor directory
 	issues                   []string
 	goals, approaches, weeks int
@@ -45,7 +63,7 @@ type auditor struct {
 
 func (a *auditor) issue(path, format string, args ...any) {
 	rel := path
-	if r, err := filepath.Rel(filepath.Dir(filepath.Dir(a.skill)), path); err == nil {
+	if r, err := filepath.Rel(a.root, path); err == nil {
 		rel = r
 	}
 	a.issues = append(a.issues, rel+": "+fmt.Sprintf(format, args...))
@@ -59,10 +77,24 @@ func lines(path string) []string {
 	return strings.Split(string(b), "\n")
 }
 
+// cells splits a Markdown table row on '|' and trims each cell.
+func cells(l string) []string {
+	cs := strings.Split(l, "|")
+	for i, c := range cs {
+		cs[i] = strings.TrimSpace(c)
+	}
+	return cs
+}
+
 // dateLine checks that line 2 is e.g. "*Last verified: 2026-07-03*".
 func (a *auditor) dateLine(path, label string, ls []string) {
-	re := regexp.MustCompile(`^\*` + label + `: \d{4}-\d{2}-\d{2}\*`)
-	if len(ls) < 2 || !re.MatchString(ls[1]) {
+	ok := false
+	if len(ls) >= 2 {
+		if rest, found := strings.CutPrefix(ls[1], "*"+label+": "); found {
+			ok = reDateTail.MatchString(rest)
+		}
+	}
+	if !ok {
 		a.issue(path, "line 2 must be '*%s: YYYY-MM-DD*'", label)
 	}
 }
@@ -78,24 +110,21 @@ func (a *auditor) checkRouting(path string, approachNames []string) []string {
 	var goals []string
 	section, rows, gem := "", []string{}, ""
 	flush := func() {
-		if section == "" || section == "extraction-notes" {
+		if section == "" || nonGoalSections[section] {
 			return
 		}
 		goals = append(goals, section)
-		if len(rows) < 3 {
-			a.issue(path, "section %s: only %d rows (expected at least 3)", section, len(rows))
+		if len(rows) < minGoalRows {
+			a.issue(path, "section %s: only %d rows (expected at least %d)", section, len(rows), minGoalRows)
 		}
 		if gem == "" {
 			a.issue(path, "section %s: missing Hidden gem line", section)
 		} else {
 			g := strings.ToLower(strings.TrimSpace(gem))
-			ok := false
-			for _, r := range rows {
+			ok := slices.ContainsFunc(rows, func(r string) bool {
 				rl := strings.ToLower(r)
-				if strings.Contains(g, rl) || strings.Contains(rl, g) {
-					ok = true
-				}
-			}
+				return strings.Contains(g, rl) || strings.Contains(rl, g)
+			})
 			if !ok {
 				a.issue(path, "section %s: Hidden gem '%s' does not match any ranked row", section, strings.TrimSpace(gem))
 			}
@@ -115,13 +144,8 @@ func (a *auditor) checkRouting(path string, approachNames []string) []string {
 				a.issue(path, "section %s: row numbering not sequential at row %d", section, len(rows)+1)
 			}
 			rows = append(rows, m[2])
-			cells := strings.Split(l, "|")
-			if len(cells) > 3 {
-				switch lvl := strings.TrimSpace(cells[3]); lvl {
-				case "Beginner", "Intermediate", "Advanced":
-				default:
-					a.issue(path, "invalid level %s", lvl)
-				}
+			if cs := cells(l); len(cs) > 3 && !slices.Contains(levels, cs[3]) {
+				a.issue(path, "invalid level %s", cs[3])
 			}
 		}
 	}
@@ -147,13 +171,7 @@ func (a *auditor) checkApproach(path string) {
 
 	pos := 0
 	for _, s := range approachSections {
-		ln := 0
-		for i, l := range ls {
-			if strings.Contains(l, s) {
-				ln = i + 1
-				break
-			}
-		}
+		ln := slices.IndexFunc(ls, func(l string) bool { return strings.Contains(l, s) }) + 1
 		switch {
 		case ln == 0:
 			a.issue(path, "missing section '%s'", s)
@@ -164,17 +182,15 @@ func (a *auditor) checkApproach(path string) {
 		}
 	}
 
-	if n := len(ls) - 1; n < 60 { // trailing newline yields one empty element
-		a.issue(path, "%d lines (expected at least 60)", n)
+	if n := len(ls) - 1; n < minApproachLines { // trailing newline yields one empty element
+		a.issue(path, "%d lines (expected at least %d)", n, minApproachLines)
 	}
-	srcs, in := 0, false
-	for _, l := range ls {
-		if l == "## Sources" {
-			in = true
-			continue
-		}
-		if in && reSource.MatchString(l) {
-			srcs++
+	srcs := 0
+	if i := slices.Index(ls, "## Sources"); i >= 0 {
+		for _, l := range ls[i+1:] {
+			if reSource.MatchString(l) {
+				srcs++
+			}
 		}
 	}
 	if srcs < 1 {
@@ -205,12 +221,11 @@ func (a *auditor) checkLedger(path string) {
 			a.issue(path, "duplicate ledger row for '%s'", slug)
 		}
 		seen[slug] = true
-		cells := strings.Split(l, "|")
-		if len(cells) > 3 {
-			if !reDate.MatchString(strings.TrimSpace(cells[2])) {
-				a.issue(path, "row '%s' has invalid processed date '%s'", slug, strings.TrimSpace(cells[2]))
+		if cs := cells(l); len(cs) > 3 {
+			if !reDate.MatchString(cs[2]) {
+				a.issue(path, "row '%s' has invalid processed date '%s'", slug, cs[2])
 			}
-			if strings.TrimSpace(cells[3]) == "" {
+			if cs[3] == "" {
 				a.issue(path, "row '%s' has an empty outcome", slug)
 			}
 		}
@@ -290,11 +305,12 @@ func (a *auditor) run() error {
 	return nil
 }
 
+// dedup and dups are order-preserving on purpose: their order feeds issue
+// order, which is part of the frozen output. Do not replace with sorted forms.
 func dedup(xs []string) []string {
-	seen, out := map[string]bool{}, []string{}
+	var out []string
 	for _, x := range xs {
-		if !seen[x] {
-			seen[x] = true
+		if !slices.Contains(out, x) {
 			out = append(out, x)
 		}
 	}
@@ -302,10 +318,9 @@ func dedup(xs []string) []string {
 }
 
 func dups(xs []string) []string {
-	seen, out := map[string]int{}, []string{}
-	for _, x := range xs {
-		seen[x]++
-		if seen[x] == 2 {
+	var out []string
+	for i, x := range xs {
+		if slices.Contains(xs[:i], x) && !slices.Contains(out, x) {
 			out = append(out, x)
 		}
 	}
@@ -314,20 +329,13 @@ func dups(xs []string) []string {
 
 // diff returns (in a but not b, in b but not a), preserving order.
 func diff(a, b []string) (onlyA, onlyB []string) {
-	inA, inB := map[string]bool{}, map[string]bool{}
 	for _, x := range a {
-		inA[x] = true
-	}
-	for _, x := range b {
-		inB[x] = true
-	}
-	for _, x := range a {
-		if !inB[x] {
+		if !slices.Contains(b, x) {
 			onlyA = append(onlyA, x)
 		}
 	}
 	for _, x := range dedup(b) {
-		if !inA[x] {
+		if !slices.Contains(a, x) {
 			onlyB = append(onlyB, x)
 		}
 	}
@@ -344,15 +352,20 @@ func findRoot(dir string) (string, error) {
 		return "", err
 	}
 	for {
-		if _, err := os.Stat(filepath.Join(dir, "skills", "mentor")); err == nil {
+		if _, err := os.Stat(filepath.Join(dir, skillDir)); err == nil {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return "", fmt.Errorf("no skills/mentor directory found here or above")
+			return "", fmt.Errorf("no %s directory found here or above", skillDir)
 		}
 		dir = parent
 	}
+}
+
+func fatal(err error) {
+	fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
+	os.Exit(2)
 }
 
 func main() {
@@ -361,13 +374,11 @@ func main() {
 	if len(os.Args) > 1 {
 		repo = os.Args[1]
 	} else if repo, err = findRoot("."); err != nil {
-		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
-		os.Exit(2)
+		fatal(err)
 	}
-	a := &auditor{skill: filepath.Join(repo, "skills", "mentor")}
+	a := &auditor{root: repo, skill: filepath.Join(repo, skillDir)}
 	if err := a.run(); err != nil {
-		fmt.Fprintf(os.Stderr, "FATAL: %v\n", err)
-		os.Exit(2)
+		fatal(err)
 	}
 	for _, is := range a.issues {
 		fmt.Printf("  - %s\n", is)
