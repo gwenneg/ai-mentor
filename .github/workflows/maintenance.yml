@@ -36,12 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Plugin catalog drift check (plain script)
+      - name: Plugin catalog drift check (deterministic, no LLM)
         id: catalog
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bash scripts/check_plugin_catalog.sh | tee catalog-drift.txt
+        run: go -C tools/catalog-drift run . | tee catalog-drift.txt
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -60,7 +60,7 @@ jobs:
           claude -p "/ai-mentor-update --auto $STEPS --files $FILES" \
             --allowedTools "WebSearch" "WebFetch" "Read" "Edit" "Write" "Glob" "Grep" \
               "Bash(gh api *)" "Bash(date *)" "Bash(python3 *)" "Bash(git diff *)" "Bash(git status *)" \
-              "Bash(curl -s https://code.claude.com/*)" "Bash(bash scripts/structural_audit.sh)" \
+              "Bash(curl -s https://code.claude.com/*)" "Bash(go -C tools/structural-audit run .)" \
             --max-turns 150 \
             | tee maintenance-report.md
 

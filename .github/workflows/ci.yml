@@ -10,8 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: tools/structural-audit/go.mod
+          cache: false
+      - name: Self-test the Go tools (every audit check must fail the gate)
+        run: |
+          go -C tools/structural-audit test ./...
+          go -C tools/catalog-drift test ./...
       - name: Structural audit (deterministic, no LLM)
-        run: bash scripts/structural_audit.sh
+        run: go -C tools/structural-audit run .
 
   plugin-validate:
     runs-on: ubuntu-latest
