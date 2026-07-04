@@ -5,7 +5,7 @@
 // setup errors. Uses GITHUB_TOKEN / GH_TOKEN if set (else unauthenticated,
 // subject to rate limits). Stdlib only.
 //
-// Usage: go -C scripts/catalog run .
+// Usage: go -C tools/catalog-drift run .
 package main
 
 import (
@@ -138,7 +138,7 @@ func report(w io.Writer, live, documented []string) bool {
 
 // findRoot walks upward from dir to the first directory containing
 // skills/mentor, so the check works from anywhere in the repo — including
-// scripts/catalog itself, where `go -C scripts/catalog run .` lands.
+// tools/catalog-drift itself, where `go -C tools/catalog-drift run .` lands.
 func findRoot(dir string) (string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {

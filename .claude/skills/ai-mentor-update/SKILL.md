@@ -30,7 +30,7 @@ The routine weekly run is `--auto 4,5`: process new changelogs and sync the plug
 
 Auto-mode overrides, in addition to skipping every question below:
 
-- **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs the structural audit (`go -C scripts/audit run .`) as a deterministic gate — prefer reporting over creative fixing.
+- **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs the structural audit (`go -C tools/structural-audit run .`) as a deterministic gate — prefer reporting over creative fixing.
 - **Step 3**: process the N oldest-verified files with no per-file pause. Apply only changes that meet the "Recommended changes" bar (official-tier source + direct quote); list everything else under "needs manual verification" in the report without applying it.
 - **Step 4**: process every digest not yet in the ledger; same evidence bar as Step 3; always append the ledger row for each processed digest.
 - **Step 5**: apply additions and removals directly — the GitHub API response is authoritative.
