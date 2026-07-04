@@ -131,7 +131,7 @@ Respond in this shape, compact, no card walls:
 3. **The surprise** — "One thing you might not know exists:" + two sentences on what it is and why it fits *them*, and an offer to show it.
 4. **One closing line**: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
 
-On "more": show the routing section's ranked table (approach, setup, best-when), excluding nothing — this is the full-catalog escape hatch. On a specific approach name: deep-dive by reading `approaches/<name>.md` — full explanation, setup steps, composition, pitfalls, real example.
+On "more": show the routing section's ranked table (approach, setup, best-when), excluding nothing — this is the full-catalog escape hatch. It needs zero new tool calls: `routing.md` is already read. On a specific approach name: deep-dive by reading `approaches/<name>.md` — full explanation, setup steps, composition, pitfalls, real example. Never list the `approaches/` directory (with any tool — `routing.md` and `adoption-signals.md` already enumerate every approach), and access catalog files only with the Read tool: it is pre-allowed and prompt-free, while a Bash `ls` or `cat` on the plugin directory costs the user a permission prompt.
 
 Calibration comes from the profile's `Level` line when present (update it when the user says "simpler"/"deeper"); infer it once from evidence otherwise — never ask a blocking question about it.
 
@@ -205,6 +205,7 @@ For file-writing actions, always show the change before applying it, and never o
 
 ## Rules
 
+- Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — they are pre-allowed and prompt-free there. Never Bash (`ls`, `cat`, `find`, ...) against those paths: no Bash rule covers them, so every such call interrupts the user with a permission prompt
 - Present exactly one primary move per response; the ranked list appears only when asked ("more")
 - Every prompt you show uses paths and commands verified in this repo — never catalog placeholders
 - Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator; never skip it
