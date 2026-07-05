@@ -1,15 +1,23 @@
 # Thin caller — the release logic lives in claude-ichiba's reusable
-# plugin-release workflow (annotated-tag validation, GitHub release,
-# marketplace dispatch). Pinned to a commit SHA, never @main.
+# plugin-release workflow (version computed from the latest v* tag, signed
+# plugin.json bump commit, annotated tag, GitHub release, marketplace
+# dispatch). Pinned to a commit SHA, never @main.
 name: Release
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semver component to bump (auto derives it from conventional commits)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
 
 jobs:
   release:
-    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@2cd3f7fbe4fe0a80ff28215c513042cc83f08b1f # 2026-07-04
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@ed0b287bb80b1ba978023b0b9225cabedbe457b1 # 2026-07-06
+    with:
+      bump: ${{ inputs.bump }}
     permissions:
       contents: write
     secrets:
