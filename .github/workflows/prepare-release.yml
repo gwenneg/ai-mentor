@@ -1,0 +1,18 @@
+# Thin caller — the logic lives in claude-ichiba's reusable
+# plugin-prepare-release workflow: on every push to main it maintains the
+# standing release PR on release/next (next version from conventional
+# commits, signed plugin.json bump, changelog in the body). Merging that
+# PR is the release decision — create-release.yml takes over from there.
+# Pinned to a commit SHA, never @main.
+name: Prepare release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  prepare:
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-prepare-release.yml@6568a08a998d2c4c3e14977adee20d511c56d8c1 # 2026-07-06
+    permissions:
+      contents: write
+      pull-requests: write
