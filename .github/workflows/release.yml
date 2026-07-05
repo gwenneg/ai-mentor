@@ -1,0 +1,21 @@
+# Thin caller — the logic lives in claude-ichiba's reusable plugin-release
+# workflow. On every push to main it either refreshes the standing release
+# PR on release/next (next version from conventional commits, signed
+# plugin.json bump, changelog in the body) or, when the push is the merge
+# of that PR, tags it, publishes the GitHub release, and dispatches the
+# marketplace PR. Merging the standing PR is the release decision.
+# Pinned to a commit SHA, never @main.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@cf6372fea49df21640458053548c2b888fe70478 # 2026-07-06
+    permissions:
+      contents: write
+      pull-requests: write
+    secrets:
+      ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
