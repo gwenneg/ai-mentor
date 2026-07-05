@@ -1,0 +1,19 @@
+# Thin caller — the logic lives in claude-ichiba's reusable
+# plugin-tag-release workflow: when the standing release PR (from
+# prepare-release.yml) is merged, it tags the merge commit, publishes the
+# GitHub release, and dispatches the marketplace PR in claude-ichiba.
+# Pinned to a commit SHA, never @main.
+name: Create release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  release:
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-tag-release.yml@6568a08a998d2c4c3e14977adee20d511c56d8c1 # 2026-07-06
+    permissions:
+      contents: write
+    secrets:
+      ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
