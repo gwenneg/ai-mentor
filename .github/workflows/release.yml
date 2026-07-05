@@ -15,10 +15,11 @@ on:
 
 jobs:
   release:
-    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@17789f1c52b4906b6ebe4d933a50991369aff3f5 # 2026-07-06
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@7cbab7b54712e1606470ec853e0a95489107c789 # 2026-07-06
     with:
       bump: ${{ inputs.bump }}
     permissions:
       contents: write
+      pull-requests: write # the version bump lands through an auto-merged PR
     secrets:
       ICHIBA_PAT: ${{ secrets.ICHIBA_PAT }}
