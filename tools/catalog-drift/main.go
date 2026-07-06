@@ -26,7 +26,8 @@ const manifestURL = "https://raw.githubusercontent.com/anthropics/claude-plugins
 var (
 	skillDir = filepath.Join("skills", "mentor")
 
-	reToken     = regexp.MustCompile("`([a-z0-9-]+)`")
+	// Dots are valid in plugin names (e.g. wordpress.com).
+	reToken     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reMultiWord = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)+$`)
 )
 
