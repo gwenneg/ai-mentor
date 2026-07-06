@@ -21,12 +21,20 @@ Verdict text format: `<tier> <date> — <2-line evidence with the caveat inline>
 
 ## Part 1 — Desk-check (all plugins, cheap, no installs)
 
-Via `gh api` against `anthropics/claude-plugins-official`, for each plugin in `plugins/` and `external_plugins/`:
+The marketplace manifest is the authoritative source — it lists every plugin, including externally-hosted ones with no directory in the marketplace repo:
 
-1. Manifest: `.claude-plugin/plugin.json` → description, author/maintainer
-2. Component inventory: top-level dirs → skills/agents/commands/hooks counts, MCP/LSP presence
-3. Freshness: `gh api "repos/anthropics/claude-plugins-official/commits?path=<dir>/<name>&per_page=1" --jq '.[0].commit.committer.date'`
+```
+curl -s https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json
+```
+
+For each plugin, from its manifest entry (`name`, `description`, `author`, `category`, `homepage`, `source`):
+
+1. Metadata: description, author/maintainer, category
+2. Component inventory at the pinned commit: `gh api "repos/<owner>/<repo>/contents/<source.path>?ref=<source.sha>" --jq '.[].name'` → skills/agents/commands/hooks presence, MCP/LSP presence (for in-repo plugins, owner/repo is `anthropics/claude-plugins-official` and the path is the `./`-relative source)
+3. Freshness: `gh api "repos/<owner>/<repo>/commits?path=<source.path>&per_page=1" --jq '.[0].commit.committer.date'`
 4. Built-in-overlap judgment: does it duplicate a bundled skill or built-in tool? (This is the ⚠️ trigger.)
+
+At marketplace scale (hundreds of plugins) desk-checks may run as batched agent sweeps; the per-plugin checks and the evidence bar are the same either way.
 
 ## Part 2 — Hands-on (exercised plugins)
 

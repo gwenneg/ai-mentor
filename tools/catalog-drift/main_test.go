@@ -37,9 +37,9 @@ func TestFetchLiveNamesEmptyManifestIsError(t *testing.T) {
 }
 
 func TestDocumentedNames(t *testing.T) {
-	text := "The `code-review` and `security-guardian` plugins, plus prose like `pr` and `multi-word-token`."
+	text := "The `code-review` and `security-guardian` plugins, plus `wordpress.com`, and prose like `pr` and `multi-word-token`."
 	got := documentedNames(text)
-	want := []string{"code-review", "security-guardian", "pr", "multi-word-token"}
+	want := []string{"code-review", "security-guardian", "wordpress.com", "pr", "multi-word-token"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("documentedNames = %v, want %v", got, want)
 	}
