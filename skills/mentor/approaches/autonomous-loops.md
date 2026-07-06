@@ -1,5 +1,5 @@
 # Autonomous Loops
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -7,7 +7,7 @@ Autonomous Loops let you give your AI coding tool a measurable goal — like "al
 
 ## Why It Works
 
-Feedback loops are how all iterative processes converge on a solution. A developer debugging manually follows the same pattern: change code, run tests, read output, change code again. Autonomous Loops automate this cycle by letting the AI act as both the developer and the evaluator. After each turn, a fast model checks whether the goal condition is met. If not, the AI continues. This removes the bottleneck of a human reading each intermediate result and typing "try again" — which is low-value labor when the success criterion is already well-defined. The key insight is that many development tasks have a clear, machine-verifiable definition of "done" — and for those tasks, human supervision of each iteration adds latency without adding judgment.
+Feedback loops are how all iterative processes converge on a solution. Autonomous Loops automate the change-test-observe cycle by letting the AI act as both developer and evaluator: after each turn, a fast model checks whether the goal condition is met, and if not, the AI keeps working. This removes the bottleneck of a human reading each intermediate result and typing "try again" — low-value labor when the success criterion is already well-defined. The key insight is that many development tasks have a clear, machine-verifiable definition of "done" — and for those tasks, human supervision of each iteration adds latency without adding judgment.
 
 ## When to Use It
 
@@ -27,12 +27,11 @@ Feedback loops are how all iterative processes converge on a solution. A develop
 
 ### Basic (Beginner)
 
-1. Enable auto mode: press Shift+Tab to cycle to "auto" mode, or start Claude with `--permission-mode auto`
+1. Let turns run unattended (optional — `/goal` works in any permission mode, but you would otherwise approve each tool call): press Shift+Tab to cycle to "auto" mode if your account supports it, or start Claude with `--permission-mode auto`
 2. Start a goal: `/goal all tests in tests/payment/ pass`
-3. Claude reads the first failing test output to understand what is broken
-4. It edits code, runs `pytest tests/payment/`, reads the new failures, and edits again
-5. After each turn, a fast model evaluates the test output against your condition
-6. When all tests pass, Claude stops and reports what it changed
+3. Claude reads the first failing test output, edits code, runs `pytest tests/payment/`, reads the new failures, and edits again
+4. After each turn, a fast model evaluates the test output against your condition
+5. When all tests pass, the goal clears automatically and Claude stops — check progress anytime with `/goal`, or stop early with `/goal clear`
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -44,15 +43,13 @@ Feedback loops are how all iterative processes converge on a solution. A develop
 
 - **Headless goal loops**: Run `claude -p "/goal coverage above 85% for src/billing/"` in CI or a background terminal. The AI works unattended and exits when done. Combine with `--output-format json` to capture the final result programmatically.
 - **Compound conditions**: Goal conditions can be up to 4,000 characters. Use this to set multi-part goals: `/goal all tests pass AND no eslint errors AND no TypeScript errors`. The evaluator checks all parts.
-- **Progressive tightening**: Start with a loose goal (`/goal tests pass`), review the result, then set a tighter goal (`/goal tests pass with no skipped tests and no console warnings`). Each round raises the bar.
-- **Scoped loops for large projects**: In a monorepo, avoid `/goal all tests pass` across the entire project. Instead, target a specific package or directory: `/goal all tests in packages/billing/ pass`. Narrower scope means faster iterations and lower cost per loop.
+- **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence.
 
 ## Common Pitfalls
 
-- **Vague conditions**: A goal like "improve performance" gives the evaluator nothing measurable to check. The AI will either stop after one change or loop until the turn limit. Always use conditions that produce a clear pass/fail signal.
-- **Superficial fixes**: The AI optimizes for the stated condition. If your goal is "all tests pass," it might delete a failing test, add `@pytest.mark.skip`, or catch-and-swallow an exception. Review the diff carefully — passing tests are necessary but not sufficient for correct code.
-- **Ignoring the diff**: After the loop completes, read what changed. Autonomous loops can touch many files across many iterations. A quick `git diff --stat` tells you the blast radius before you commit.
-- **Over-long loops**: If the AI has not converged after 15-20 turns, the goal may be underspecified or the problem may require a different approach entirely. Set reasonable expectations for what can be achieved autonomously.
+- **Vague conditions**: A goal like "improve performance" gives the evaluator nothing measurable to check. The AI will either stop after one change or loop indefinitely — a goal runs until the evaluator judges the condition met or you run `/goal clear`. Always use conditions that produce a clear pass/fail signal.
+- **Superficial fixes**: The AI optimizes for the stated condition. If your goal is "all tests pass," it might delete a failing test, add `@pytest.mark.skip`, or catch-and-swallow an exception. Review the diff carefully — start with `git diff --stat` for the blast radius — passing tests are necessary but not sufficient for correct code.
+- **Over-long loops**: If the AI has not converged after 15-20 turns, the goal may be underspecified or the problem may require a different approach entirely. There is no built-in turn limit, so bound the run in the condition itself, e.g. `/goal tests pass, or stop after 20 turns`.
 - **Cost blindness**: Each iteration consumes tokens. A 20-turn loop that reads large files and runs long test suites can cost significantly more than a focused interactive session. Monitor iteration count and set the goal scope appropriately — target a specific directory or test file rather than the entire project.
 
 ## Real-World Example
@@ -74,5 +71,5 @@ Total time: about three minutes, seven iterations. You run `git diff` and review
 
 ## Sources
 
-- [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode) — Official docs covering /goal command and autonomous behavior
-- [Enabling Claude Code to Work More Autonomously](https://www.anthropic.com/news/enabling-claude-code-to-work-more-autonomously) — Anthropic blog on goal-oriented autonomous execution
+- [Keep Claude Working Toward a Goal](https://code.claude.com/docs/en/goal) — Official docs for /goal: setting, checking, and clearing goals, and how the evaluator works
+- [Choose a Permission Mode](https://code.claude.com/docs/en/permission-modes) — Official docs on auto mode and the other permission modes that let loop turns run unattended

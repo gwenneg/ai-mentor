@@ -1,9 +1,40 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestFetchLiveNamesParsesManifest(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"name":"claude-plugins-official","plugins":[
+			{"name":"alpha-one","source":"./plugins/alpha-one"},
+			{"name":"partner-tool","source":{"source":"github","repo":"partner/tool"}},
+			{"name":""}]}`))
+	}))
+	defer srv.Close()
+	names, err := fetchLiveNames(&http.Client{Timeout: 5 * time.Second}, srv.URL)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := "alpha-one,partner-tool"
+	if strings.Join(names, ",") != want {
+		t.Errorf("fetchLiveNames = %v, want %s (external-source plugins must be included, empty names dropped)", names, want)
+	}
+}
+
+func TestFetchLiveNamesEmptyManifestIsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"plugins":[]}`))
+	}))
+	defer srv.Close()
+	if _, err := fetchLiveNames(&http.Client{Timeout: 5 * time.Second}, srv.URL); err == nil {
+		t.Error("empty plugin list should be an error, not an in-sync verdict")
+	}
+}
 
 func TestDocumentedNames(t *testing.T) {
 	text := "The `code-review` and `security-guardian` plugins, plus prose like `pr` and `multi-word-token`."

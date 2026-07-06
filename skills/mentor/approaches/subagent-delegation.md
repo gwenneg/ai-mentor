@@ -1,5 +1,5 @@
 # Subagent Delegation
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -32,19 +32,25 @@ This mirrors the way effective engineering teams work: a tech lead breaks a prob
 4. When the subagent finishes, it returns a summary to the main session
 5. The main session uses the summary to inform its next steps or synthesize a final answer
 
-For example: "Review this PR for both correctness bugs and security issues." Claude can spawn one subagent for correctness review and another for security review, then combine the findings.
+For example:
+
+```
+> Review this PR for both correctness bugs and security issues.
+```
+
+Claude can spawn one subagent for correctness review and another for security review, then combine the findings.
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Subagents with worktree isolation**: Give each subagent `isolation: "worktree"` so they can all edit code in parallel without conflicts. Each produces a branch you can review independently.
+- **Subagents with worktree isolation**: Give each subagent `isolation: "worktree"` so they can all edit code in parallel without conflicts. Each produces a branch you can review independently. Note that subagent worktrees branch from your default branch by default — set `worktree.baseRef` to `"head"` in settings so they carry your unpushed commits and feature-branch state (uncommitted changes never carry over; commit first if agents must build on them).
 - **Plan Mode then subagent execution**: Use Plan Mode to design the overall approach, then spawn subagents to execute each step of the plan. The plan becomes the task breakdown.
 - **Subagent results into review skills**: After subagents make parallel changes, run `/code-review` on each worktree branch to verify the changes before merging.
 
 ### Advanced Patterns
 
 - **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to be enabled): Multiple Claude instances share a task list and message each other directly via `SendMessage`. Unlike simple subagents (which report to a parent), team members are peers: tasks can declare dependencies, and teammates self-claim the next unblocked task when they finish one. Best for work requiring discussion — competing debugging hypotheses, multi-lens reviews — at a significantly higher token cost than subagents.
-- **Agent View monitoring**: When running 5-30 parallel subagents, use Agent View to monitor all sessions from one screen. You can see each agent's progress, intervene if one gets stuck, and track overall completion.
-- **Typed subagents**: Choose agent types based on the task — `Explore` for read-only code search (faster, cannot edit), `Plan` for architecture design (cannot edit), or general-purpose for tasks that require both reading and writing.
+- **Scaling beyond one session**: Subagents live inside your session and do not appear in agent view (`claude agents`) — that board tracks background sessions. When you want many parallel workers you can monitor and steer from one screen, dispatch separate background sessions instead (see Background Agents).
+- **Typed subagents**: Choose agent types based on the task — `Explore` for read-only code search (fast, cannot edit) or general-purpose for tasks that require both reading and writing. The built-in `Plan` type is mainly Claude's own: it spawns it for read-only codebase research while in Plan Mode.
 
 ## Common Pitfalls
 

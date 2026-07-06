@@ -1,13 +1,13 @@
 # Visual Artifacts
-*Last verified: 2026-07-02*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Visual Artifacts turn Claude Code's terminal output into rendered, shareable web pages. Claude writes an HTML or Markdown file and publishes it with the built-in Artifact tool to a private page hosted on claude.ai — a link you can open in a browser, iterate on, and choose to share with teammates. Instead of scrolling back through a wall of terminal text, you get a real document: an architecture diagram, a review-findings dashboard, an interactive comparison table, a UI mockup. The bundled `dataviz` and `artifact-design` skills guide Claude toward charts and layouts that are actually readable, not just technically rendered.
+Visual Artifacts turn Claude Code's terminal output into rendered, shareable web pages. Claude writes an HTML or Markdown file and publishes it with the built-in Artifact tool to a private page hosted on claude.ai — a link you can open in a browser, iterate on, and choose to share with teammates. Instead of scrolling back through a wall of terminal text, you get a real document: an architecture diagram, a review-findings dashboard, an interactive comparison table, a UI mockup — with the bundled `dataviz` and `artifact-design` skills guiding Claude toward charts and layouts that are actually readable, not just technically rendered.
 
 ## Why It Works
 
-Some information is spatial, not linear. A dependency graph, an incident timeline, or a before/after comparison carries most of its meaning in layout — position, grouping, color — which terminal text physically cannot express. Rendering to a page moves the output into a medium that matches the information's shape. The second effect is persistence and audience: terminal output dies with the scrollback and is visible only to you, while an artifact survives the session at a stable URL and can be handed to a teammate who was never in the conversation. The output stops being a transcript and becomes a deliverable.
+Some information is spatial, not linear. A dependency graph, an incident timeline, or a before/after comparison carries most of its meaning in layout — position, grouping, color — which terminal text physically cannot express. Rendering to a page moves the output into a medium that matches the information's shape. The second effect is persistence and audience: terminal output dies with the scrollback and is visible only to you, while an artifact survives the session at a stable URL and can be handed to a teammate who was never in the conversation — the output stops being a transcript and becomes a deliverable.
 
 ## When to Use It
 
@@ -21,9 +21,7 @@ Some information is spatial, not linear. A dependency graph, an incident timelin
 
 - Quick answers and small results — a page for three findings is ceremony, not clarity
 - Content that must live in the repo — commit the Markdown; publish the artifact as a *view* of it, not the source of truth
-- Sensitive material — publishing sends content to claude.ai hosting; check your team's policy before rendering internal data
-- Headless and CI contexts where nobody clicks links — write a file instead
-- Enterprise setups on Amazon Bedrock, Google Vertex AI, or Microsoft Foundry — artifacts require the Anthropic API and a claude.ai sign-in; on those providers Claude writes a local HTML file instead of publishing
+- Sessions that can't publish — headless and CI contexts where nobody clicks links, and setups on Amazon Bedrock, Google Cloud's Agent Platform, or Microsoft Foundry; artifacts require a paid claude.ai plan (Pro, Max, Team, or Enterprise) signed in with `/login`, and Claude writes a local HTML file instead
 
 ## How It Works
 
@@ -31,19 +29,19 @@ Some information is spatial, not linear. A dependency graph, an incident timelin
 
 1. Do the underlying work first — the exploration, the review, the comparison. The artifact is a presentation of results, not a substitute for them.
 2. Ask Claude to render it: "Publish this architecture summary as an artifact — one section per service, with a dependency diagram at the top."
-3. Claude writes a self-contained HTML file, publishes it, and returns a `claude.ai` link. Open it in your browser.
+3. Claude writes a self-contained HTML file, asks permission the first time it publishes, and prints a `claude.ai` link — your browser opens to the page automatically.
 4. Iterate in conversation: "make the timeline horizontal", "collapse the low-severity findings". Claude edits the file and redeploys to the same URL.
 5. Share the link when you're happy. Artifacts are private to you by default, and the URL alone grants nothing — viewers must be signed in to claude.ai. On Team and Enterprise plans you can share with specific people or everyone in your organization, never outside it (there is no public option); on Pro and Max plans artifacts stay private to you entirely.
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Plan Mode then artifact**: After a structured exploration produces an architecture summary, render it as a page with a diagram. The map you built for yourself becomes onboarding material for the next engineer.
-- **Built-in reviews then artifact**: Run `/code-review` or a security audit, then publish the findings as a dashboard grouped by severity — far easier to triage in a team meeting than raw terminal output.
-- **Fan-out then artifact**: When parallel agents each audit one module, have the final step aggregate their reports into a single rendered scorecard instead of concatenated text.
+- **Visual artifacts plus Plan Mode**: After a structured exploration produces an architecture summary, render it as a page with a diagram. The map you built for yourself becomes onboarding material for the next engineer.
+- **Visual artifacts plus Built-in Review Skills**: Run `/code-review` or a security audit, then publish the findings as a dashboard grouped by severity — far easier to triage in a team meeting than raw terminal output.
+- **Visual artifacts plus Fan-Out Workflows**: When parallel agents each audit one module, have the final step aggregate their reports into a single rendered scorecard instead of concatenated text.
 
 ### Advanced Patterns
 
-- **Living status pages**: Re-render the same artifact on a schedule — a scheduled agent updates a project status page after each run, so the URL stays stable while the content tracks reality. The official `project-artifact` plugin packages this pattern.
+- **Living status pages**: Keep one artifact current across sessions — asking to "refresh the artifact" re-gathers live state and redeploys to the same URL, so the team's bookmark stays valid while the content tracks reality. The official `project-artifact` plugin packages this pattern, remembering the project's sources and published URL between sessions.
 - **Interactive deliverables**: Artifacts execute inline JavaScript, so a comparison can have sortable columns and a dependency map can have clickable nodes. Ask for interactivity when the data is bigger than one screen.
 - **Design iteration on mockups**: For greenfield UI work, generate two or three visual directions as separate artifacts and A/B them with stakeholders before writing any application code.
 

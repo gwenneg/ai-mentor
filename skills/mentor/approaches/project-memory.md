@@ -1,5 +1,5 @@
 # Project Memory & Context Docs
-*Last verified: 2026-07-02*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -30,7 +30,7 @@ Every session starts with a fresh context window; without persistent memory, you
 1. Run `/init` in your project. Claude analyzes the codebase and generates a starter `CLAUDE.md` with build commands, test instructions, and discovered conventions. If one already exists, it suggests improvements instead of overwriting.
 2. Add the facts you'd otherwise re-explain, written to be verifiable: "Run `npm test` before committing", "API handlers live in `src/api/handlers/`" — not "test your changes" or "keep files organized".
 3. Keep it under 200 lines with markdown headers — longer files consume more context and reduce adherence.
-4. Auto memory works on its own (enabled by default, v2.1.59+): Claude saves build quirks, debugging insights, and preferences it discovers to `~/.claude/projects/<project>/memory/` and recalls them next session.
+4. Auto memory works on its own (enabled by default): Claude saves build quirks, debugging insights, and preferences it discovers to `~/.claude/projects/<project>/memory/` and recalls them next session.
 5. Run `/memory` anytime to see every loaded instruction file, open one in your editor, or toggle auto memory.
 
 ### Composing with Other Approaches (Intermediate)
@@ -56,7 +56,15 @@ Every session starts with a fresh context window; without persistent memory, you
 
 You inherit a Go service where the previous owner left no docs. First session, you run `/init` — Claude generates a CLAUDE.md capturing the `make test-integration` command, the `internal/` package layout, and the fact that migrations run through a custom `./scripts/migrate.sh` wrapper.
 
-Over the next week you append the corrections you catch yourself repeating: "gRPC handlers must call `auth.Verify()` before touching the store", "the `orders` table is append-only — never generate UPDATE migrations against it". Meanwhile auto memory quietly records that the integration tests need Docker running and that you prefer table-driven tests.
+Over the next week you append the corrections you catch yourself repeating:
+
+```markdown
+## Rules
+- gRPC handlers must call `auth.Verify()` before touching the store
+- The `orders` table is append-only — never generate UPDATE migrations against it
+```
+
+Meanwhile auto memory quietly records that the integration tests need Docker running and that you prefer table-driven tests.
 
 Two weeks later a teammate opens the repo with Claude Code for the first time. Their first session already builds correctly, tests correctly, respects the append-only table, and writes table-driven tests — the entire ramp-up you went through, inherited for free from `git pull`.
 

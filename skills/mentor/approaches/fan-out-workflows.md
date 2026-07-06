@@ -1,9 +1,9 @@
 # Fan-Out Workflows (Orchestration)
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Fan-Out Workflows let you orchestrate tens to hundreds of AI agents through a JavaScript runtime built into Claude Code. You write a short script that defines phases, parallelism, and verification steps, and the runtime manages spawning agents, collecting results, and feeding outputs between stages. Think of it as a build system for AI tasks — you define the dependency graph, and the runtime handles execution.
+Fan-Out Workflows let you orchestrate tens to hundreds of AI agents through a JavaScript runtime built into Claude Code. You describe the task, Claude writes a short script that defines phases, parallelism, and verification steps, and the runtime manages spawning agents, collecting results, and feeding outputs between stages. Think of it as a build system for AI tasks — you define the dependency graph, and the runtime handles execution.
 
 ## Why It Works
 
@@ -20,17 +20,16 @@ Some problems are embarrassingly parallel: reviewing 50 files, migrating 200 API
 
 - Tasks with fewer than 5-10 independent units — the orchestration overhead is not worth it for small batches
 - Highly interdependent changes where each step depends on the output of the previous step — use sequential subagents instead
-- Exploratory work where you do not know the structure of the problem yet — plan first, fan out after
 - When you need interactive human feedback during execution — fan-out workflows run autonomously
 
 ## How It Works
 
 ### Basic (Beginner)
 
-1. Define your task list and the work each agent should do
-2. Use `agent()` to spawn individual workers with specific prompts
-3. Use `parallel()` to run a batch and wait for all results
-4. Collect and process the results
+1. Ask for a workflow in your prompt — say "use a workflow to ..." or include the keyword `ultracode` — and Claude writes the orchestration script (paid plans; on Pro, enable Dynamic workflows in `/config`)
+2. In the script, `agent()` spawns individual workers with specific prompts
+3. `parallel()` runs a batch and waits for all results; `pipeline()` runs one agent per item in a list
+4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself)
 
 Example — review three services in parallel:
 ```javascript
@@ -44,7 +43,7 @@ const reviews = await parallel(services.map(svc =>
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Fan-out with worktree isolation**: Give each agent `isolation: "worktree"` so they can make edits in parallel. Useful for migration tasks where each agent modifies files.
+- **Fan-out with worktree isolation**: Ask for each agent to work in its own isolated worktree copy so parallel edits don't conflict. Useful for migration tasks where each agent modifies files.
 - **Plan Mode then fan-out**: Use Plan Mode to identify the 50 files that need migration, then fan out agents to migrate each file independently.
 - **Fan-out then review skills**: After agents make parallel changes across worktrees, run `/code-review` on the combined diff to catch cross-cutting issues that individual agents missed.
 
@@ -56,14 +55,14 @@ const verified = await parallel(findings.map(f =>
   agent(`Challenge this finding. Is it a real bug or a false positive? ${f.description}`)
 ));
 ```
-- **Pipeline stages**: Use `pipeline()` for multi-stage processing where items flow through stages independently (no barrier between stages). Item 1 can be in stage 3 while item 5 is still in stage 1.
-- **Structured output with schema**: Pass a `schema` option to `agent()` to get validated JSON output. The runtime enforces the schema at the tool-call layer, so you always get parseable, typed results.
+- **Per-item pipelines**: Use `pipeline(items, fn)` to run one agent per item in a list; chain multiple `agent()` calls inside `fn` when an item needs staged processing.
+- **Structured output with schema**: Pass a `schema` option to `agent()` to get validated JSON output. The runtime validates the output against the schema, so you get parseable, typed results.
 - **Budget-aware loops**: Use `loop-until-dry` patterns where agents keep finding issues until a round produces zero new findings, with a budget cap to prevent runaway costs.
 
 ## Common Pitfalls
 
-- **Unbounded fan-out**: Spawning 500 agents without a concurrency limit can exhaust API rate limits and produce unreliable results. Start with up to 16 concurrent agents (capped at min(16, cpu_cores - 2)) and scale up after validating.
-- **Ignoring pipeline vs parallel**: `pipeline()` lets items flow through stages independently (no barrier). `parallel()` waits for everything to complete before continuing. Using the wrong one causes either unnecessary blocking or premature aggregation.
+- **Unbounded fan-out**: Spawning 500 agents without a concurrency limit can exhaust API rate limits and produce unreliable results. The runtime caps runs at 16 concurrent agents (fewer on limited-CPU machines) and 1,000 agents per run; validate on a small slice before running the full set.
+- **Ignoring pipeline vs parallel**: `pipeline()` runs one agent per item in a list; `parallel()` runs a batch and waits for all of it before continuing. Pick the shape that matches whether results are consumed per item or as a whole batch.
 - **Skipping verification**: Raw fan-out results have a false-positive rate. Always add a verification phase — even a simple "does this finding still hold?" recheck — before presenting results to a human.
 - **Overly broad agent prompts**: If each agent gets the same vague prompt, you get 50 copies of shallow analysis. Give each agent specific scope: the file, the rule, the exact question to answer.
 
@@ -75,12 +74,10 @@ Your team is migrating from `moment.js` to `dayjs` across a monorepo with 180 fi
 const files = await agent("List all files importing 'moment'. Return as JSON array.");
 
 const migrations = await parallel(files.map(f =>
-  agent({
-    prompt: `Migrate ${f} from moment.js to dayjs. Replace all moment() calls
-             with dayjs(), update duration APIs, and handle timezone calls with
-             dayjs/plugin/timezone. Return the file path and a summary of changes.`,
-    isolation: "worktree"
-  })
+  agent(`Migrate ${f} from moment.js to dayjs in your own isolated worktree copy.
+         Replace all moment() calls with dayjs(), update duration APIs, and handle
+         timezone calls with dayjs/plugin/timezone. Return the file path and a
+         summary of changes.`, { label: f })
 ));
 
 const verified = await parallel(migrations.map(m =>
@@ -89,12 +86,12 @@ const verified = await parallel(migrations.map(m =>
          dayjs-compatible. Report pass/fail with details.`)
 ));
 
-log(`Migrated ${migrations.length} files. ${verified.filter(v => v.pass).length} passed verification.`);
+return `Migrated ${migrations.length} files. ${verified.filter(v => v.pass).length} passed verification.`;
 ```
 
 The runtime spawns agents in batches, each migrating one file in its own worktree. A second wave verifies each migration. The whole operation takes minutes instead of hours, and each agent works with full context on a single file rather than degraded context across 180.
 
 ## Sources
 
-- [Claude Code Common Workflows](https://code.claude.com/docs/en/common-workflows) — Official docs on workflow patterns and fan-out orchestration
+- [Dynamic Workflows](https://code.claude.com/docs/en/workflows) — Official docs on orchestrating subagents at scale with workflow scripts
 - [Building a C Compiler with Claude](https://www.anthropic.com/engineering/building-c-compiler) — Anthropic engineering blog demonstrating parallel fan-out patterns

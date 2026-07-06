@@ -1,5 +1,5 @@
 # Plan Mode
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -28,16 +28,16 @@ Planning before acting is a fundamental engineering discipline, and it applies e
 ### Basic (Beginner)
 
 1. Start Claude Code with plan permissions: `claude --permission-mode plan`
-2. Or toggle mid-session by pressing `Shift+Tab` to switch into Plan Mode
+2. Or switch mid-session: press `Shift+Tab` to cycle into Plan Mode, or prefix a single prompt with `/plan`
 3. Describe your task: "The user login flow is broken when SSO tokens expire. Find the root cause and propose a fix."
 4. Claude reads relevant files, traces the logic, and presents a structured plan
-5. Review the plan. Approve to let Claude execute, or refine: "Good analysis, but let's handle the token refresh in the middleware instead."
+5. Review the plan. Approve it — picking whether Claude executes in auto, accept-edits, or manual mode — or refine: "Good analysis, but let's handle the token refresh in the middleware instead."
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Plan then delegate**: Use Plan Mode to design a refactoring strategy, then spawn subagents to execute each piece in parallel. The plan becomes the task list.
-- **Plan then review**: Have Claude plan the fix, execute it, then run `/code-review` on its own changes to catch issues the plan missed.
-- **Plan in worktree**: Enter a worktree first, then use Plan Mode for risky changes. If the plan goes sideways after approval, you can discard the entire worktree.
+- **Plan Mode plus Subagent Delegation**: Use Plan Mode to design a refactoring strategy, then spawn subagents to execute each piece in parallel. The plan becomes the task list.
+- **Plan Mode plus Built-in Review Skills**: Have Claude plan the fix, execute it, then run `/code-review` on its own changes to catch issues the plan missed.
+- **Plan Mode plus Worktree Isolation**: Enter a worktree first, then use Plan Mode for risky changes. If the plan goes sideways after approval, you can discard the entire worktree.
 
 ### Advanced Patterns
 
@@ -73,5 +73,5 @@ You approve, and Claude implements the interface, updates the test, and updates 
 
 ## Sources
 
-- [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode) — Official docs covering plan mode toggle and structured planning
-- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Anthropic engineering guide with plan mode workflow patterns
+- [Permission modes](https://code.claude.com/docs/en/permission-modes) — Official docs on plan mode: how to enter it, what it can and cannot do, and the plan approval flow
+- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Official best-practices guide with the explore, plan, then code workflow

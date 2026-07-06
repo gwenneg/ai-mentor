@@ -1,5 +1,5 @@
 # Deep Research
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -7,7 +7,7 @@ Deep Research lets you ask a complex question and get back a thoroughly sourced 
 
 ## Why It Works
 
-Single-source answers are fragile. When you search one page and take its answer at face value, you inherit that source's biases, omissions, and potential inaccuracies. Deep Research applies the same adversarial verification that good journalism and peer review use: multiple independent sources must agree before a claim is treated as established. The fan-out search pattern also surfaces information you would not find in a single query, because different search terms hit different parts of the web. The adversarial step is particularly valuable: rather than just finding supporting evidence, independent agents actively try to disprove each claim, which catches errors that consensus-seeking approaches miss. The result is a report you can actually make decisions from, not a guess you have to double-check yourself.
+Single-source answers are fragile: when you take one page's answer at face value, you inherit that source's biases, omissions, and potential inaccuracies. Deep Research applies the same adversarial verification that good journalism and peer review use: multiple independent sources must agree before a claim is treated as established. The fan-out search pattern also surfaces information you would not find in a single query, because different search terms hit different parts of the web. The result is a report you can actually make decisions from, not a guess you have to double-check yourself.
 
 ## When to Use It
 
@@ -28,24 +28,21 @@ Single-source answers are fragile. When you search one page and take its answer 
 ### Basic (Beginner)
 
 1. First, check whether your question is specific enough. If it is too broad, Claude will ask clarifying questions before starting the research.
-2. Start Claude Code and type: `/deep-research Why does React 19 drop support for defaultProps on function components, and what is the recommended migration path?`
-3. Claude fans out approximately 5 web searches with different query variations simultaneously
-4. It fetches and reads the actual content of the most relevant pages — not just snippet previews
-5. Independent verification agents check key claims against other sources
-6. Claude synthesizes a report with inline citations, flags any conflicting information, and assigns confidence levels to each finding
-7. The final report includes source URLs so you can verify any claim that matters to your decision
+2. Type: `/deep-research Why does React 19 drop support for defaultProps on function components, and what is the recommended migration path?` and approve the run when Claude Code asks. Deep Research is a bundled dynamic workflow — available on all paid plans (on Pro, turn on Dynamic workflows in `/config`) — and it needs the WebSearch tool available
+3. The run continues in the background while your session stays free: Claude fans out roughly 5 parallel web searches with different query variations, then fetches and reads the actual content of the most relevant pages — not just snippet previews. Check progress anytime with `/workflows`
+4. Independent verification agents adversarially cross-check each claim, and claims that do not survive verification are filtered out of the report
+5. Claude synthesizes a cited report with confidence levels and source URLs for each finding, so you can verify any claim that matters to your decision
 
 ### Composing with Other Approaches (Intermediate)
 
 - **Deep Research then Plan Mode**: Research a migration path first, then switch to Plan Mode to design the implementation strategy based on what you learned. The research grounds the plan in reality rather than the AI's training data.
 - **Deep Research then Autonomous Loop**: Research the correct API changes for a library upgrade, then run `/goal all tests pass` to let Claude apply the migration mechanically. The research context stays in the session, so the loop has accurate information about what changed and why.
-- **Deep Research for incident response**: When a production dependency has a CVE, run Deep Research to understand the vulnerability, its exploitability, available patches, and workarounds — all in one step instead of manually triaging GitHub advisories.
+- **Deep Research plus MCP Context**: During an incident, pull the error timeline from your observability stack via MCP Context, then run Deep Research on the suspect dependency — known CVEs, open issues, available patches — to check whether the root cause is a known upstream problem before debugging your own code.
 
 ### Advanced Patterns
 
 - **Scoped questions get better results**: "What are the performance implications of enabling React Compiler with existing useMemo calls in a Next.js 15 app?" will produce a more useful report than "Tell me about React Compiler." Specific questions constrain the search space and produce higher-signal results.
 - **Asking for comparison tables**: Request output in a specific format: "Compare Drizzle ORM and Prisma for a serverless PostgreSQL deployment. Include cold start impact, migration tooling, and type safety. Format as a comparison table." The synthesis step will structure the report accordingly.
-- **Chaining research sessions**: If the first report reveals a subtopic you need to dig into, run a follow-up Deep Research with a narrower question. Each session is independent, so the second query can target exactly the gap the first report exposed.
 - **Pre-research for unfamiliar domains**: Before starting work in a codebase area you have never touched, run Deep Research on the underlying technology. "How does gRPC streaming handle backpressure in Go?" gives you foundational understanding that makes your code review or implementation significantly better informed.
 
 ## Common Pitfalls
@@ -74,5 +71,5 @@ The report arrives as a structured comparison with a recommendation section: Day
 
 ## Sources
 
-- [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills and slash commands including /deep-research
+- [Dynamic workflows](https://code.claude.com/docs/en/workflows) — Official docs for the bundled /deep-research workflow: availability, approval, and monitoring runs with /workflows
 - [Claude Code Expertise](https://www.anthropic.com/research/claude-code-expertise) — Anthropic research on how Claude Code is used in practice

@@ -98,7 +98,7 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Hidden gem:** MCP Context — reviewing against the ticket's acceptance criteria instead of just the diff catches the most expensive bugs: code that works but solves the wrong problem.
 
-**Exemplar move:** Run `/code-review --effort high` on the branch diff — focus on src/services/billing/ discount stacking edge cases and Stripe webhook failure-mode error handling.
+**Exemplar move:** Run `/code-review high` on the branch diff — focus on src/services/billing/ discount stacking edge cases and Stripe webhook failure-mode error handling.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -299,7 +299,7 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Hidden gem:** Headless Mode — a headless pre-tag validation step catches the version mismatches and forgotten migrations humans miss on Friday afternoons.
 
-**Exemplar move:** Create .claude/skills/release-notes.md: /release-notes finds the latest git tag, categorizes commits by conventional prefixes, prepends a versioned changelog entry to CHANGELOG.md, adds migration notes for BREAKING CHANGE footers.
+**Exemplar move:** Create .claude/skills/release-notes/SKILL.md: /release-notes finds the latest git tag, categorizes commits by conventional prefixes, prepends a versioned changelog entry to CHANGELOG.md, adds migration notes for BREAKING CHANGE footers.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -358,7 +358,7 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Hidden gem:** Hooks — a PreToolUse hook that blocks edits to fixtures stops the AI from "fixing" a failing test by changing the expected output.
 
-**Exemplar move:** /goal: Raise src/services/order-processing/ coverage from 52% to 80% — run `npx jest --coverage --collectCoverageFrom='src/services/order-processing/**/*.ts'`, target untested branches and error paths, keep existing tests passing.
+**Exemplar move:** /goal Raise src/services/order-processing/ coverage from 52% to 80% — run `npx jest --coverage --collectCoverageFrom='src/services/order-processing/**/*.ts'`, target untested branches and error paths, keep existing tests passing.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|

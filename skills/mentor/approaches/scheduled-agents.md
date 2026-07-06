@@ -1,5 +1,5 @@
 # Scheduled & Recurring Agents
-*Last verified: 2026-07-02*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -7,7 +7,7 @@ Scheduled & Recurring Agents run Claude Code without you starting it. A routine 
 
 ## Why It Works
 
-Recurring maintenance work fails for one reason: someone has to remember to do it. Backlog grooming, dependency health checks, docs drift review — all valuable, none urgent, so they lose to whatever is on fire. Scheduling removes the remembering. The same shift that made CI the default for testing applies here: work that runs automatically happens every time, and work that requires initiative happens until the third busy week. Routines also change the economics of small recurring tasks — a job too minor to justify anyone's morning is perfectly justified as a nightly run someone reviews in thirty seconds.
+Recurring maintenance work fails for one reason: someone has to remember to do it — backlog grooming, dependency health checks, docs drift review are all valuable but never urgent, so they lose to whatever is on fire. Scheduling removes the remembering. The same shift that made CI the default for testing applies here: work that runs automatically happens every time, and work that requires initiative happens until the third busy week. Routines also change the economics of small recurring tasks — a job too minor to justify anyone's morning is perfectly justified as a nightly run someone reviews in thirty seconds.
 
 ## When to Use It
 
@@ -26,7 +26,7 @@ Recurring maintenance work fails for one reason: someone has to remember to do i
 
 ### Basic (Beginner)
 
-1. From any session, run `/schedule` with a natural-language description: `/schedule daily PR review at 9am` or a one-off like `/schedule in 2 weeks, open a cleanup PR that removes the feature flag`. Claude walks through the setup and saves the routine to your account. (Requires a claude.ai subscription login; also manageable at claude.ai/code/routines.)
+1. From any session, run `/schedule` with a natural-language description: `/schedule daily PR review at 9am` or a one-off like `/schedule in 2 weeks, open a cleanup PR that removes the feature flag`. Claude walks through the setup and saves the routine to your account. (Research preview; requires a claude.ai subscription login, and runs count against a daily per-account allowance. Also manageable at claude.ai/code/routines.)
 2. Write the prompt as if briefing someone who can't ask questions: what to do, where, and what success looks like. The routine runs with no permission prompts, so the prompt is the whole specification.
 3. Each run clones the selected repositories from the default branch and pushes changes only to `claude/`-prefixed branches unless you explicitly allow unrestricted pushes.
 4. Review runs at claude.ai/code/routines — each run is a full session you can open, read, and continue. Manage from the CLI with `/schedule list`, `/schedule update`, and `/schedule run`.
@@ -36,12 +36,12 @@ Recurring maintenance work fails for one reason: someone has to remember to do i
 
 - **Routines plus MCP connectors**: a triage routine reads new Slack reports and files Linear issues — your claude.ai connectors are available during runs (all included by default; remove the ones a routine doesn't need).
 - **Routines plus headless CI**: they overlap but split cleanly — GitHub Actions for checks tied to your pipeline and secrets, routines for account-level work spanning repos and external services with no CI config at all.
-- **API trigger plus incident response**: wire your monitoring tool to the routine's `/fire` endpoint with the alert body as `text` — the run correlates the stack trace with recent commits and opens a draft PR before on-call finishes reading the page.
+- **API trigger plus Cloud Sessions**: wire your monitoring tool to the routine's `/fire` endpoint with the alert body as `text` — the run correlates the stack trace with recent commits and opens a draft PR as a full cloud session on-call can open and continue, instead of starting from a blank terminal.
 
 ### Advanced Patterns
 
-- **Multi-trigger routines**: one PR-review routine can run nightly, react to every `pull_request.opened`, and be fired from a deploy script — same prompt, three entry points.
-- **Filtered GitHub triggers**: scope event triggers with filters (author, title, base/head branch, labels, draft state) — e.g. run the security-focused reviewer only when the head branch contains `auth` or a maintainer applies a `needs-backport` label.
+- **Multi-trigger routines**: one PR-review routine can run nightly, react to every `pull_request.opened`, and be fired from a deploy script — same prompt, three entry points. API and GitHub triggers are added from the web UI; the CLI's `/schedule` creates schedule triggers only.
+- **Filtered GitHub triggers**: scope event triggers with filters (author, title, body, base/head branch, labels, draft or merged state) — e.g. run the security-focused reviewer only when the head branch contains `auth` or a maintainer applies a `needs-backport` label.
 - **Custom cron cadence**: pick the closest preset in the UI, then `/schedule update` to set an exact cron expression (minimum interval one hour).
 
 ## Common Pitfalls
@@ -53,7 +53,15 @@ Recurring maintenance work fails for one reason: someone has to remember to do i
 
 ## Real-World Example
 
-Your team's dependency PRs pile up because nobody owns triage. You create a routine: nightly at 6am, against the service repo, with the prompt "Check open Renovate PRs. For each: read the changelog diff, run the test suite, and if tests pass and the change is a patch or minor bump with no breaking-change notes, approve and label `auto-verified`. For major bumps or failures, comment with a summary of the breaking changes and the failing tests. Never merge anything."
+Your team's dependency PRs pile up because nobody owns triage. You create a routine: nightly at 6am, against the service repo, with this prompt:
+
+```
+Check open Renovate PRs. For each: read the changelog diff, run the
+test suite, and if tests pass and the change is a patch or minor bump
+with no breaking-change notes, approve and label auto-verified. For
+major bumps or failures, comment with a summary of the breaking
+changes and the failing tests. Never merge anything.
+```
 
 The first morning, three patch bumps carry `auto-verified` labels and one major bump has a comment summarizing the two API changes that break your usage — with file paths. Triage that used to eat the first coffee of whoever felt guilty now takes one person five minutes of reviewing pre-analyzed PRs.
 

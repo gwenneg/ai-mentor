@@ -1,13 +1,13 @@
 # Model & Effort Selection
-*Last verified: 2026-07-01*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Model & Effort Selection lets you match the model and the reasoning depth to what each task needs, instead of running everything at one setting. Claude Code ships multiple models (Opus for deep reasoning, Sonnet as the balanced default, Haiku for fast, cheap work) plus an adjustable effort level that controls how much thinking the model spends per response. You choose per task, per session, or per agent — and switching takes seconds.
+Model & Effort Selection lets you match the model and the reasoning depth to what each task needs, instead of running everything at one setting. Claude Code ships multiple models (Fable — the Claude 5 flagship — for the hardest, longest-running tasks, Opus for deep reasoning, Sonnet for balanced everyday coding, Haiku for fast, cheap work; availability varies by plan) plus an adjustable effort level that controls how much thinking the model spends per response. You choose per task, per session, or per agent — and switching takes seconds.
 
 ## Why It Works
 
-No single model configuration is best at everything. Deep reasoning models at high effort excel at architecture and debugging but are slower and more expensive than routine work justifies. Fast models handle boilerplate and mechanical edits efficiently but miss subtleties in multi-file reasoning. Matching the model to the task is the same engineering principle as choosing between a profiler, a debugger, and a linter — the right tool for the job. Because subagents can each run their own model, you can compose both in one workflow: a strong model orchestrates while cheap models handle the volume.
+No single model configuration is best at everything. Deep reasoning models at high effort excel at architecture and debugging but are slower and more expensive than routine work justifies, while fast models handle boilerplate and mechanical edits efficiently but miss subtleties in multi-file reasoning. Matching the model to the task is the same engineering principle as choosing between a profiler, a debugger, and a linter — the right tool for the job. Because subagents can each run their own model, you can compose both in one workflow: a strong model orchestrates while cheap models handle the volume.
 
 ## When to Use It
 
@@ -29,8 +29,8 @@ No single model configuration is best at everything. Deep reasoning models at hi
 1. Check your current model with `/model` — it lists available models and saves your choice as the default for new sessions.
 2. Switch based on the task ahead: pick Opus before a gnarly debugging session, Haiku for a batch of mechanical renames.
 3. Adjust reasoning depth with `/effort` (`low`, `medium`, `high`, `xhigh`, `max`, or `auto`) — lower effort responds faster and costs less, higher effort thinks longer on hard problems.
-4. On Opus, toggle `/fast` for fast mode: the same model with faster output, useful for interactive back-and-forth.
-5. Continue working. The conversation context carries over — the model you switch to sees everything discussed so far.
+4. On Opus, toggle `/fast` for fast mode: the same model with faster output at a higher cost per token — worth it for interactive back-and-forth where latency matters more than cost.
+5. Continue working. The conversation context carries over — the model you switch to sees everything discussed so far, though the first turn after a switch re-reads the history without cached context, so switch at natural task boundaries.
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -41,8 +41,7 @@ No single model configuration is best at everything. Deep reasoning models at hi
 ### Advanced Patterns
 
 - **Per-agent model overrides**: Custom agent definitions accept a `model` field in frontmatter (`opus`, `sonnet`, `haiku`), and ad-hoc subagents can override the model per invocation. A fan-out workflow can run its finder agents cheap and its verifier agents strong.
-- **Effort-tiered workflows**: In orchestrated workflows, set the effort per stage — low for mechanical extraction stages, max for the adversarial verification stage where missed reasoning means false positives slip through.
-- **Cost-aware budgeting**: Watch `/usage` during long sessions. If a session is burning budget on routine turns, drop the model or effort and save the expensive configuration for the tasks where quality measurably differs.
+- **Stage-tiered workflows**: In orchestrated workflows, every agent uses the session's model unless the script routes a stage to a different one — run mechanical extraction stages cheap and the adversarial verification stage strong, where missed reasoning means false positives slip through. Watch `/usage` during long runs and save the expensive configuration for the stages where quality measurably differs.
 - **Advisor pairing** (experimental, Anthropic API only, v2.1.98+): instead of switching models, keep a fast main model and set a stronger advisor with `/advisor opus` (or `advisorModel` in settings). Claude consults the advisor at decision points — before committing to an approach, when an error keeps recurring, before declaring a task done — sending it the full conversation. Consultations bill at the advisor model's rates, but pairing a fast main with a strong advisor typically costs less than running the strong model throughout, and toggling `/advisor` doesn't invalidate the prompt cache the way `/model` does.
 
 ## Common Pitfalls

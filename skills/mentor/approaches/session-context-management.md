@@ -1,5 +1,5 @@
 # Session & Context Management
-*Last verified: 2026-07-02*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -29,7 +29,7 @@ Context windows are finite, and response quality degrades as they fill with stal
 1. Run `/context` to see where the window is going — it renders usage as a colored grid and flags context-heavy tools, memory bloat, and capacity issues.
 2. When the conversation gets long, run `/compact` to summarize it down. Pass focus instructions to control what survives: `/compact keep the migration plan and open bugs`.
 3. Ask side questions with `/btw <question>` — you get an answer without the exchange being added to the conversation history.
-4. Starting an unrelated task? `/clear` gives you an empty context; the previous conversation stays available in `/resume`. Pass a name (`/clear payments-work`) to label the old one for easy retrieval.
+4. Starting an unrelated task? `/clear` gives you an empty context; the previous conversation stays available in `/resume` — and, on v2.1.191+, as a `previous session` entry at the top of the `/rewind` menu until you exit Claude Code. Pass a name (`/clear payments-work`) to label the old one for easy retrieval.
 5. Use `/rewind` to step the conversation and/or code back to an earlier point when a direction didn't pan out.
 
 ### Composing with Other Approaches (Intermediate)
@@ -41,14 +41,12 @@ Context windows are finite, and response quality degrades as they fill with stal
 ### Advanced Patterns
 
 - **Named session workflows**: `/rename` sessions as you go and resume any of them by name with `/resume <name>` — turning sessions into durable, addressable workstreams rather than one anonymous scrollback.
-- **Recovering from a premature `/clear`**: `/rewind` can restore the conversation from before a `/clear` (v2.1.191+), so clearing is no longer irreversible.
-- **Compaction-aware task ordering**: settle decisions early ("we're using approach B") and let details accumulate after — compaction preserves conclusions better than meandering deliberation, so a session that decides-then-executes compacts cleanly while a session that deliberates forever compacts into mush.
 - **Extended 1M-token context**: for sessions that legitimately need huge context — sprawling monorepos, massive migration diffs — append `[1m]` to the model: `/model opus[1m]` or `/model sonnet[1m]` (Sonnet 5 runs the 1M window natively on the Anthropic API; Opus availability varies by plan). A bigger window is not a substitute for curation — noise degrades quality at any size — but it raises the ceiling when the working set is genuinely large.
 - **Cache-aware session habits**: the prompt cache is keyed on your model, effort level, and the conversation prefix — so `/model` and `/effort` switches make the *next* turn reprocess the whole history uncached (one slow, expensive turn), while `/compact` deliberately rebuilds the conversation layer. Pick model and effort at the top of a session, save `/compact` for natural breaks between tasks, and when abandoning a bad path prefer `/rewind` over compaction: rewinding truncates back to a prefix that's already cached.
 
 ## Common Pitfalls
 
-- **Compacting too late**: by the time responses visibly degrade, the noise has already been influencing answers for a while. Check `/context` at natural task boundaries instead of waiting for symptoms.
+- **Compacting too late**: by the time responses visibly degrade, the noise has already been influencing answers for a while. Check `/context` at natural task boundaries instead of waiting for symptoms — compacting at a break you choose beats auto-compaction firing mid-task.
 - **Using the main thread for everything**: every "quick question" answered in the main conversation permanently occupies context. `/btw` exists precisely for this — use it.
 - **Preserving conversations that should die**: nursing a confused 3-hour session is usually worse than `/clear` plus a two-sentence restatement of where you are. The restatement forces clarity the old context lacked.
 - **Confusing conversation memory with project memory**: anything you'd be sad to lose in a `/clear` belongs in CLAUDE.md or auto memory. If losing the conversation would lose knowledge, the knowledge is in the wrong place.
@@ -57,7 +55,13 @@ Context windows are finite, and response quality degrades as they fill with stal
 
 You're four hours into a gnarly migration in a monorepo. Claude starts re-asking about the package layout it knew earlier — the classic saturation sign. `/context` confirms it: the window is dominated by old test output from the morning's debugging.
 
-You run `/compact keep the migration checklist, the three remaining failing packages, and the decision to use the compat shim`. The session shrinks to a tight summary plus your project's CLAUDE.md, which re-injects automatically. Claude's next answer is sharp again — it names the three failing packages without being reminded.
+You run:
+
+```
+/compact keep the migration checklist, the three remaining failing packages, and the decision to use the compat shim
+```
+
+The session shrinks to a tight summary plus your project's CLAUDE.md, which re-injects automatically. Claude's next answer is sharp again — it names the three failing packages without being reminded.
 
 Mid-afternoon, a teammate pings you about an unrelated production question. Instead of contaminating the migration session, you ask it via `/btw` — answered, gone, zero context cost. At the end of the day you `/rename` the session `pkg-migration` and close the laptop. Tomorrow, `/resume pkg-migration` puts you exactly where you left off — checklist, decisions, and all.
 

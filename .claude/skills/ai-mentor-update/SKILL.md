@@ -218,11 +218,10 @@ Present the suggested actions and ask the user which ones to apply *(auto mode: 
 
 *Skip this step if the user did not select it.*
 
-Fetch the current plugin list from `anthropics/claude-plugins-official` using the GitHub API:
+Fetch the current plugin list from the marketplace manifest — the manifest is the authoritative list and includes externally-hosted partner plugins that have no directory in the repo:
 
 ```
-gh api repos/anthropics/claude-plugins-official/contents/plugins | python3 -c "import json,sys; [print(d['name']) for d in json.load(sys.stdin) if d['type']=='dir']"
-gh api repos/anthropics/claude-plugins-official/contents/external_plugins | python3 -c "import json,sys; [print(d['name']) for d in json.load(sys.stdin) if d['type']=='dir']"
+curl -s https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | python3 -c "import json,sys; [print(p['name']) for p in json.load(sys.stdin)['plugins']]"
 ```
 
 Extract the plugin names currently documented in `skills/mentor/references/official-plugins.md` by reading the file and collecting all backtick-wrapped names in its tables.
@@ -230,15 +229,9 @@ Extract the plugin names currently documented in `skills/mentor/references/offic
 Compare the two lists:
 
 - **New plugins** — present in the repo but not mentioned in `references/official-plugins.md`
-- **Removed plugins** — mentioned in `references/official-plugins.md` but no longer in the repo
+- **Removed plugins** — mentioned in `references/official-plugins.md` but no longer in the manifest
 
-For each new plugin, fetch its description:
-
-```
-gh api repos/anthropics/claude-plugins-official/contents/plugins/<name>/.claude-plugin/plugin.json
-```
-
-Decode the base64 content and extract the `description` field.
+For each new plugin, take its `description` (and `author`, to label Anthropic-built vs external) from the same manifest JSON — no per-plugin fetch needed. If a batch of new plugins is very large (e.g. a marketplace expansion), still list every name in the report, but it is acceptable to add table rows in slices across runs, oldest-known first, noting the remaining backlog count in the report.
 
 ### Output
 
@@ -251,7 +244,7 @@ Decode the base64 content and extract the `description` field.
 - `<name>` (Anthropic-built / External) — <description>
   → Suggested table row: | `<name>` | <short description> | `<goal slug>` | ☑️ desk-checked — <reason> |
 
-### Removed plugins (in references/official-plugins.md but no longer in repo)
+### Removed plugins (in references/official-plugins.md but no longer in the manifest)
 - `<name>` — remove from the relevant table
 
 ### No changes
