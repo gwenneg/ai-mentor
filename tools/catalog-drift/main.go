@@ -1,11 +1,10 @@
 // Check references/official-plugins.md against the live official marketplace.
 //
-// Pure manifest diffing — no LLM. Reads the marketplace.json manifest, which
-// lists every plugin including externally-hosted ones; listing the repo's
-// plugin directories instead (the pre-2026-07-07 approach) silently missed
-// all external-source entries. Exits 1 on drift so a scheduled workflow can
-// open an issue or feed the diff to the maintenance run, 2 on fetch or setup
-// errors. Stdlib only.
+// Pure manifest diffing — no LLM. Reads the marketplace.json manifest, the
+// authoritative plugin list: it includes externally-hosted plugins that have
+// no directory in the marketplace repo, so directory listings undercount.
+// Exits 1 on drift so a scheduled workflow can open an issue or feed the
+// diff to the maintenance run, 2 on fetch or setup errors. Stdlib only.
 //
 // Usage: go -C tools/catalog-drift run .
 package main
