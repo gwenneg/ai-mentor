@@ -1,5 +1,5 @@
 # Worktree Isolation
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -21,57 +21,54 @@ Isolation is one of the oldest reliability principles in software engineering �
 
 - Simple, sequential changes where you are only running one session at a time — worktrees add setup overhead for no benefit
 - When the task requires modifying gitignored state (databases, build caches, local server state) that cannot be replicated via `.worktreeinclude`
-- Quick questions or code explanations that do not involve any file edits
 - Very large monorepos where the disk cost of a full working copy is prohibitive
 
 ## How It Works
 
 ### Basic (Beginner)
 
-1. Start Claude Code with a worktree: `claude --worktree`
-2. Claude creates a new branch and working directory under `.claude/worktrees/<name>/`
+1. Start Claude Code with a worktree: `claude --worktree feature-name` (omit the name and Claude generates one)
+2. Claude creates the working directory `.claude/worktrees/<name>/` on a new branch named `worktree-<name>`
 3. Work normally — all edits happen in the isolated copy, your original branch is untouched
-4. When done, review changes with `git diff` or `git log` in the worktree
-5. If the changes look good, merge the worktree branch into your main branch
-6. If the changes are bad, discard the entire worktree — no cleanup needed
-7. Exit the worktree: Claude prompts you to keep or remove it
+4. When done, review changes with `git diff` in the worktree; merge the branch if they look good, or discard the worktree if they don't
+5. Exit the session: if the worktree has changes, Claude prompts you to keep or remove it; a clean worktree is removed automatically
 
 ### Composing with Other Approaches (Intermediate)
 
 - **Worktree plus Plan Mode**: Enter a worktree, then use Plan Mode for a risky refactoring. If the plan looks wrong after execution, discard the entire worktree — no `git reset` gymnastics needed.
 - **Worktree plus subagents**: Spawn subagents with `isolation: "worktree"` so each agent edits in its own worktree. Three agents can refactor three different services in parallel without merge conflicts.
-- **Worktree for A/B approaches**: Create two worktrees, give each a different implementation strategy for the same problem, then compare the results side by side.
+- **Worktree plus Checkpoints**: Inside a worktree you get two levels of undo — rewind a checkpoint when a single edit went wrong, discard the whole worktree when the entire approach did.
 
 ### Advanced Patterns
 
 - **`.worktreeinclude` for environment parity**: Create a `.worktreeinclude` file listing gitignored files your project needs (`.env`, `.env.local`, vendored binaries). These get copied into each new worktree automatically, so the isolated environment actually works.
 - **Subagent fan-out with worktree isolation**: In a fan-out workflow, each subagent gets `isolation: "worktree"`. This lets you run 5-10 parallel agents that all edit code without any coordination — each produces a branch you can review and merge independently.
-- **Long-lived worktrees for feature branches**: Keep a worktree alive across sessions for a multi-day feature. Re-enter it with `EnterWorktree` using the path to resume exactly where you left off. This is particularly useful for multi-day migrations where you want to checkpoint progress without merging incomplete work.
+- **Long-lived worktrees for feature branches**: Keep a worktree alive across sessions for a multi-day feature. Ask Claude to switch back into it — the `EnterWorktree` tool enters an existing worktree under `.claude/worktrees/` by path — and pick up the file state where you left off. This is particularly useful for multi-day migrations where you want to checkpoint progress without merging incomplete work.
 
 ## Common Pitfalls
 
 - **Forgetting to set `worktree.baseRef`**: By default, worktrees branch from `origin/<default-branch>`. If you want to branch from your current HEAD instead, set `worktree.baseRef` to `head` in your Claude settings.
 - **Forgetting `.worktreeinclude`**: Your worktree will not have `.env`, local configs, or other gitignored files unless you list them. If your app fails to start in the worktree, this is almost always why.
-- **Worktree accumulation**: Each worktree is a full copy of your repo on disk. If you forget to clean them up, they consume disk space. Use `git worktree list` periodically and remove stale ones.
+- **Worktree accumulation**: Each worktree is a full working copy of your project files on disk (git history is shared). If you forget to clean them up, they consume disk space. Use `git worktree list` periodically and remove stale ones.
 - **Merging divergent worktrees**: If two worktrees edit overlapping files, you still get merge conflicts when combining them — isolation defers the conflict, it does not eliminate it. Plan your parallel work to minimize overlap.
-- **Assuming worktree state persists across sessions**: If you exit Claude Code without keeping the worktree, it may be cleaned up. Explicitly choose "keep" when prompted if you plan to return to the work later.
 
 ## Real-World Example
 
 You need to upgrade your project from React Router v5 to v6, but you are not sure it will go smoothly. You also have a teammate waiting on a bug fix in the same codebase.
 
 ```
-claude --worktree
+claude --worktree router-upgrade
 > Upgrade all React Router v5 APIs to v6 in src/routes/ and src/components/.
   Update useHistory to useNavigate, Switch to Routes, and component prop
   to element prop.
 ```
 
-Claude creates `.claude/worktrees/router-upgrade/` on branch `router-upgrade`, then methodically updates 14 files. Meanwhile, you open a second terminal and work on the bug fix in your normal working directory — no conflicts, no stashing, no branch switching.
+Claude creates `.claude/worktrees/router-upgrade/` on branch `worktree-router-upgrade`, then methodically updates 14 files. Meanwhile, you open a second terminal and work on the bug fix in your normal working directory — no conflicts, no stashing, no branch switching.
 
 After Claude finishes, you run `npm test` in the worktree directory. Three tests fail in `src/routes/__tests__/ProtectedRoute.test.tsx` because the test setup still uses `MemoryRouter` from v5. You ask Claude to fix the tests, it does, and all 47 tests pass. You merge the branch into `main` and remove the worktree with a clean history. Your teammate's bug fix, developed concurrently on the main working directory, never experienced a single conflict.
 
 ## Sources
 
+- [Run parallel sessions with worktrees](https://code.claude.com/docs/en/worktrees) — Official docs for the `--worktree` flag, `.worktreeinclude`, `worktree.baseRef`, and worktree cleanup
 - [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs covering worktree isolation mode for subagents
 - [Claude Code IDE Integrations](https://code.claude.com/docs/en/ide-integrations) — VS Code integration docs covering the --worktree flag

@@ -1,5 +1,5 @@
 # Hooks as Workflow
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -7,7 +7,7 @@ Hooks are automatic actions that fire when Claude Code does something — edits 
 
 ## Why It Works
 
-The biggest productivity losses in development come from delayed feedback. A bug caught at edit time costs seconds to fix. The same bug caught in CI costs minutes. Caught in production, hours. Hooks shift feedback left to the earliest possible moment — the instant Claude makes a change — by automating the checks that developers intend to do but often skip under pressure.
+The biggest productivity losses in development come from delayed feedback. A bug caught at edit time costs seconds to fix; the same bug caught in CI costs minutes, and in production, hours. Hooks shift feedback left to the earliest possible moment — the instant Claude makes a change — by automating the checks that developers intend to do but often skip under pressure.
 
 ## When to Use It
 
@@ -27,10 +27,12 @@ The biggest productivity losses in development come from delayed feedback. A bug
 
 ### Basic (Beginner)
 
-1. Identify the trigger event: `PreToolUse` (before an action), `PostToolUse` (after an action), `Stop` (session end), `SessionStart`, or `Notification`
+1. Identify the trigger event: `PreToolUse` (before an action), `PostToolUse` (after an action), `Stop` (when Claude finishes responding), `SessionStart`, or `Notification` — among others; see the hooks reference for the full event list
 2. Write the hook action: a shell command, an HTTP request, or a prompt
 3. Add it to `.claude/settings.json` under the `hooks` key
 4. The hook fires automatically — no manual invocation needed
+
+Don't want to write the JSON by hand? The official `hookify` plugin turns a plain-language rule — or a repeated pattern it spots in your conversation history — into a working hook for you.
 
 Example — auto-format after every file edit:
 ```json
@@ -51,17 +53,17 @@ Example — auto-format after every file edit:
 
 - **Hooks plus autonomous loops**: Add a PostToolUse hook that runs tests after every edit. Combined with `/goal "all tests pass"`, Claude gets instant test feedback on each iteration — tightening the autonomous loop.
 - **Hooks plus worktree isolation**: Add a PreToolUse hook that blocks edits outside the worktree directory, preventing agents from accidentally modifying your main working tree.
-- **Hooks plus subagent delegation**: Use a Stop hook to aggregate results from all subagents and post a summary when the last one finishes.
+- **Hooks plus subagent delegation**: Use `SubagentStop` hooks to log each subagent's result as it finishes, and a Stop hook to post a summary once the main agent completes the turn.
 
 ### Advanced Patterns
 
 - **Layered protection**: Stack PreToolUse hooks — one blocks `.env` edits, another requires confirmation for database migration files, a third rejects any `rm -rf` command. Each layer catches what the others miss.
 - **Async notification hooks**: Fire Slack webhooks or desktop notifications when Claude finishes a task, without blocking the session. Useful for long-running autonomous work.
-- **Goal evaluation via Stop hooks**: When a session ends, a Stop hook can run a validation script and report whether the work met acceptance criteria — turning informal "is it done?" into automated verification.
+- **Goal evaluation via Stop hooks**: When Claude finishes responding, a Stop hook can run a validation script — and exit with code 2 to block the stop, feeding the failure back so Claude keeps working until acceptance criteria are met. This turns informal "is it done?" into automated verification.
 
 ## Common Pitfalls
 
-- **Slow hooks kill productivity**: A hook that runs `npm test` on every edit adds 10+ seconds of latency per change. Use `--related` flags or scope tests to the changed file. If the full suite is needed, run it asynchronously.
+- **Slow hooks kill productivity**: A hook that runs `npm test` on every edit adds 10+ seconds of latency per change. Scope tests to the changed file (e.g. `jest --findRelatedTests`). If the full suite is needed, run it asynchronously.
 - **Over-blocking with PreToolUse**: Too many "are you sure?" prompts train developers to click yes without reading. Reserve blocking hooks for genuinely dangerous operations.
 - **Forgetting hook scope**: Hooks in `.claude/settings.json` apply to the project. Hooks in `~/.claude/settings.json` apply globally. A formatting hook for a JavaScript project should not fire in a Go project.
 

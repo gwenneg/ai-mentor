@@ -1,13 +1,13 @@
 # Channels
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Channels push events from outside systems into your already-running Claude Code session — chat messages, CI results, monitoring alerts, webhooks — so Claude can react to things that happen while you're not at the terminal. A channel is an MCP server with push capability, installed as a plugin and opted in per session with `claude --channels plugin:<name>@claude-plugins-official`. Channels can be two-way: Claude reads the inbound event and replies through the same channel, like a chat bridge. Telegram, Discord, and iMessage plugins ship in the research preview, plus a localhost `fakechat` demo, and you can build your own for systems without one.
+Channels push events from outside systems into your already-running Claude Code session — chat messages, CI results, monitoring alerts, webhooks — so Claude can react to things that happen while you're not at the terminal. A channel is an MCP server with push capability, installed as a plugin and opted in per session with `claude --channels plugin:<name>@claude-plugins-official`; channels can be two-way, with Claude reading the inbound event and replying through the same channel like a chat bridge. Telegram, Discord, and iMessage plugins ship in the research preview, plus a localhost `fakechat` demo, and you can build your own for systems without one.
 
 ## Why It Works
 
-Every other remote integration either spawns a fresh session (Claude Code on the web, Slack) or waits to be asked (a standard MCP server Claude queries mid-task). Channels fill the gap between them: the event arrives in the session that already has your files open and remembers what you were debugging. That context is the whole value — a CI failure webhook landing in the session that just touched the failing code gets triaged with everything loaded, instead of by a cold-started agent reconstructing state. And because the reply path runs through the same channel, your phone becomes a steering wheel for work executing on your real machine against your real files.
+Other remote integrations spawn a fresh session (Claude Code on the web, Slack), wait to be asked (a standard MCP server Claude queries mid-task), or need you actively driving (Remote Control). Channels fill the gap: the event arrives in the session that already has your files open and remembers what you were debugging. That context is the whole value — a CI failure webhook landing in the session that just touched the failing code gets triaged with everything loaded, instead of by a cold-started agent reconstructing state. And because the reply path runs through the same channel, your phone becomes a steering wheel for work executing on your real machine against your real files.
 
 ## When to Use It
 
@@ -20,14 +20,13 @@ Every other remote integration either spawns a fresh session (Claude Code on the
 
 - Delegating self-contained async work — a cloud session (Claude Code on the web) fits better than keeping a local session alive
 - Steering an in-progress session interactively — Remote Control gives you the full session UI; channels give you a message pipe
-- Enterprise setups on Amazon Bedrock, Google Vertex AI, or Microsoft Foundry — channels require Anthropic authentication and are unavailable there
-- Anything unattended without thinking through permissions — a paused permission prompt stalls the session until someone answers it
+- Enterprise setups on Amazon Bedrock, Google Cloud's Agent Platform (formerly Vertex AI), or Microsoft Foundry — channels require Anthropic authentication and are unavailable there
 
 ## How It Works
 
 ### Basic (Beginner)
 
-1. Install a channel plugin: `/plugin install telegram@claude-plugins-official` (Discord and iMessage work the same way; the prebuilt plugins require [Bun](https://bun.sh)). Run `/reload-plugins` to activate its configure command.
+1. Install a channel plugin: `/plugin install telegram@claude-plugins-official` (Discord works the same way; iMessage is macOS-only and needs Full Disk Access instead of a bot token; the prebuilt plugins require [Bun](https://bun.sh)). Run `/reload-plugins` to activate its configure command.
 2. Configure credentials — for Telegram, create a bot via BotFather and run `/telegram:configure <token>`.
 3. Restart with the channel enabled: `claude --channels plugin:telegram@claude-plugins-official`. Events only arrive while the session is open; for an always-on setup, run Claude in a persistent terminal or background process.
 4. Pair your account: message the bot, get a pairing code, run `/telegram:access pair <code>`, then lock access down with `/telegram:access policy allowlist`.
@@ -36,8 +35,8 @@ Every other remote integration either spawns a fresh session (Claude Code on the
 ### Composing with Other Approaches (Intermediate)
 
 - **Channels plus background agents**: a persistent background session with a channel attached is a standing worker you can message from anywhere — dispatch from chat in the morning, get the result in the same thread.
-- **Channels plus hooks and permissions**: unattended reactions need pre-decided boundaries — allowlist the safe inner loop so a webhook-triggered fix doesn't stall on a prompt nobody is present to approve. Channel servers that declare the permission-relay capability can forward prompts to the chat so you approve remotely.
-- **Channels plus incident runbooks**: wire the error tracker's webhook into the session attached to the affected service; the alert arrives with the repo open and the recent context intact.
+- **Channels plus permissions & safe autonomy**: unattended reactions need pre-decided boundaries — allowlist the safe inner loop so a webhook-triggered fix doesn't stall on a prompt nobody is present to approve. Channel servers that declare the permission-relay capability can forward prompts to the chat so you approve remotely.
+- **Channels plus MCP context**: wire the error tracker's webhook in as the push trigger and its standard MCP server in as the lookup — the alert lands in the session with the repo open, and Claude queries full stack traces and event history from the same tracker on demand.
 
 ### Advanced Patterns
 
@@ -56,7 +55,13 @@ Every other remote integration either spawns a fresh session (Claude Code on the
 
 Your error tracker pages you at lunch: payment webhooks are failing. This morning's session — still open on your machine — was working in that exact service. The tracker's webhook, wired to a custom channel server, has already pushed the alert into the session.
 
-From your phone, you message the session through Telegram: "Look at that webhook alert — is it related to the retry change from this morning?" Claude reads the alert payload, greps the code it touched two hours ago, reproduces the failing signature check against the staging endpoint, and replies in the thread: the new retry sends a stale timestamp on the second attempt; one-line fix in `src/payments/webhook.ts`; tests pass locally.
+From your phone, you message the session through Telegram:
+
+```
+Look at that webhook alert — is it related to the retry change from this morning?
+```
+
+Claude reads the alert payload, greps the code it touched two hours ago, reproduces the failing signature check against the staging endpoint, and replies in the thread: the new retry sends a stale timestamp on the second attempt; one-line fix in `src/payments/webhook.ts`; tests pass locally.
 
 You reply "commit it on a branch and open a draft PR." Claude does, and posts the PR link in the chat. Total incident time: eleven minutes, none of them at a desk — and the diagnosis quality came from the session's morning context, which a cold cloud session wouldn't have had.
 

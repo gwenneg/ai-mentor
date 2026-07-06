@@ -1,9 +1,9 @@
 # Built-in Review Skills
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Built-in Review Skills are ready-to-use commands in Claude Code that analyze your code changes for bugs, security issues, and simplification opportunities. You run a slash command — `/code-review`, `/security-review`, or `/simplify` — and Claude systematically reviews your diff using structured analysis. No prompt engineering needed: the skills encode expert review strategies so you get consistent, thorough reviews every time.
+Built-in Review Skills are ready-to-use commands in Claude Code that analyze your code changes for bugs, security issues, and simplification opportunities. You run a slash command — `/code-review`, `/security-review`, or `/simplify` — and Claude systematically reviews your diff using structured analysis.
 
 Two companion skills close the loop from the behavior side: `/verify` exercises a change end-to-end in the running application to confirm it actually does what it's supposed to (driving the affected flow, not just the tests), and `/run` launches the project's app so you can see a change working for real.
 
@@ -23,7 +23,6 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 
 - Reviewing changes you have not made yet — these skills analyze the current diff, not hypothetical code
 - As a substitute for human review on critical paths — use them as a first pass, not the only pass
-- On massive diffs (500+ files) without narrowing scope — the review quality degrades at extreme scale
 - Running `/verify` on diffs with no runtime surface (docs-only or test-only changes) — there is no behavior to observe
 
 ## How It Works
@@ -31,27 +30,25 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 ### Basic (Beginner)
 
 1. Make your code changes and stage them (or leave them unstaged — both work)
-2. Run `/code-review` in your Claude Code session. Choose an effort level:
+2. Run `/code-review` in your Claude Code session — optionally pass an effort level and a target such as a path or PR number (`/code-review high src/api/`). Effort levels:
    - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
    - High: broader coverage, may surface uncertain findings — good for thorough review
-   - xhigh/max: deepest analysis available on Opus 4.7+ models — exhaustive coverage for critical changes
+   - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
 3. Claude analyzes the diff and reports findings grouped by severity
 4. Optionally, add `--fix` to have Claude auto-apply its findings: `/code-review --fix`
 5. Or add `--comment` to post findings as inline PR comments: `/code-review --comment`
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Review then simplify**: Run `/code-review` first to catch bugs, then `/simplify` to clean up the code. This ensures correctness before optimization — fixing a bug in already-simplified code is harder.
 - **Review then verify**: `/code-review` reads the code; `/verify` observes the behavior. Static review catches bugs that would never reproduce in a quick manual test, while verification catches integration failures no diff reader can see. Together they cover failure modes neither catches alone.
 - **Subagent changes then review**: After spawning subagents to make parallel changes, run `/code-review` on each worktree branch to verify the agents' work before merging.
 - **Plan Mode then review**: Use Plan Mode to design and execute a change, then immediately run `/security-review` to catch security implications the plan did not consider.
 
 ### Advanced Patterns
 
-- **CI pipeline integration**: Add Claude Code to your GitHub Actions workflow in headless mode. On every PR, it runs `/code-review --comment` and posts inline findings directly on the PR. Reviewers see AI findings alongside the diff without any manual step.
-- **Layered review strategy**: Run all three skills in sequence for critical changes: `/code-review` for correctness, `/security-review` for security (uses Opus-tier reasoning for deeper analysis), then `/simplify` to clean up. Each pass focuses on its specialty.
+- **CI pipeline integration**: Run reviews on every PR without a manual step: use the `claude-code-action` GitHub Action with a review skill as the prompt, so findings post as inline comments alongside the diff. From any CI script, `claude ultrareview` runs the deep cloud review non-interactively.
 - **Targeted review with context**: Before running the review, tell Claude about specific concerns: "This change modifies our rate limiter. Run /security-review with extra attention to bypass vectors." The skill uses your context to focus its analysis.
-- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits (roughly $5-20 per run after 3 free runs on Pro/Max). Requires claude.ai auth; unavailable on Bedrock/Vertex/Foundry and Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively.
+- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits (roughly $5-20 per run after 3 free runs on Pro/Max). Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively.
 
 ## Common Pitfalls
 
@@ -90,4 +87,5 @@ Claude applies the extraction automatically. You run `/security-review` as a fin
 ## Sources
 
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills including built-in /code-review and /security-review
+- [Commands](https://code.claude.com/docs/en/commands) — Reference for /code-review effort levels and --fix/--comment flags, plus /simplify, /security-review, /verify, and /run
 - [Find bugs with ultrareview](https://code.claude.com/docs/en/ultrareview) — Official docs for /code-review ultra: cloud fleet review, pricing, and the CI subcommand

@@ -1,5 +1,5 @@
 # Permissions & Safe Autonomy
-*Last verified: 2026-07-02*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -7,7 +7,7 @@ Permissions & Safe Autonomy is the practice of tuning what your AI agent may do 
 
 ## Why It Works
 
-Autonomy is a function of trust boundaries, not model capability. An agent that prompts for every `npm test` trains you to approve without reading — which is *less* safe, not more. An agent with crisp boundaries (these commands always fine, these paths never touchable, everything else asks) can run long autonomous stretches while the dangerous surface stays provably closed. This is least-privilege from security engineering applied to AI: precision about what's denied is what makes broad allowance safe. Crucially, permission rules are enforced by Claude Code itself — unlike CLAUDE.md instructions, they hold regardless of what the model decides.
+Autonomy is a function of trust boundaries, not model capability. An agent that prompts for every `npm test` trains you to approve without reading — which is *less* safe, not more. An agent with crisp boundaries (these commands always fine, these paths never touchable, everything else asks) can run long autonomous stretches while the dangerous surface stays provably closed. This is least-privilege from security engineering applied to AI: precision about what's denied is what makes broad allowance safe — and crucially, permission rules are enforced by Claude Code itself, so unlike CLAUDE.md instructions they hold regardless of what the model decides.
 
 ## When to Use It
 
@@ -35,13 +35,13 @@ Autonomy is a function of trust boundaries, not model capability. An agent that 
 
 - **Permissions plus autonomous loops**: allowlist the loop's inner cycle (test runner, linter, file edits via `acceptEdits`) and deny the escape hatches (pushes, deletions of test files) — the loop runs unattended and can't cheat destructively.
 - **Permissions plus hooks**: rules match patterns; hooks evaluate logic. A PreToolUse hook can block conditionally (e.g. edits to files with pending migrations) — and deny rules still apply regardless of what a hook returns.
-- **Permissions plus sandboxing**: complementary layers — rules govern what the agent may attempt; the OS-level sandbox restricts what Bash and its child processes can reach even if a prompt injection gets past the model's judgment. With the sandbox on, sandboxed commands run without prompts by default while explicit deny/ask rules still hold.
+- **Permissions plus sandboxing**: complementary layers (enable it with `/sandbox`) — rules govern what the agent may attempt; the OS-level sandbox restricts what Bash and its child processes can reach even if a prompt injection gets past the model's judgment. With the sandbox on, sandboxed commands run without prompts by default while deny rules and content-scoped ask rules like `Bash(git push *)` still hold (only a bare `Bash` ask rule is skipped for sandboxed commands).
 
 ### Advanced Patterns
 
 - **Parameter-scoped rules**: deny/ask rules can match tool parameters — `Agent(isolation:worktree)`, `Bash(run_in_background:true)` — for policies on *how* tools are used, not just which.
 - **Mode ceilings for real autonomy**: `bypassPermissions` skips prompts (keep it for containers/VMs — root/home `rm -rf` still trips a circuit breaker); `auto` mode auto-approves with background safety checks (research preview). Organizations can disable both via `disableBypassPermissionsMode` / `disableAutoMode` in managed settings.
-- **Team guardrails via settings precedence**: managed settings > CLI flags > local project > shared project > user — a deny at any level cannot be re-allowed below it, so checked-in project denies become team-wide invariants.
+- **Team guardrails via settings precedence**: managed settings > CLI flags > local project > shared project > user — a deny at any level cannot be re-allowed at any other level, so checked-in project denies become team-wide invariants.
 
 ## Common Pitfalls
 
@@ -63,7 +63,7 @@ Your team's autonomous test-fixing loops keep stalling on permission prompts, so
 }
 ```
 
-Committed to the repo, this applies to everyone: loops run test/lint/commit cycles without a single prompt, nobody's session can push, touch infra, read secrets, or "fix" a failing test by editing its snapshot — and because deny rules outrank everything below managed settings, a `--allowedTools` flag can't loosen it. The loops now run unattended to completion, and the two prompts that remain (`git push`, infra edits) are the two that deserve a human.
+Committed to the repo, this applies to everyone: loops run test/lint/commit cycles without a single prompt, nobody's session can push, touch infra, read secrets, or "fix" a failing test by editing its snapshot — and because a deny from any settings level can't be re-allowed by any other, a `--allowedTools` flag can't loosen it. The loops now run unattended to completion, and the two prompts that remain (`git push`, infra edits) are the two that deserve a human.
 
 ## Sources
 

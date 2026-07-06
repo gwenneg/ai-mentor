@@ -16,11 +16,11 @@ Absence is weak evidence, graded by tier: no hooks in settings after months of u
 |----------|---------------------|-----------------|
 | autonomous-loops | — | `/loop` or `/goal` in the transcript; goal-conditioned prompts |
 | background-agents | — | `claude agents`, `claude --bg`, or `/bg` usage; talks about dispatching tasks |
-| browser-integration | Browser/Chrome MCP server configured in `.mcp.json` | `/chrome` usage; asks Claude to drive a browser |
+| browser-integration | — | `claude --chrome` or `/chrome` usage; asks Claude to drive a browser |
 | built-in-review-skills | Review commands wired into CI workflows | `/code-review`, `/security-review`, `/simplify`, `/verify`, or `/run` in the transcript |
 | channels | A channel plugin installed (telegram, discord, imessage, fakechat) | `--channels` flag mentions; talks about pushing webhooks/chat into a session |
 | checkpoints-rewind | — | `/rewind` usage; "undo that" / restore-checkpoint interactions |
-| cloud-sessions | — | `claude --remote`, `/teleport`, claude.ai/code or mobile-app mentions |
+| cloud-sessions | — | `claude --cloud` (or the deprecated `--remote`), `/teleport`, claude.ai/code or mobile-app mentions |
 | custom-agents | `.claude/agents/*.md` or `~/.claude/agents/*.md` exists | References their own named agents |
 | custom-plugins | `.claude-plugin/` in a repo they own; a marketplace file they maintain | Talks about publishing or packaging a plugin |
 | custom-skills | `.claude/skills/*/SKILL.md` or `~/.claude/skills/*/SKILL.md` exists (their own, not plugin-installed) | Invokes their own slash commands |

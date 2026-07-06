@@ -1,13 +1,13 @@
 # Headless Mode
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Headless Mode runs Claude without a terminal interface and without human interaction. You pass a prompt on the command line with the `-p` flag, Claude executes it, and outputs the result to stdout. There is no interactive session, no back-and-forth conversation — just input, execution, output. This is the bridge between "AI tool I use at my desk" and "AI step in my CI pipeline."
+Headless Mode runs Claude without a terminal interface and without human interaction. You pass a prompt on the command line with the `-p` flag, Claude executes it, and outputs the result to stdout. No interactive session, no back-and-forth — it is the bridge between "AI tool I use at my desk" and "AI step in my CI pipeline."
 
 ## Why It Works
 
-Automation requires predictability and composability. Interactive tools are powerful for exploration, but they cannot be scheduled, piped, or embedded in scripts. Headless Mode turns Claude from an interactive assistant into a Unix-style command-line tool that follows the standard input/output contract. This means it composes with everything else in your toolchain: shell scripts, CI/CD pipelines, cron jobs, GitHub Actions, `xargs`, `jq`, and any other tool that speaks stdin/stdout. The same capability that helps you debug at your desk can now run unattended at 3 AM when a PR is opened.
+Interactive tools are powerful for exploration, but they cannot be scheduled, piped, or embedded in scripts. Headless Mode turns Claude from an interactive assistant into a Unix-style command-line tool that follows the standard input/output contract. This means it composes with everything else in your toolchain: shell scripts, CI/CD pipelines, cron jobs, GitHub Actions, `xargs`, `jq`, and any other tool that speaks stdin/stdout. The same capability that helps you debug at your desk can now run unattended at 3 AM when a PR is opened.
 
 ## When to Use It
 
@@ -28,21 +28,19 @@ Automation requires predictability and composability. Interactive tools are powe
 1. Run a simple prompt: `claude -p "Explain what src/auth/middleware.ts does"`
 2. Claude reads the file, generates a response, and prints it to stdout
 3. Get structured output: `claude -p "List all exported functions in src/api/" --output-format json`
-4. The JSON output can be piped to `jq`, saved to a file, or consumed by another program
+4. The JSON output can be piped to `jq`, saved to a file, or consumed by another program — add `--json-schema` with a JSON Schema to get output conforming to a shape you define
 5. For scripts that need specific tools: `claude -p "Run the tests" --allowedTools "Bash(npm test)"` grants only the permissions your task needs
 
 ### Composing with Other Approaches (Intermediate)
 
 - **Headless plus Autonomous Loops**: Run `claude -p "/goal all tests in tests/api/ pass"` in a CI job after a dependency update. The loop iterates until green, then the pipeline continues.
-- **Headless in GitHub Actions**: Trigger Claude on `pull_request` events to review the diff, post comments, and optionally push fix commits — all without a human in the loop.
-- **Headless in GitLab CI/CD** (beta, maintained by GitLab): one job in `.gitlab-ci.yml` that installs the CLI and runs `claude -p` with a masked `ANTHROPIC_API_KEY` variable — `@claude` mentions in issues and MRs can trigger it via webhook, changes flow through MRs, and Bedrock/Vertex OIDC auth works for enterprises that can't use API keys.
-- **Headless for batch operations**: Use a shell loop to run Claude on multiple files: `for f in src/api/*.ts; do claude -p "Add JSDoc comments to all exported functions in $f" --allowedTools "Edit"; done`
+- **Headless plus Built-in Review Skills**: Trigger Claude on `pull_request` events in GitHub Actions — or one `.gitlab-ci.yml` job that installs the CLI and runs `claude -p` with a masked `ANTHROPIC_API_KEY` variable (the GitLab integration is beta, maintained by GitLab) — to review the diff and post comments on every change, no human in the loop.
+- **Headless plus Fan-Out Workflows**: Use a shell loop to run Claude on multiple files: `for f in src/api/*.ts; do claude -p "Add JSDoc comments to all exported functions in $f" --allowedTools "Edit"; done`
 
 ### Advanced Patterns
 
-- **`--bare` for reproducible runs**: The `--bare` flag tells Claude to ignore `CLAUDE.md` files, memory, and user preferences. This ensures the same input always produces the same behavior, which is critical for CI where reproducibility matters.
-- **Session continuity**: Use `--continue` to resume the most recent session, or `--resume <session-id>` to pick up a specific session. This allows multi-step pipelines where step 1 runs Claude, a human reviews the output, and step 2 continues the same session with additional instructions.
-- **Structured streaming**: Use `--output-format stream-json` to get a stream of JSON events as Claude works. Each event includes the type (text, tool_use, tool_result), allowing your pipeline to react to intermediate steps — for example, logging tool invocations in real time.
+- **`--bare` for reproducible runs**: The `--bare` flag skips auto-discovery of `CLAUDE.md`, auto memory, hooks, skills, plugins, and MCP servers, so a run behaves the same on every machine regardless of local configuration. Docs recommend it for all scripted calls, and it will become the default for `-p`.
+- **Structured streaming**: Use `--output-format stream-json` to get a stream of JSON events as Claude works. Events carry a top-level type (`system`, `assistant`, `user`, `result`), with tool calls and results inside the message content, allowing your pipeline to react to intermediate steps — for example, logging tool invocations in real time.
 - **MCP server integration**: Headless Claude can connect to MCP servers with `--mcp-config`, giving it access to databases, APIs, or custom tools without any interactive setup: `claude -p "Query the staging database for users created today" --mcp-config mcp-servers.json`
 
 ## Common Pitfalls
@@ -63,6 +61,9 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+permissions:
+  pull-requests: write
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -70,25 +71,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install Claude Code
+        run: curl -fsSL https://claude.ai/install.sh | bash
       - name: Run Claude Review
         run: |
           claude -p "Review the changes in this PR. Focus on correctness bugs,
             security issues, and missing error handling. Post your findings as
             a PR comment." \
-            --allowedTools "Bash(gh pr comment:*)" \
+            --allowedTools "Bash(git diff:*),Bash(gh pr comment:*)" \
             --output-format json \
             --bare
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Every time a PR is opened or updated, Claude checks out the code, reads the diff, and posts a review comment via `gh pr comment`. The `--bare` flag ensures no local `CLAUDE.md` or memory affects the review. `--allowedTools` restricts Claude to only posting comments — it cannot edit code, run tests, or access anything else. The `--output-format json` lets you parse the result in subsequent pipeline steps if needed.
+Every time a PR is opened or updated, Claude checks out the code, reads the diff, and posts a review comment via `gh pr comment`. The `--bare` flag ensures no local `CLAUDE.md` or memory affects the review. `--allowedTools` restricts Claude to reading the diff and posting comments — it cannot edit code, run tests, or access anything else. The `--output-format json` lets you parse the result in subsequent pipeline steps if needed.
 
 The first week, the team notices Claude is flagging style issues they do not care about. They add a one-line instruction to the prompt: "Ignore formatting and style. Focus only on logic errors and security." The false-positive rate drops, and the reviews become a net time saver — catching a null-pointer dereference in `src/handlers/webhook.ts` that two human reviewers had missed.
 
 ## Sources
 
-- [Claude Code Headless Mode](https://code.claude.com/docs/en/headless) — Official docs for running Claude Code non-interactively
+- [Run Claude Code Programmatically](https://code.claude.com/docs/en/headless) — Official docs for running Claude Code non-interactively with `claude -p`
 - [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions) — CI/CD integration with GitHub Actions
 - [Claude Code GitLab CI/CD](https://code.claude.com/docs/en/gitlab-ci-cd) — Beta GitLab pipeline integration maintained by GitLab
 - [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference) — CLI reference covering -p flag and non-interactive options

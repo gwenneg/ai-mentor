@@ -1,9 +1,9 @@
 # Custom Plugins
-*Last verified: 2026-07-02*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Custom Plugins are how you package your own AI workflow — skills, hooks, agent definitions, MCP configuration — into a single versioned unit that anyone can install. What starts as personal configuration in one project's `.claude/` directory becomes `​/plugin install your-toolkit` for your whole team, or for the community through a marketplace. Building a plugin is a different activity from using one: you are the author and maintainer, not the consumer.
+Custom Plugins are how you package your own AI workflow — skills, hooks, agent definitions, MCP configuration — into a single versioned unit that anyone can install. What starts as personal configuration in one project's `.claude/` directory becomes `/plugin install your-toolkit` for your whole team, or for the community through a marketplace. Building a plugin is a different activity from using one: you are the author and maintainer, not the consumer.
 
 ## Why It Works
 
@@ -41,16 +41,15 @@ Team knowledge compounds only when it's distributable. A brilliant skill in one 
 ### Advanced Patterns
 
 - **Internal marketplace**: a git repo with a marketplace manifest is a private plugin registry — teammates run `/plugin marketplace add your-org/your-marketplace` once and install from it like any marketplace. Keep it in a private repo for internal-only distribution.
-- **Community distribution**: submit to `anthropics/claude-plugins-community` via the review pipeline; approved plugins are pinned to a commit SHA in the public catalog and CI bumps the pin as you push.
+- **Community distribution**: submit for review via the in-app form at [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit); approved plugins are pinned to a commit SHA in the public `anthropics/claude-plugins-community` catalog and CI bumps the pin as you push.
 - **Dependency constraints** (v2.1.110+): declare `dependencies` in `plugin.json` — a bare name tracks the marketplace's latest, while `{ "name": "secrets-vault", "version": "~2.1.0" }` pins a semver range so an upstream breaking release can't move the dependency under you. Resolution works off git tags named `{plugin}--v{version}`; create them with `claude plugin tag --push`. Cross-marketplace dependencies are blocked unless the root marketplace allowlists the source via `allowCrossMarketplaceDependenciesOn`.
-- **Version semantics**: without a `version` field, every commit counts as a new version (SHA fallback); with explicit semver, users only receive updates when you bump it — pick deliberately, and add `displayName` for a human-readable listing in the `/plugin` picker.
 
 ## Common Pitfalls
 
 - **Components inside `.claude-plugin/`**: the classic structure mistake — only `plugin.json` lives there; `skills/`, `hooks/`, and `agents/` belong at the plugin root or they silently don't load.
 - **Forgetting namespacing when naming**: your skill invocations become `/plugin-name:skill-name`. A plugin named `ai-mentor` with a skill named `ai-mentor` produces the awkward `/ai-mentor:ai-mentor` — name the skill for how the combination reads.
 - **Shipping noisy hooks**: a hook that misfires on every edit gets your whole plugin disabled by annoyed teammates. Test hooks thoroughly before they ship to anyone.
-- **Ambient versioning**: leaving `version` unset means every push to your marketplace repo is an update. Fine for a personal plugin; for a team, explicit versions make updates reviewable events.
+- **Ambient versioning**: leaving `version` unset means every push to your marketplace repo is an update. Fine for a personal plugin; for a team, explicit versions make updates reviewable events, and `displayName` gives the listing a human-readable name without changing the install name.
 
 ## Real-World Example
 
@@ -58,7 +57,14 @@ After three microservices, a platform team notices every new repo gets the same 
 
 They package the trio as `service-workflows`: manifest in `.claude-plugin/plugin.json` (`"name": "service-workflows"`, explicit `"version": "1.0.0"`), the skill under `skills/release-notes/`, the hook in `hooks/hooks.json`, the reviewer under `agents/`. `claude plugin validate` passes; a `--plugin-dir` session confirms `/service-workflows:release-notes` behaves.
 
-They push it to an internal repo set up as a marketplace. The next microservice's setup is two commands: add the marketplace, install the plugin. Three months later they improve the changelog format once, bump to `1.1.0`, and every service picks it up on its next marketplace update — the drift problem is structurally gone, and the team's workflow knowledge finally lives in exactly one place.
+They push it to an internal repo set up as a marketplace. The next microservice's setup is two commands:
+
+```
+/plugin marketplace add acme-platform/claude-workflows
+/plugin install service-workflows@claude-workflows
+```
+
+Three months later they improve the changelog format once, bump to `1.1.0`, and every service picks it up on its next marketplace update — the drift problem is structurally gone, and the team's workflow knowledge finally lives in exactly one place.
 
 ## Sources
 

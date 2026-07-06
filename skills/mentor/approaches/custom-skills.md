@@ -1,9 +1,9 @@
 # Custom Skills (Slash Commands)
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
-Custom Skills let you package a repeatable workflow into a slash command that anyone on your team can invoke. You write a markdown file that describes what the skill does, include any scripts or templates it needs, and from that point forward the workflow is a single `/command` instead of a multi-step manual process. Skills live in `.claude/skills/<name>/SKILL.md` and can accept arguments, run bundled scripts, and reference local documentation.
+Custom Skills let you package a repeatable workflow into a slash command that anyone on your team can invoke. You write a markdown file that describes what the skill does, include any scripts or templates it needs, and from that point forward the workflow is a single `/command` instead of a multi-step manual process. Skills live in `.claude/skills/<name>/SKILL.md` (or `~/.claude/skills/` for personal, cross-project skills), can accept arguments, run bundled scripts, and reference local documentation — and Claude can also invoke them automatically when a request matches their description.
 
 ## Why It Works
 
@@ -26,17 +26,21 @@ Most engineering teams have workflows that are done the same way every time but 
 ### Basic (Beginner)
 
 1. Create the directory `.claude/skills/<skill-name>/` in your project
-2. Write a `SKILL.md` file that describes what the skill does, what inputs it expects, and what steps to follow
+2. Write a `SKILL.md` file with a one-line `description:` in YAML frontmatter (Claude uses it to decide when to load the skill automatically), followed by the steps to follow and what inputs it expects
 3. Use `$ARGUMENTS` in the skill file to accept user input (e.g., `/create-migration add-user-roles-table`)
 4. Optionally add bundled scripts (shell, Python, etc.) in the same directory that the skill references for deterministic steps
 5. Invoke the skill with `/<skill-name>` — Claude reads the SKILL.md, follows the instructions, and executes the workflow
 
 Example SKILL.md for a migration generator:
 ```markdown
+---
+description: Create a database migration from a short description. Use when adding or changing tables.
+---
+
 Create a new database migration for: $ARGUMENTS
 
 Steps:
-1. Run `./skills/create-migration/generate.sh $ARGUMENTS` to create the migration file
+1. Run `${CLAUDE_SKILL_DIR}/generate.sh $ARGUMENTS` to create the migration file
 2. Read the schema in `db/schema.prisma` for current table definitions
 3. Write the migration SQL following our conventions in `docs/migration-guide.md`
 4. Add a corresponding test in `tests/migrations/`
@@ -50,9 +54,9 @@ Steps:
 
 ### Advanced Patterns
 
-- **Forked context with `context: fork`**: Run a skill in an isolated subagent context so it does not pollute your main session's context window. The skill executes, returns a summary, and your main session stays clean. Useful for skills that read many files.
+- **Forked context with `context: fork`**: Run a skill in an isolated subagent context so it does not pollute your main session's context window. The forked skill does not see your conversation history, so its instructions must be self-contained; it executes, returns a summary, and your main session stays clean. Useful for skills that read many files.
 - **Skills with reference docs**: Bundle project-specific reference material (API schemas, style guides, architecture docs) in the skill directory. The skill instructions tell Claude to read these before generating code, ensuring output matches your conventions without relying on the main context.
-- **Argument parsing patterns**: Use structured argument formats in your SKILL.md to handle multiple parameters: `/create-endpoint POST /api/users CreateUserRequest`. The skill parses `$ARGUMENTS` into method, path, and request type.
+- **Argument parsing patterns**: Use structured argument formats in your SKILL.md to handle multiple parameters: `/create-endpoint POST /api/users CreateUserRequest`. Use positional substitutions — `$0` for the method, `$1` for the path, `$2` for the request type — instead of asking Claude to parse the raw `$ARGUMENTS` string.
 
 ## Common Pitfalls
 
@@ -72,7 +76,7 @@ You create `/create-endpoint`:
 ```
 
 The skill reads `$ARGUMENTS`, splits them into method, path, and request type, then:
-1. Runs `./skills/create-endpoint/scaffold.sh` to create empty files with correct names in the right directories
+1. Runs `${CLAUDE_SKILL_DIR}/scaffold.sh` to create empty files with correct names in the right directories
 2. Reads `api/serializers/order_serializer.py` to understand existing patterns
 3. Generates `api/serializers/cancel_order_serializer.py` matching the existing style
 4. Generates the view in `api/views/cancel_order_view.py` with proper permission classes
@@ -85,4 +89,4 @@ What used to take 25-30 minutes and a review for forgotten steps now takes 2 min
 ## Sources
 
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for creating custom skills in .claude/skills/ directories
-- [Claude Code Common Workflows](https://code.claude.com/docs/en/common-workflows) — Common workflow tutorials including skill creation patterns
+- [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) — Official guidance on writing effective SKILL.md instructions across Claude products

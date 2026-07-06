@@ -1,5 +1,5 @@
 # Custom Agent Definitions
-*Last verified: 2026-06-27*
+*Last verified: 2026-07-06*
 
 ## What It Is
 
@@ -25,7 +25,7 @@ Specialization produces better results than generalization. A general-purpose ag
 
 ### Basic (Beginner)
 
-1. Create a file at `.claude/agents/<agent-name>.md` in your project
+1. Create a file at `.claude/agents/<agent-name>.md` in your project, or in `~/.claude/agents/` to make the agent available in all your projects
 2. Add frontmatter specifying the model, allowed tools, and any configuration
 3. Write the agent's system instructions in the markdown body — its role, rules, and approach
 4. Invoke the agent by name from your Claude Code session
@@ -52,15 +52,15 @@ and a recommended fix. If you find nothing, say so — do not invent issues.
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Custom agents plus worktree isolation**: Define a `refactoring-agent` that uses Edit and Write tools, then invoke it in an isolated worktree. It makes changes on a separate branch, and you review the diff before merging. The agent definition ensures consistent refactoring style; the worktree ensures safety.
+- **Custom agents plus worktree isolation**: Define a `refactoring-agent` that uses Edit and Write tools, then set `isolation: worktree` in its frontmatter so it runs in a temporary git worktree. It makes changes on a separate branch, and you review the diff before merging. The agent definition ensures consistent refactoring style; the worktree ensures safety.
 - **Custom agents plus skills**: Create a `/security-scan` skill that invokes your `security-reviewer` agent on every file changed in the current branch. The skill handles orchestration (which files, how to report); the agent handles analysis.
-- **Custom agents plus hooks**: Add a Stop hook that invokes a `summary-agent` (using haiku for speed) to generate a session summary whenever Claude finishes a long task. The agent definition keeps the summary format consistent.
+- **Custom agents plus hooks**: Define hooks inside the agent's own frontmatter — a `db-reader` agent with a `PreToolUse` hook that runs a validation script can execute queries while the script blocks anything but `SELECT`. The agent's instructions state the rule; the hook enforces it deterministically.
 
 ### Advanced Patterns
 
 - **Model-tiered agent families**: Define the same agent at different cost levels. A `quick-review` agent uses haiku and checks for obvious issues in seconds. A `deep-review` agent uses opus and performs thorough analysis. Developers choose based on the stakes — haiku for draft PRs, opus for release candidates.
-- **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var): Define multiple agents that share a task list and communicate via peer messages. For example, a `planner` agent creates a task breakdown, a `coder` agent implements each task, and a `reviewer` agent checks each implementation. They coordinate without a human orchestrating every handoff.
-- **Agent View for parallel monitoring**: When running multiple custom agents concurrently (five agents reviewing five services), use Agent View to monitor all of them from one screen. You see each agent's progress, can intervene if one gets stuck, and track overall completion without switching between sessions.
+- **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var): Define multiple agents that share a task list and communicate via peer messages. For example, the team lead breaks the work into shared tasks, then a `coder` teammate implements each task and a `reviewer` teammate checks each implementation. They coordinate without a human orchestrating every handoff.
+- **Custom agents as background sessions**: To run several custom agents at once (five reviewers on five services), dispatch each as its own background session with `claude --agent <name> --bg "<task>"`, then run `claude agents` to monitor them all from one screen and step in when one needs input. Agent view lists background sessions only — subagents spawned inside a session appear in that session's agent panel, not in agent view.
 
 ## Common Pitfalls
 
@@ -99,4 +99,4 @@ Now any developer on the team can invoke this agent when they need a migration. 
 ## Sources
 
 - [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs for creating custom agent definitions in .claude/agents/
-- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Anthropic engineering guide with agent composition patterns
+- [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Official best-practices guide, including a section on creating custom subagents
