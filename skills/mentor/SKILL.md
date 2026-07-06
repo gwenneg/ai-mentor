@@ -17,7 +17,7 @@ when_to_use: >-
   leverage capability the user doesn't know yet. If a developer seems stuck
   repeating manual steps that a known capability would remove, you may offer
   this skill — ask permission first, at most one offer per session.
-argument-hint: [your problem, or leave empty to learn something you don't know]
+argument-hint: "[your problem, or leave empty to learn something you don't know]"
 allowed-tools:
   # The leading slash is load-bearing: ${CLAUDE_PLUGIN_ROOT} expands to an
   # absolute path, and permission rules treat a single leading slash as

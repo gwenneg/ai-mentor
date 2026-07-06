@@ -5,7 +5,7 @@ description: >-
   content accuracy against current tool docs, and detects recent tool
   changes. Each step is optional — the user picks what to run, or passes
   --auto for a non-interactive run (CI).
-argument-hint: [--auto 4,5 --files 5]
+argument-hint: "[--auto 4,5 --files 5]"
 disable-model-invocation: true
 ---
 
