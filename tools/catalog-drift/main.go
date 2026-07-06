@@ -1,15 +1,16 @@
 // Check references/official-plugins.md against the live official marketplace.
 //
-// Pure GitHub API diffing — no LLM. Exits 1 on drift so a scheduled workflow
-// can open an issue or feed the diff to the maintenance run, 2 on fetch or
-// setup errors. Uses GITHUB_TOKEN / GH_TOKEN if set (else unauthenticated,
-// subject to rate limits). Stdlib only.
+// Pure manifest diffing — no LLM. Reads the marketplace.json manifest, which
+// lists every plugin including externally-hosted ones; listing the repo's
+// plugin directories instead (the pre-2026-07-07 approach) silently missed
+// all external-source entries. Exits 1 on drift so a scheduled workflow can
+// open an issue or feed the diff to the maintenance run, 2 on fetch or setup
+// errors. Stdlib only.
 //
 // Usage: go -C tools/catalog-drift run .
 package main
 
 import (
-	"cmp"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,45 +22,41 @@ import (
 	"time"
 )
 
-const api = "https://api.github.com/repos/anthropics/claude-plugins-official/contents"
+const manifestURL = "https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json"
 
 var (
-	marketplaceDirs = []string{"plugins", "external_plugins"}
-	skillDir        = filepath.Join("skills", "mentor")
+	skillDir = filepath.Join("skills", "mentor")
 
 	reToken     = regexp.MustCompile("`([a-z0-9-]+)`")
 	reMultiWord = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)+$`)
 )
 
-// fetchNames returns the directory names under one marketplace directory.
-func fetchNames(client *http.Client, token, dir string) ([]string, error) {
-	req, err := http.NewRequest("GET", api+"/"+dir, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-	resp, err := client.Do(req)
+// fetchLiveNames downloads the marketplace manifest and returns every listed
+// plugin name — in-repo and externally-sourced alike.
+func fetchLiveNames(client *http.Client, url string) ([]string, error) {
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET %s: %s", dir, resp.Status)
+		return nil, fmt.Errorf("GET marketplace manifest: %s", resp.Status)
 	}
-	var entries []struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
+	var manifest struct {
+		Plugins []struct {
+			Name string `json:"name"`
+		} `json:"plugins"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
 		return nil, err
 	}
+	if len(manifest.Plugins) == 0 {
+		return nil, fmt.Errorf("manifest has no plugins — format change?")
+	}
 	var names []string
-	for _, e := range entries {
-		if e.Type == "dir" {
-			names = append(names, e.Name)
+	for _, p := range manifest.Plugins {
+		if p.Name != "" {
+			names = append(names, p.Name)
 		}
 	}
 	return names, nil
@@ -155,14 +152,9 @@ func main() {
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
-	token := cmp.Or(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN"))
-	var live []string
-	for _, dir := range marketplaceDirs {
-		names, err := fetchNames(client, token, dir)
-		if err != nil {
-			fatal(err)
-		}
-		live = append(live, names...)
+	live, err := fetchLiveNames(client, manifestURL)
+	if err != nil {
+		fatal(err)
 	}
 
 	if report(os.Stdout, live, documentedNames(string(catalog))) {
