@@ -50,6 +50,7 @@ A fresh scratch directory (session scratchpad, never the real repo): `git init`,
 
 ### Rules (all of these are load-bearing for comparability)
 
+0. Hands-on runs execute third-party code: use a disposable, isolated environment (e.g. a cloud-session sandbox), not a maintainer's primary machine. Plugins requiring an external account or product are not exercised at all — they keep an honest ☑️ with the requirement named.
 1. Install with `claude plugin install <name>@claude-plugins-official --scope local`, run from inside the scratch dir. Never user scope.
 2. After install, capture `claude plugin details <name>@claude-plugins-official` — components, context cost, and REAL command/skill names (never guess invocation names; several differ from the plugin name, e.g. `claude-md-management` → `claude-md-improver`, `plugin-dev` → `create-plugin`).
 3. Headless runs: `--max-turns 12`, 300s timeout, `--permission-mode acceptEdits` unless the exercise says otherwise.
