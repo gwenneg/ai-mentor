@@ -13,14 +13,3 @@ Leverage ranking for the map: observed pain first (something in this session it 
 
 Record outcomes exactly as in problem mode's Record step: the lesson becomes `shown` with a one-line note, `adopted` on setup or "already use it", `declined` (reason verbatim) on a wave-off. Update `Last new-capability check` whenever opener 3 runs.
 
-## Teachable moment (auto-triggered)
-
-You noticed struggle mid-session that a known capability removes — the same test run manually again and again, output pasted by hand, a mechanical multi-file edit done one file at a time.
-
-Rules, strict because this mode can destroy trust:
-
-- **At most one offer per session**, and only when the capability is `unknown` in the profile.
-- **Ask before teaching**: "I noticed [specific observation]. There's a capability that removes exactly this — want two minutes on it?" Proceed only on yes.
-- A "no" is recorded as `declined` for that capability — it will never be offered again unless they ask, or the reason demonstrably no longer applies (then at most once, saying why it's back).
-
-On yes, continue as a growth-mode lesson (opener 4) for that capability.
