@@ -159,7 +159,10 @@ func statementsByID(as []evalCase) map[string]string {
 	return m
 }
 
-// approachNames enumerates approach basenames for the B06 all-adopted profile.
+// approachNames enumerates every teachable unit for the B06 all-adopted
+// profile: approach basenames plus, when the capability registry exists,
+// its record ids — B06's "honest empty answer" only holds when the WHOLE
+// ignorance map is saturated.
 func approachNames(repo string) ([]string, error) {
 	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*.md"))
 	if err != nil || len(files) == 0 {
@@ -168,6 +171,17 @@ func approachNames(repo string) ([]string, error) {
 	names := make([]string, len(files))
 	for i, f := range files {
 		names[i] = strings.TrimSuffix(filepath.Base(f), ".md")
+	}
+	reg, err := os.ReadFile(filepath.Join(repo, "skills", "mentor", "registry", "builtin-commands.md"))
+	if err != nil {
+		return names, nil // no registry on this tree — approaches are the whole map
+	}
+	for _, l := range strings.Split(string(reg), "\n") {
+		if id, ok := strings.CutPrefix(l, "id: "); ok {
+			if id = strings.TrimSpace(id); id != "" && !slices.Contains(names, id) {
+				names = append(names, id)
+			}
+		}
 	}
 	return names, nil
 }
