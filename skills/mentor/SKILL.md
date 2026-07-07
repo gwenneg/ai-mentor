@@ -140,7 +140,7 @@ Calibration comes from the profile's `Level` line when present (update it when t
 
 ### Record
 
-Immediately after presenting: the move and the surprise become `shown` (with a one-line note). If they set it up or say they already use it → `adopted`. If they wave something off → `declined`, with their reason verbatim.
+The move and the surprise become `shown` (with a one-line note) — written immediately BEFORE composing the response: the picks are final by then, and writing first means the response is the turn's last message, ending cleanly on the closing line with no post-write narration. On later turns: if they set it up or say they already use it → `adopted`; if they wave something off → `declined`, with their reason verbatim.
 
 ---
 
