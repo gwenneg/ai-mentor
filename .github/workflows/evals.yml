@@ -6,11 +6,15 @@
 #     "run Groups A-C before every release tag". The branch is force-refreshed
 #     on every push to main, so concurrency cancels superseded runs — only the
 #     state you'd actually tag gets a full run.
-#   - Manual dispatch for feature branches (pick groups/cases, optionally gate).
+#   - Manual dispatch for feature branches (pick groups/cases; gate=false
+#     for a report-only run).
 #
-# Report-only by default: results land in the job summary and as a PR comment.
-# Flip GATE to true (or dispatch with gate=true) once the suite has proven
-# stable across a few releases.
+# GATING: any FAIL or ERROR fails the job. What gates are the deterministic
+# expectations in evals/cases.md — classification, fabrication, grounding,
+# output shape, never-repeat, profile hygiene — objective criteria the judge
+# scores mechanically. If a fuzzy quality rubric is ever added, it must stay
+# advisory: it informs, never blocks (NEXT_VERSION.md D5). The report lands
+# in the job summary and as a PR comment either way.
 #
 # Group D (trigger calibration) is interactive-only and never runs here.
 
@@ -30,7 +34,7 @@ on:
       gate:
         description: 'Fail the job on eval failures'
         type: boolean
-        default: false
+        default: true
 
 concurrency:
   group: evals-${{ github.event.pull_request.number || github.ref }}
@@ -64,7 +68,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GROUPS: ${{ github.event.inputs.groups || 'A,B,C' }}
           CASES: ${{ github.event.inputs.cases || '' }}
-          GATE: ${{ github.event.inputs.gate || 'false' }}
+          GATE: ${{ github.event.inputs.gate || 'true' }}
         run: |
           ARGS="-groups $GROUPS -out $GITHUB_WORKSPACE/eval-report.md"
           if [ -n "$CASES" ]; then ARGS="$ARGS -cases $CASES"; fi
