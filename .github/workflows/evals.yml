@@ -69,7 +69,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GROUPS: ${{ github.event.inputs.groups || 'A,B,C' }}
-          CASES: ${{ github.event.inputs.cases || '' }}
+          CASES: ${{ github.event.inputs.cases || 'A01' }}  # TEMPORARY single-case debug slice — restore '' before merge
           GATE: ${{ github.event.inputs.gate || 'true' }}
         run: |
           ARGS="-groups $GROUPS -out $GITHUB_WORKSPACE/eval-report.md"

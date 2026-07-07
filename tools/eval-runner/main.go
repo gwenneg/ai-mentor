@@ -179,7 +179,16 @@ var runClaude = func(ctx context.Context, dir string, env []string, args ...stri
 	var out, errOut bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errOut
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("claude: %w: %s", err, strings.TrimSpace(errOut.String()))
+		// stderr is often empty on failure — the CLI reports errors as a
+		// JSON envelope on stdout — so surface both, capped.
+		detail := strings.TrimSpace(errOut.String())
+		if o := strings.TrimSpace(out.String()); o != "" {
+			detail += " stdout: " + o
+		}
+		if len(detail) > 1000 {
+			detail = detail[:1000] + " ..."
+		}
+		return "", fmt.Errorf("claude: %w: %s", err, detail)
 	}
 	return out.String(), nil
 }
