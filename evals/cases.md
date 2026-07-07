@@ -32,7 +32,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 ### Group A output-shape expectations (every classified case)
 
 - Opens with the one-sentence Phase 0 announcement, then a diagnosis naming observed evidence — never a questionnaire
-- Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo
+- Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo — unless the problem targets a different repo than the fixture (e.g. A20's SAPUI5 app in a non-UI5 fixture): then SKILL.md's repo-boundary rule requires a *portable* prompt instead, which must not import fixture-repo paths or conventions
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known
 - Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more"
 - No safe/surprising *card wall*: response is prose + one fenced prompt, not 3-5 formatted cards
