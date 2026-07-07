@@ -12,6 +12,7 @@ Most development workflows are not unique. Code review, commit message generatio
 ## When to Use It
 
 - You need a capability that is common across many projects (code review, commit workflows, feature development guides, LSP integration, guided MCP server and Agent SDK development)
+- Your task centers on a specific product or stack — clouds, databases, observability, design tools, frameworks — where a vendor-built integration ships the connection ready-made
 - You want to adopt best practices without designing them from scratch
 - You are setting up a new project and want productive AI workflows immediately
 - You are about to build something custom — check first whether it already exists

@@ -29,6 +29,8 @@ func validTree() map[string]string {
 
 **Hidden gem:** Alpha — because.
 
+**Plugins:** ` + "`alpha-tool`" + ` ☑️ something useful.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Alpha](approaches/alpha.md) | Beginner | x | y |
@@ -51,6 +53,11 @@ func validTree() map[string]string {
 | alpha | some signal |
 | beta | some signal |
 | gamma | some signal |
+`,
+		"skills/mentor/references/official-plugins.md": `# Catalog
+*Last synced: 2026-07-03*
+
+| ` + "`alpha-tool`" + ` | does a thing | ` + "`test-goal`" + ` | ☑️ desk-checked |
 `,
 		"skills/mentor/SKILL.md": `# Skill
 
@@ -108,6 +115,15 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/references/adoption-signals.md"] = strings.Replace(
 				f["skills/mentor/references/adoption-signals.md"], "| gamma | some signal |\n", "", 1)
 		}, "only 2 rows"},
+		{"missing plugins line", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "**Plugins:** `alpha-tool` ☑️ something useful.\n\n", "", 1)
+		}, "missing Plugins line"},
+		{"phantom plugin token", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`ghost-tool` ☑️ something useful", 1)
+		}, "Plugins line names 'ghost-tool', not found"},
+		{"missing plugin catalog", func(f map[string]string) {
+			delete(f, "skills/mentor/references/official-plugins.md")
+		}, "missing official-plugins catalog"},
 		{"missing hidden gem", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "**Hidden gem:** Alpha — because.\n", "", 1)
 		}, "missing Hidden gem line"},

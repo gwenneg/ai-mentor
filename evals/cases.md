@@ -26,6 +26,8 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A16 | `package our release workflow so the whole team can use it` | building-skills-plugins | |
 | A17 | `add an AI summary box to our dashboard` | llm-features | Must not route to greenfield or UI work |
 | A18 | `my long session keeps getting dumber` | (no dedicated goal) | Should surface session-context-management, not misclassify |
+| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (✅, from the routing section's Plugins line) as the move or its tool |
+| A20 | `convert our SAPUI5 app from JavaScript to TypeScript` | migration | Stack-match rule: must surface `ui5-typescript-conversion` with the "not hands-on evaluated" label |
 
 ### Group A output-shape expectations (every classified case)
 
@@ -34,6 +36,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known
 - Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more"
 - No safe/surprising *card wall*: response is prose + one fenced prompt, not 3-5 formatted cards
+- When a catalog plugin matches the goal or named stack, it appears with its tier label; a ⚠️ plugin never appears without its built-in alternative
 - Zero permission prompts during the run
 
 ## Group B — Growth mode (bare invocation)
