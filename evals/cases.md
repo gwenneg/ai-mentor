@@ -31,7 +31,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 
 ### Group A output-shape expectations (every classified case)
 
-- Opens with one sentence naming what was checked (or is about to be checked) and why — the Phase 0 announcement, in prospective or retrospective phrasing — then a diagnosis naming observed evidence; never a questionnaire
+- Opens with a sentence naming what was checked (or is about to be checked) and why — the Phase 0 announcement, prospective or retrospective. Judged transcripts interleave brief progress narration between tool calls; that narration is acceptable opening material (it is how the announcement reads live), and the diagnosis naming observed evidence must follow it. A questionnaire is never acceptable
 - Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo *inside the fenced block itself* (a setup line for that same move — a `/plugin install` or `claude mcp add` — counts as part of the move, not as a second one) — unless the problem targets a different repo than the fixture or names code the fixture does not contain (e.g. A20's SAPUI5 app in a non-UI5 fixture, or authentication code in a fixture without any): then SKILL.md's repo-boundary rule requires a *portable* prompt instead, which must not import fixture-repo paths or conventions
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known
 - Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more"
