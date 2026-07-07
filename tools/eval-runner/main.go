@@ -471,7 +471,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string) resul
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, ".", os.Environ(),
-		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "5")
+		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "5", "--bare")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
@@ -495,6 +495,9 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string) resul
 func (r *runner) judgePrompt(c evalCase, responses []string, profile string) string {
 	var b strings.Builder
 	b.WriteString("You are a strict evaluator for the ai-mentor Claude Code skill. Do not use any tools — judge only the material in this prompt and reply immediately. ")
+	b.WriteString("You cannot see the run's tool calls: never infer from the text whether checks actually ran, and a missing profile file does not mean reads were skipped. ")
+	b.WriteString("The response was produced INSIDE the fixture repo described by the problem context — its file paths are the fixture's, not this machine's; do not judge them against any other repository. ")
+	b.WriteString("Approaches/techniques (plan mode, hooks, browser integration, ...) and built-in slash commands are NOT catalog plugins — plugin rules (tier labels, ⚠️ alternatives) apply only to marketplace plugins installed via /plugin install. ")
 	b.WriteString("Judge whether the response(s) below meet the case expectation. ")
 	b.WriteString("Reply with STRICT JSON only — no prose, no markdown fences: ")
 	b.WriteString(`{"pass": bool, "checks": [{"name": string, "pass": bool, "reason": string}]}`)
