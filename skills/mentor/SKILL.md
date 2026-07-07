@@ -60,7 +60,7 @@ Then, silently:
 3. **Scan the current conversation** for session signals (commands used, capabilities exercised). Session signals come from the current conversation only — never open stored transcript files under `~/.claude/projects/`; their format is internal and unstable.
 4. **Reconcile silently**: a signal-positive capability with no profile row → record it as `adopted` without comment (they already knew it). Evidence beats memory: disk state wins over stale profile rows.
 
-The **ignorance map** is what remains: every approach in the catalog and every built-in command in `registry/builtin-commands.md` with no `adopted`/`shown`/`declined` row and no positive signal — ranked by leverage for the work you observed. Registry records carry their own `session_signal` line for the reconcile step; profile rows for built-ins use the record's `id`, same table, same statuses.
+The **ignorance map** is what remains, and it is kind-aware: every technique (`registry/techniques.md`), built-in command (`registry/builtin-commands.md`), and integration (`registry/integrations.md`) with no `adopted`/`shown`/`declined` row and no positive signal is teachable by default; marketplace plugins (`references/official-plugins.md`, the registry's plugin slice) enter only when their stack or goal matches the observed work — never as generic filler. Rank by leverage for the work you observed. Registry records carry their own `session_signal` line for the reconcile step; profile rows use the record's `id` — approach basename, command id, integration id, or plugin name — same table, same statuses.
 
 Then select the mode and **read that mode's file from the plugin root** — it is the playbook for the rest of the interaction; the other mode's file stays unread:
 
@@ -107,7 +107,7 @@ For file-writing actions, always show the change before applying it, and never o
 - Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — never Bash (`ls`, `cat`, `find`, ...): no Bash rule covers those paths, so every such call interrupts the user with a permission prompt
 - The plugin-path Read grant is invocation-scoped: prompt-free only while composing the first response. Read everything follow-ups will need before finishing it; on later turns, warn before any plugin-file read and handle the prompt gracefully
 - Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator. In problem mode it accompanies the move (subject to problem-mode's relevance floor: omit rather than pad); in growth mode the lesson itself IS the pick — never add a second capability on top
-- Never re-teach `shown`, never re-offer `declined`, never explain `adopted` — check the profile before every recommendation
+- Never re-teach `shown`, never re-offer `declined`, never explain `adopted` — check the profile before every recommendation. Declined means invisible: never name the declined capability at all, not even to say you're skipping it ("you waved off X, so I won't pitch it" is itself a re-reference)
 - Write profile changes immediately, in-flow; announce the profile's existence and path exactly once, at creation
 - Session signals come from the current conversation only; never parse stored transcript files
 - Never block on a calibration or clarification question when evidence can answer it; one light question maximum per session

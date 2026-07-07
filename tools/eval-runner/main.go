@@ -172,14 +172,17 @@ func approachNames(repo string) ([]string, error) {
 	for i, f := range files {
 		names[i] = strings.TrimSuffix(filepath.Base(f), ".md")
 	}
-	reg, err := os.ReadFile(filepath.Join(repo, "skills", "mentor", "registry", "builtin-commands.md"))
-	if err != nil {
-		return names, nil // no registry on this tree — approaches are the whole map
-	}
-	for _, l := range strings.Split(string(reg), "\n") {
-		if id, ok := strings.CutPrefix(l, "id: "); ok {
-			if id = strings.TrimSpace(id); id != "" && !slices.Contains(names, id) {
-				names = append(names, id)
+	regs, _ := filepath.Glob(filepath.Join(repo, "skills", "mentor", "registry", "*.md"))
+	for _, rf := range regs {
+		reg, err := os.ReadFile(rf)
+		if err != nil {
+			continue
+		}
+		for _, l := range strings.Split(string(reg), "\n") {
+			if id, ok := strings.CutPrefix(l, "id: "); ok {
+				if id = strings.TrimSpace(id); id != "" && !slices.Contains(names, id) {
+					names = append(names, id)
+				}
 			}
 		}
 	}

@@ -33,9 +33,9 @@ func validTree() map[string]string {
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Alpha](approaches/alpha.md) | Beginner | x | y |
-| 2 | [Beta](approaches/beta.md) | Intermediate | x | y |
-| 3 | [Gamma](approaches/gamma.md) | Advanced | x | y |
+| 1 | [Alpha](../approaches/alpha.md) | Beginner | x | y |
+| 2 | [Beta](../approaches/beta.md) | Intermediate | x | y |
+| 3 | [Gamma](../approaches/gamma.md) | Advanced | x | y |
 `,
 		"skills/mentor/approaches/alpha.md": approachMD(),
 		"skills/mentor/approaches/beta.md":  approachMD(),
@@ -53,6 +53,36 @@ func validTree() map[string]string {
 | alpha | some signal |
 | beta | some signal |
 | gamma | some signal |
+`,
+		"skills/mentor/registry/techniques.md": `# Techniques
+*Last verified: 2026-07-03*
+
+## alpha
+
+id: alpha
+kind: technique
+goals: test-goal
+
+## beta
+
+id: beta
+kind: technique
+goals: test-goal
+
+## gamma
+
+id: gamma
+kind: technique
+goals: test-goal
+`,
+		"skills/mentor/registry/integrations.md": `# Integrations
+*Last verified: 2026-07-03*
+
+## some-integration
+
+id: some-integration
+kind: integration
+goals: test-goal
 `,
 		"skills/mentor/registry/builtin-commands.md": `# Registry
 *Last verified: 2026-07-03*
@@ -228,6 +258,27 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/registry/builtin-commands.md"] = strings.Replace(
 				f["skills/mentor/registry/builtin-commands.md"], "goals: test-goal", "goals: no-such-goal", 1)
 		}, "registry goals name 'no-such-goal'"},
+		{"technique record missing", func(f map[string]string) {
+			f["skills/mentor/registry/techniques.md"] = strings.Replace(
+				f["skills/mentor/registry/techniques.md"], "## gamma\n\nid: gamma\nkind: technique\ngoals: test-goal\n", "", 1)
+		}, "approach 'gamma' has no techniques-registry record"},
+		{"stale technique record", func(f map[string]string) {
+			f["skills/mentor/registry/techniques.md"] += "\n## omega\n\nid: omega\nkind: technique\ngoals: test-goal\n"
+		}, "record 'omega' has no matching approach file"},
+		{"technique goals drift (extra)", func(f map[string]string) {
+			f["skills/mentor/registry/techniques.md"] = strings.Replace(
+				f["skills/mentor/registry/techniques.md"], "id: beta\nkind: technique\ngoals: test-goal", "id: beta\nkind: technique\ngoals: test-goal, other-goal", 1)
+		}, "record 'beta' lists goal 'other-goal' but routing/other-goal.md has no row"},
+		{"integration id collides with builtin", func(f map[string]string) {
+			f["skills/mentor/registry/integrations.md"] = strings.Replace(
+				f["skills/mentor/registry/integrations.md"], "id: some-integration", "id: testcmd", 1)
+		}, "duplicate registry id 'testcmd'"},
+		{"missing techniques registry", func(f map[string]string) {
+			delete(f, "skills/mentor/registry/techniques.md")
+		}, "missing techniques registry"},
+		{"missing integrations registry", func(f map[string]string) {
+			delete(f, "skills/mentor/registry/integrations.md")
+		}, "missing integrations registry"},
 		{"missing registry", func(f map[string]string) {
 			delete(f, "skills/mentor/registry/builtin-commands.md")
 			f[routing] = strings.Replace(f[routing], "\n**Built-ins:** `/testcmd` — does the thing.\n", "", 1)

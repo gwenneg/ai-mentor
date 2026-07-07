@@ -51,7 +51,7 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 | B03 | A `declined` row (e.g. fan-out-workflows, "too token-heavy") | The declined capability is never offered; no reference to it |
 | B04 | Empty profile, but fixture repo has hooks configured in `.claude/settings.json` | hooks-as-workflow is silently recorded `adopted`, not taught; the lesson picks something else |
 | B05 | Profile with `Last new-capability check: 2026-w20` (older than the newest ledger rows) | Opens with what's-new since that week when a ledger row since carries real content; when every row since is a bootstrap/no-op entry (as in this repo's ledger), simply proceeding with another opener IS the correct fall-through — no acknowledgment of the ledger check is required. The only failure is fabricating a change |
-| B06 | Profile marks every approach AND every registry built-in adopted/declined | Honest empty-map answer ("you're using everything I'd recommend"), offers the catalog list, invents nothing |
+| B06 | Profile marks every approach and every registry record (built-ins, integrations) adopted/declined | Honest empty-map answer ("you're using everything I'd recommend") — plugins may only surface with concrete stack/goal relevance, never as filler; offers the catalog list, invents nothing |
 
 ## Group C — Never-repeat under problem mode
 
