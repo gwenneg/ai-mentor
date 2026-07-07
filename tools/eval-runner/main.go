@@ -402,25 +402,52 @@ func (r *runner) invoke(prompt, dir string, env []string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, dir, env,
-		"-p", prompt, "--plugin-dir", r.repo, "--output-format", "json", "--max-turns", "30")
+		"-p", prompt, "--plugin-dir", r.repo, "--output-format", "stream-json", "--verbose", "--max-turns", "30")
 	if err != nil {
 		return "", err
 	}
-	return resultField(out)
+	return assistantText(out)
 }
 
-// resultField loosely decodes claude's --output-format json envelope and
-// returns its "result" string.
-func resultField(out string) (string, error) {
-	var m map[string]any
-	if err := json.Unmarshal([]byte(out), &m); err != nil {
-		return "", fmt.Errorf("claude output is not JSON: %w", err)
+// assistantText extracts what the user would have seen: the concatenated
+// text blocks of every assistant message in a stream-json transcript.
+// Judging only the final message hides everything the model said before a
+// trailing profile write ("Recorded." would be the whole response). A plain
+// json envelope's "result" field is kept as a fallback for older output.
+func assistantText(out string) (string, error) {
+	var texts []string
+	envelope := ""
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			continue
+		}
+		if msg, ok := m["message"].(map[string]any); ok && m["type"] == "assistant" {
+			content, _ := msg["content"].([]any)
+			for _, c := range content {
+				cm, _ := c.(map[string]any)
+				if cm["type"] == "text" {
+					if s, _ := cm["text"].(string); strings.TrimSpace(s) != "" {
+						texts = append(texts, s)
+					}
+				}
+			}
+		}
+		if s, ok := m["result"].(string); ok {
+			envelope = s
+		}
 	}
-	s, ok := m["result"].(string)
-	if !ok {
-		return "", fmt.Errorf(`claude output has no string "result" field`)
+	if len(texts) > 0 {
+		return strings.Join(texts, "\n\n"), nil
 	}
-	return s, nil
+	if envelope != "" {
+		return envelope, nil
+	}
+	return "", fmt.Errorf("no assistant text found in claude output")
 }
 
 // judgeCase scores the responses with the judge model. An unparseable judge
@@ -453,7 +480,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string) resul
 // expectations from cases.md verbatim.
 func (r *runner) judgePrompt(c evalCase, responses []string, profile string) string {
 	var b strings.Builder
-	b.WriteString("You are a strict evaluator for the ai-mentor Claude Code skill. ")
+	b.WriteString("You are a strict evaluator for the ai-mentor Claude Code skill. Do not use any tools — judge only the material in this prompt and reply immediately. ")
 	b.WriteString("Judge whether the response(s) below meet the case expectation. ")
 	b.WriteString("Reply with STRICT JSON only — no prose, no markdown fences: ")
 	b.WriteString(`{"pass": bool, "checks": [{"name": string, "pass": bool, "reason": string}]}`)
@@ -465,6 +492,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 		}
 		b.WriteString("\nGroup A output-shape expectations (verbatim from cases.md; every classified case must satisfy all of them):\n")
 		b.WriteString(r.shape + "\n")
+		b.WriteString("\nThe case notes take precedence over the shape expectations when they conflict: a case whose notes say it is not classified (catalog browse, graceful decline) is judged on its notes, not on the classified-case shape.\n")
 	} else {
 		fmt.Fprintf(&b, "Setup / profile fixture: %s\nExpected behavior: %s\n", c.Statement, c.Expected)
 	}
@@ -685,6 +713,20 @@ func main() {
 			fmt.Printf("  reason: %s\n", res.reason)
 		}
 		results = append(results, res)
+	}
+	// One bounded retry for ERROR verdicts: transient API failures
+	// (connection drops, judge hiccups) must not fail a gating run.
+	for i, res := range results {
+		if res.verdict != vError {
+			continue
+		}
+		fmt.Printf("retrying %s after error ...", res.c.ID)
+		res = r.runCase(res.c)
+		fmt.Printf(" %s\n", res.verdict)
+		if res.verdict != vPass {
+			fmt.Printf("  reason: %s\n", res.reason)
+		}
+		results[i] = res
 	}
 
 	if err := os.WriteFile(*out, []byte(renderReport(results)), 0o644); err != nil {

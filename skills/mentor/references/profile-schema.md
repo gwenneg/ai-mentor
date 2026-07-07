@@ -40,7 +40,7 @@ Facts future maintainers must not "fix" (each verified by test, not assumption):
 *Updated: YYYY-MM-DD*
 
 Level: getting-started | comfortable | advanced — one line of evidence for the calibration
-Last new-capability check: <what's-new week slug, e.g. 2026-w26>
+Last new-capability check: <what's-new week slug, e.g. 2026-w26 — always a week slug; on profile creation set it to the current ISO week (first meeting is the baseline), never "never">
 
 | Capability | Status | Date | Note |
 |------------|--------|------|------|
