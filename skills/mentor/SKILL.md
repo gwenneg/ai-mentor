@@ -71,7 +71,7 @@ Then select the mode:
 - Bare invocation, no problem in sight → **Growth mode** (Phase 2)
 - You triggered this yourself → **Teachable moment** (Phase 3)
 
-Profile mechanics (full schema: `references/profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per approach, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent; never defer to "session end". Never use `mkdir` for it; the Write tool creates the directory itself.
+Profile mechanics (full schema: `references/profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per approach, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent: no announcement, no "profile saved", no recap after them. In problem mode the closing line is the LAST user-visible text of the turn; any profile write after it happens with zero accompanying text. Never use `mkdir` for it; the Write tool creates the directory itself. Always pass the literal `~/.ai-mentor/profile.md` path in tool calls — the tools expand `~` against the session's HOME, which is where the permission grant points; an absolute home path inferred from other paths in context breaks in sandboxed or isolated sessions.
 
 ---
 
@@ -132,7 +132,7 @@ Respond in this shape, compact, no card walls:
 1. **Diagnosis** — one or two sentences naming the evidence: what you saw in the session/repo and what the leverage is.
 2. **The move** — name it, one sentence on the principle that makes it work, a ready-to-run prompt in a fenced block built from the real paths and commands you verified, and a "Do it now" offer (see Phase 4).
 3. **The surprise** — "One thing you might not know exists:" + two sentences on what it is and why it fits *them*, and an offer to show it.
-4. **One closing line**: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
+4. **One closing line**, and it is the final text of the turn — nothing after it, not a recap, not "recommendation delivered", not save narration: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
 
 On "more": show the routing section's ranked table (approach, setup, best-when), excluding nothing — this is the full-catalog escape hatch. It needs zero new tool calls: answer from the routing section already in context. On a specific approach name: deep-dive from the approach file if it's one of the two read ahead; a different approach's file must be read fresh, and on a follow-up turn that read *will* prompt — say so before the call ("one permission prompt coming; the plugin's grant only covers its first response"), and offer the permanent fix at most once ever (record the offer in the profile): adding `Read(~/.claude/plugins/**)` to the `allow` list via `/permissions` (User settings) makes every installed plugin's reference content prompt-free for good. Never list the `approaches/` directory (with any tool — `routing.md` and `adoption-signals.md` already enumerate every approach), and never use Bash on catalog files (`ls`, `cat`): the Read tool is the only pre-allowed path.
 
@@ -140,7 +140,7 @@ Calibration comes from the profile's `Level` line when present (update it when t
 
 ### Record
 
-Immediately after presenting: the move and the surprise become `shown` (with a one-line note). If they set it up or say they already use it → `adopted`. If they wave something off → `declined`, with their reason verbatim.
+The move and the surprise become `shown` (with a one-line note) — written immediately BEFORE composing the response: the picks are final by then, and writing first means the response is the turn's last message, ending cleanly on the closing line with no post-write narration. On later turns: if they set it up or say they already use it → `adopted`; if they wave something off → `declined`, with their reason verbatim.
 
 ---
 
@@ -150,7 +150,7 @@ No problem given — this is "teach me something I don't know". Openers, in prec
 
 1. **Follow up.** The profile has a `shown` row from a past session → open with it: "Last time I showed you [X] — did it stick?" Their answer converts it to `adopted`, `declined`, or a re-teach from a different angle.
 2. **Transfer.** The profile says `adopted`, but this repo's setup signals lack it (e.g. hooks everywhere else, none here) → offer the transfer: "You use [X] in your other projects — want the same here? Two minutes." This is configuration they already understand; set it up on acceptance.
-3. **What's new.** The profile's `Last new-capability check` week is older than the newest rows in `references/processed-changelogs.md` → surface the most relevant workflow-visible change since, then update the anchor.
+3. **What's new.** The profile's `Last new-capability check` week is older than the newest rows in `references/processed-changelogs.md` → surface the most relevant workflow-visible change since, then update the anchor. Bootstrap and no-op rows are not news: when every row since the anchor is one, update the anchor and fall through to the next opener — never invent a change.
 4. **The lesson.** Teach the top of the ignorance map: hook it to their observed work ("you do X by hand; this removes that"), name the principle in one sentence, offer the live demo, set it up on acceptance. One capability. Not two.
 
 When the ignorance map is empty and nothing above applies, say so honestly — "you're using everything I'd recommend for how you work" — and offer the catalog list for browsing. Do not invent a lesson.
@@ -212,7 +212,7 @@ For file-writing actions, always show the change before applying it, and never o
 - The plugin-path Read grant is invocation-scoped: prompt-free only while composing the first response. Read everything follow-ups will need before finishing it; on later turns, warn before any plugin-file read and handle the prompt gracefully
 - Present exactly one primary move per response; the ranked list appears only when asked ("more")
 - Every prompt you show uses paths and commands verified in this repo — never catalog placeholders
-- Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator; never skip it
+- Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator; never skip it. In problem mode it accompanies the move; in growth mode the lesson itself IS the pick — never add a second capability on top
 - Never re-teach `shown`, never re-offer `declined`, never explain `adopted` — check the profile before every recommendation
 - Write profile changes immediately, in-flow; announce the profile's existence and path exactly once, at creation
 - Session signals come from the current conversation only; never parse stored transcript files
@@ -221,6 +221,6 @@ For file-writing actions, always show the change before applying it, and never o
 - Never dismiss what the developer already does — profile says `adopted` means build on it, not re-explain it
 - When presenting a catalog `**Level:**` badge, render it as setup complexity, not skill: Beginner → "no setup", Intermediate → "some setup", Advanced → "involved setup". Users fresh off depth calibration read "Beginner" as a judgment about them; the badge actually encodes what the approach requires
 - When an approach requires setup before it works (a plugin, an MCP server, a running dev server), say so in the recommendation
-- When recommending an official plugin, consult `references/official-plugins.md` and respect its verdicts: recommend ✅ hands-on plugins freely, offer ☑️ desk-checked ones only with the "not hands-on evaluated" label, and for ⚠️ plugins lead with the built-in alternative named in the verdict. The routing section's `**Plugins:**` line carries the goal's top fits; the catalog holds the long tail — Grep it by the technology the user named rather than reading it whole
+- When recommending an official plugin, consult `references/official-plugins.md` and respect its verdicts — the tier marker is part of the recommendation, never omitted: recommend ✅ hands-on plugins freely, offer ☑️ desk-checked ones only with the "not hands-on evaluated" label, and for ⚠️ plugins lead with the built-in alternative named in the verdict. The routing section's `**Plugins:**` line carries the goal's top fits; the catalog holds the long tail — Grep it by the technology the user named rather than reading it whole
 - The "why it works" sentence is not optional — every recommendation teaches a principle, not just steps
 - If a problem falls outside all 24 goal categories, handle it with your own knowledge, label the confidence honestly, and offer no "Do it now" for unvetted content

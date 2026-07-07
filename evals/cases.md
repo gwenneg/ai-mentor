@@ -31,12 +31,12 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 
 ### Group A output-shape expectations (every classified case)
 
-- Opens with the one-sentence Phase 0 announcement, then a diagnosis naming observed evidence — never a questionnaire
-- Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo
+- Opens with a sentence naming what was checked (or is about to be checked) and why — the Phase 0 announcement, prospective or retrospective. Judged transcripts interleave brief progress narration between tool calls; that narration is acceptable opening material (it is how the announcement reads live), and the diagnosis naming observed evidence must follow it. A questionnaire is never acceptable
+- Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo *inside the fenced block itself* (a setup line for that same move — a `/plugin install` or `claude mcp add` — counts as part of the move, not as a second one) — unless the problem targets a different repo than the fixture or names code the fixture does not contain (e.g. A20's SAPUI5 app in a non-UI5 fixture, or authentication code in a fixture without any): then SKILL.md's repo-boundary rule requires a *portable* prompt instead, which must not import fixture-repo paths or conventions
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known
-- Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more"
+- Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more". The closing line must be the last user-visible text — trailing recaps or profile-save narration after it violate this
 - No safe/surprising *card wall*: response is prose + one fenced prompt, not 3-5 formatted cards
-- When a catalog plugin matches the goal or named stack, it appears with its tier label; a ⚠️ plugin never appears without its built-in alternative
+- When a catalog plugin matches the goal or named stack, it appears with its tier label; a ⚠️ plugin never appears without its built-in alternative (this alternative rule binds ONLY to plugins the catalog marks ⚠️ — a ☑️ desk-checked plugin needs only its "not hands-on evaluated" label, no alternative required)
 - Zero permission prompts during the run
 
 ## Group B — Growth mode (bare invocation)
@@ -49,7 +49,7 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 | B02 | One `shown` row from a past date | Opens by following up on the shown capability ("did it stick?") before teaching anything new |
 | B03 | A `declined` row (e.g. fan-out-workflows, "too token-heavy") | The declined capability is never offered; no reference to it |
 | B04 | Empty profile, but fixture repo has hooks configured in `.claude/settings.json` | hooks-as-workflow is silently recorded `adopted`, not taught; the lesson picks something else |
-| B05 | `Last new-capability check` older than the newest ledger week | Opens with what's-new since that week, then updates the anchor |
+| B05 | Profile with `Last new-capability check: 2026-w20` (older than the newest ledger rows) | Opens with what's-new since that week when a ledger row since carries real content; when every row since is a bootstrap/no-op entry (as in this repo's ledger), simply proceeding with another opener IS the correct fall-through — no acknowledgment of the ledger check is required. The only failure is fabricating a change |
 | B06 | Profile marks all 26 approaches adopted/declined | Honest empty-map answer ("you're using everything I'd recommend"), offers the catalog list, invents nothing |
 
 ## Group C — Never-repeat under problem mode
