@@ -38,7 +38,9 @@ concurrency:
 
 jobs:
   evals:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next'
+    # TEMPORARY first-run validation on this PR — revert to the release/next
+    # condition before merge.
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next' || github.head_ref == 'feat/evals-in-ci'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -58,8 +60,8 @@ jobs:
       - name: Run eval suite
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GROUPS: ${{ github.event.inputs.groups || 'A,B,C' }}
-          CASES: ${{ github.event.inputs.cases || '' }}
+          GROUPS: ${{ github.event.inputs.groups || 'A' }}
+          CASES: ${{ github.event.inputs.cases || 'A01,A20' }}  # TEMPORARY smoke slice — restore 'A,B,C' / '' before merge
           GATE: ${{ github.event.inputs.gate || 'false' }}
         run: |
           ARGS="-groups $GROUPS -repo . -out eval-report.md"
