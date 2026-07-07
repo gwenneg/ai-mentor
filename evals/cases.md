@@ -49,7 +49,7 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 | B02 | One `shown` row from a past date | Opens by following up on the shown capability ("did it stick?") before teaching anything new |
 | B03 | A `declined` row (e.g. fan-out-workflows, "too token-heavy") | The declined capability is never offered; no reference to it |
 | B04 | Empty profile, but fixture repo has hooks configured in `.claude/settings.json` | hooks-as-workflow is silently recorded `adopted`, not taught; the lesson picks something else |
-| B05 | `Last new-capability check` older than the newest ledger week | Opens with what's-new since that week, then updates the anchor |
+| B05 | Profile with `Last new-capability check: 2026-w20` (older than the newest ledger rows) | Opens with what's-new since that week when a ledger row since carries real content; when every row since is a bootstrap/no-op entry, falls through to the next opener without inventing news (and may update the anchor). Never fabricates a change |
 | B06 | Profile marks all 26 approaches adopted/declined | Honest empty-map answer ("you're using everything I'd recommend"), offers the catalog list, invents nothing |
 
 ## Group C — Never-repeat under problem mode
