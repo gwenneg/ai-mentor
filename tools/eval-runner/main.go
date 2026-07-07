@@ -648,6 +648,9 @@ func main() {
 		fmt.Printf("running %s ...", c.ID)
 		res := r.runCase(c)
 		fmt.Printf(" %s\n", res.verdict)
+		if res.verdict != vPass {
+			fmt.Printf("  reason: %s\n", res.reason)
+		}
 		results = append(results, res)
 	}
 
