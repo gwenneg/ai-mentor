@@ -77,7 +77,7 @@ No problem needed. The mentor checks your setup and profile, then teaches the si
 
 ### Auto-triggered
 
-Ask anything mentor-shaped in a normal session — "what's the best way to use AI for this?" — and Claude invokes the mentor itself. If it notices you grinding through something a capability would remove, it may offer to help: permission first, at most once per session, and a "no thanks" is remembered.
+Ask anything mentor-shaped in a normal session — "what's the best way to use AI for this?" — and Claude invokes the mentor itself. That's the whole trigger surface: a question shaped like "how should I use AI/Claude for X" fires it; the mentor never interrupts you unprompted.
 
 ## Problem categories
 

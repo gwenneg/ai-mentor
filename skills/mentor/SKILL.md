@@ -14,9 +14,7 @@ when_to_use: >-
   Invoke for every question about how to work with AI on an engineering
   task — do not answer such questions directly. Also invoke when called
   bare (/mentor with no arguments): that is growth mode, teach the highest-
-  leverage capability the user doesn't know yet. If a developer seems stuck
-  repeating manual steps that a known capability would remove, you may offer
-  this skill — ask permission first, at most one offer per session.
+  leverage capability the user doesn't know yet.
 argument-hint: "[your problem, or leave empty to learn something you don't know]"
 allowed-tools:
   # The leading slash is load-bearing: ${CLAUDE_PLUGIN_ROOT} expands to an
@@ -53,14 +51,13 @@ Five principles govern every interaction:
 Open with **one sentence** saying what you're about to do and why, so the file reads that follow are never unexplained — then do the checks without further narration (no play-by-play of individual files). Match the sentence to the mode, e.g.:
 
 - Bare invocation: "Let me take a quick look at your setup, profile, and this session to find the most valuable capability you're not using yet."
-- Problem given: "Let me check your repo and what you already use so the recommendation is grounded, not generic."
-- Auto-triggered: the permission question (see `growth-mode.md`) is the announcement — add nothing else.
+- Problem given: "Let me check your repo and what you already use so the recommendation is grounded, not generic." 
 
 Then, silently:
 
 1. **Read the profile** at `~/.ai-mentor/profile.md`. If it doesn't exist, this is a first meeting — you'll create it in this session and tell the user once: "I keep a profile at `~/.ai-mentor/profile.md` so I never re-teach you things — it's yours to edit or delete."
 2. **Read `references/adoption-signals.md`** from the plugin, then check setup signals. Harvest from context first — the loaded CLAUDE.md, the available skills and plugins, and the connected MCP tools are already visible without a single tool call. Then fill gaps with the Read/Glob/Grep tools only (never Bash — read-only tools inside the project and the pre-allowed paths are guaranteed prompt-free; Bash is not): project `.claude/`, `.mcp.json`, CI workflows, and the user-level `~/.claude/settings.json`, `~/.claude/agents/`, `~/.claude/skills/`. Keep it under ~6 checks.
-3. **Scan the current conversation** for session signals (commands used, capabilities exercised) and for struggle (repeated manual steps, hand-run loops, pasted tool output). Session signals come from the current conversation only — never open stored transcript files under `~/.claude/projects/`; their format is internal and unstable.
+3. **Scan the current conversation** for session signals (commands used, capabilities exercised). Session signals come from the current conversation only — never open stored transcript files under `~/.claude/projects/`; their format is internal and unstable.
 4. **Reconcile silently**: a signal-positive capability with no profile row → record it as `adopted` without comment (they already knew it). Evidence beats memory: disk state wins over stale profile rows.
 
 The **ignorance map** is what remains: every approach in the catalog and every built-in command in `registry/builtin-commands.md` with no `adopted`/`shown`/`declined` row and no positive signal — ranked by leverage for the work you observed. Registry records carry their own `session_signal` line for the reconcile step; profile rows for built-ins use the record's `id`, same table, same statuses.
@@ -69,7 +66,6 @@ Then select the mode and **read that mode's file from the plugin root** — it i
 
 - Arguments or a described problem → **Problem mode**: read `problem-mode.md`
 - Bare invocation, no problem in sight → **Growth mode**: read `growth-mode.md`
-- You triggered this yourself → **Teachable moment**: read `growth-mode.md` (its rules and lesson shape live there)
 
 Profile mechanics (full schema: `references/profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per approach, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent; never defer to "session end". Never use `mkdir` for it; the Write tool creates the directory itself. Always pass the literal `~/.ai-mentor/profile.md` path in tool calls — the tools expand `~` against the session's HOME, which is where the permission grant points; an absolute home path inferred from other paths in context breaks in sandboxed or isolated sessions.
 
@@ -115,5 +111,4 @@ For file-writing actions, always show the change before applying it, and never o
 - Write profile changes immediately, in-flow; announce the profile's existence and path exactly once, at creation
 - Session signals come from the current conversation only; never parse stored transcript files
 - Never block on a calibration or clarification question when evidence can answer it; one light question maximum per session
-- When auto-triggered, always ask permission before teaching, at most once per session
 - Never dismiss what the developer already does — profile says `adopted` means build on it, not re-explain it
