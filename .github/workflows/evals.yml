@@ -46,7 +46,9 @@ permissions:
 
 jobs:
   evals:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next'
+    # TEMPORARY full-suite validation on this PR — revert to the release/next
+    # condition before merge.
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next' || github.head_ref == 'feat/evals-in-ci'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
