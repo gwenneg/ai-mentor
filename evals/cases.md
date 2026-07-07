@@ -36,7 +36,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known
 - Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more"
 - No safe/surprising *card wall*: response is prose + one fenced prompt, not 3-5 formatted cards
-- When a catalog plugin matches the goal or named stack, it appears with its tier label; a ⚠️ plugin never appears without its built-in alternative
+- When a catalog plugin matches the goal or named stack, it appears with its tier label; a ⚠️ plugin never appears without its built-in alternative (this alternative rule binds ONLY to plugins the catalog marks ⚠️ — a ☑️ desk-checked plugin needs only its "not hands-on evaluated" label, no alternative required)
 - Zero permission prompts during the run
 
 ## Group B — Growth mode (bare invocation)
