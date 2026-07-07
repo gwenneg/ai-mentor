@@ -67,7 +67,7 @@ Then select the mode and **read that mode's file from the plugin root** — it i
 - Arguments or a described problem → **Problem mode**: read `problem-mode.md`
 - Bare invocation, no problem in sight → **Growth mode**: read `growth-mode.md`
 
-Profile mechanics (full schema: `references/profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per approach, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent; never defer to "session end". Never use `mkdir` for it; the Write tool creates the directory itself. Always pass the literal `~/.ai-mentor/profile.md` path in tool calls — the tools expand `~` against the session's HOME, which is where the permission grant points; an absolute home path inferred from other paths in context breaks in sandboxed or isolated sessions.
+Profile mechanics (full schema: `references/profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per approach, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent: no announcement, no "profile saved", no recap after them. In problem mode the closing line is the LAST user-visible text of the turn; any profile write after it happens with zero accompanying text. Never use `mkdir` for it; the Write tool creates the directory itself. Always pass the literal `~/.ai-mentor/profile.md` path in tool calls — the tools expand `~` against the session's HOME, which is where the permission grant points; an absolute home path inferred from other paths in context breaks in sandboxed or isolated sessions.
 
 ---
 
