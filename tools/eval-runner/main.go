@@ -465,13 +465,35 @@ func assistantText(out string) (string, error) {
 }
 
 // judgeCase scores the responses with the judge model. An unparseable judge
-// reply is an ERROR verdict, reported distinctly from FAIL.
+// reply is an ERROR verdict, reported distinctly from FAIL. The judge runs
+// hermetically — isolated HOME and an empty working directory — so no
+// CLAUDE.md, auto memory, or repo context can leak into verdicts. (--bare
+// would be simpler but silently breaks macOS keychain auth.)
 func (r *runner) judgeCase(c evalCase, responses []string, profile string) result {
 	res := result{c: c, response: strings.Join(responses, "\n\n--- second run ---\n\n")}
+	home, err := os.MkdirTemp("", "judge-home-")
+	if err != nil {
+		res.verdict, res.reason = vError, err.Error()
+		return res
+	}
+	defer os.RemoveAll(home)
+	if resolved, rerr := filepath.EvalSymlinks(home); rerr == nil {
+		home = resolved
+	}
+	env, err := caseEnv(home)
+	if err != nil {
+		res.verdict, res.reason = vError, err.Error()
+		return res
+	}
+	workdir := filepath.Join(home, "empty")
+	if err := os.MkdirAll(workdir, 0o755); err != nil {
+		res.verdict, res.reason = vError, err.Error()
+		return res
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-	out, err := runClaude(ctx, ".", os.Environ(),
-		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "5", "--bare")
+	out, err := runClaude(ctx, workdir, env,
+		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "5")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
@@ -721,6 +743,9 @@ func main() {
 		approaches: approaches,
 		today:      time.Now().Format("2006-01-02"),
 	}
+	if err := preflight(r); err != nil {
+		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))
+	}
 	var results []result
 	for _, c := range selected {
 		fmt.Printf("running %s ...", c.ID)
@@ -753,6 +778,24 @@ func main() {
 	if *gate && slices.ContainsFunc(results, func(r result) bool { return r.verdict != vPass }) {
 		os.Exit(1)
 	}
+}
+
+// preflight runs one trivial isolated-HOME prompt so an expired login
+// fails the run in seconds with a clear message, not as N per-case errors.
+func preflight(r *runner) error {
+	home, err := os.MkdirTemp("", "preflight-home-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(home)
+	env, err := caseEnv(home)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	_, err = runClaude(ctx, home, env, "-p", "reply with: ok", "--max-turns", "1")
+	return err
 }
 
 // findRoot walks upward from dir to the first directory containing
