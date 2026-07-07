@@ -27,6 +27,8 @@ const (
 var (
 	reRow      = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]`)
 	reGem      = regexp.MustCompile(`^\*\*Hidden gem:\*\* ([^—\n]+)`)
+	rePlugLine = regexp.MustCompile(`^\*\*Plugins:\*\* `)
+	rePlugTok  = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRef      = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
 	reSource   = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger   = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
@@ -99,7 +101,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 	}
 }
 
-func (a *auditor) checkRouting(path string, approachNames []string) []string {
+func (a *auditor) checkRouting(path string, approachNames []string, catalog map[string]bool) []string {
 	ls := lines(path)
 	if ls == nil {
 		a.issue(path, "missing routing table")
@@ -108,7 +110,7 @@ func (a *auditor) checkRouting(path string, approachNames []string) []string {
 	a.dateLine(path, "Last verified", ls)
 
 	var goals []string
-	section, rows, gem := "", []string{}, ""
+	section, rows, gem, plugs := "", []string{}, "", false
 	flush := func() {
 		if section == "" || nonGoalSections[section] {
 			return
@@ -116,6 +118,9 @@ func (a *auditor) checkRouting(path string, approachNames []string) []string {
 		goals = append(goals, section)
 		if len(rows) < minGoalRows {
 			a.issue(path, "section %s: only %d rows (expected at least %d)", section, len(rows), minGoalRows)
+		}
+		if !plugs {
+			a.issue(path, "section %s: missing Plugins line", section)
 		}
 		if gem == "" {
 			a.issue(path, "section %s: missing Hidden gem line", section)
@@ -133,11 +138,19 @@ func (a *auditor) checkRouting(path string, approachNames []string) []string {
 	for _, l := range ls {
 		if strings.HasPrefix(l, "## ") {
 			flush()
-			section, rows, gem = l[3:], nil, ""
+			section, rows, gem, plugs = l[3:], nil, "", false
 			continue
 		}
 		if m := reGem.FindStringSubmatch(l); m != nil {
 			gem = m[1]
+		}
+		if rePlugLine.MatchString(l) {
+			plugs = true
+			for _, m := range rePlugTok.FindAllStringSubmatch(l, -1) {
+				if !catalog[m[1]] {
+					a.issue(path, "section %s: Plugins line names '%s', not found in references/official-plugins.md", section, m[1])
+				}
+			}
 		}
 		if m := reRow.FindStringSubmatch(l); m != nil {
 			if n, _ := strconv.Atoi(m[1]); n != len(rows)+1 {
@@ -294,7 +307,17 @@ func (a *auditor) run() error {
 		names = append(names, strings.TrimSuffix(filepath.Base(f), ".md"))
 	}
 
-	goals := a.checkRouting(filepath.Join(a.skill, "routing.md"), names)
+	catalog := map[string]bool{}
+	catPath := filepath.Join(a.skill, "references", "official-plugins.md")
+	catText, catErr := os.ReadFile(catPath)
+	if catErr != nil {
+		a.issue(catPath, "missing official-plugins catalog")
+	}
+	for _, m := range rePlugTok.FindAllStringSubmatch(string(catText), -1) {
+		catalog[m[1]] = true
+	}
+
+	goals := a.checkRouting(filepath.Join(a.skill, "routing.md"), names, catalog)
 	a.goals = len(goals)
 	for _, f := range files {
 		a.checkApproach(f)

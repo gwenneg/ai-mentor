@@ -1,7 +1,7 @@
 # Goal Routing Table
 *Last verified: 2026-07-03*
 
-The mentor's per-goal judgment layer: for every goal in SKILL.md's Phase 1 classification table, the ranked approaches with their curated trigger ("Best when") and rationale ("Why it fits"), plus the hidden gem. Rankings, gems, and rationales are editorial judgment — they change when we change our minds, not when the product changes; verifiable product claims live in the approach files. "Setup" is what the approach requires (the skill renders it as no/some/involved setup), not a statement about the user.
+The mentor's per-goal judgment layer: for every goal in SKILL.md's Phase 1 classification table, the ranked approaches with their curated trigger ("Best when") and rationale ("Why it fits"), the hidden gem, and a **Plugins:** line naming the catalog's best official-plugin fits for the goal (tier markers per `references/official-plugins.md`, which holds the long tail — grep it by technology when the user names a stack). Rankings, gems, rationales, and plugin picks are editorial judgment — they change when we change our minds, not when the product changes; verifiable product claims live in the approach files. "Setup" is what the approach requires (the skill renders it as no/some/involved setup), not a statement about the user.
 
 Each section carries an **Exemplar move** — a fictional prompt showing the *shape* of a well-grounded move for that goal (named files, embedded values, real commands). Never show it verbatim: rewrite it against the actual repo, or keep it portable when the problem targets another repo.
 
@@ -12,6 +12,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Hooks — running the a11y scanner after every component edit catches regressions the moment they're introduced, not at audit time.
 
 **Exemplar move:** Connect to the browser at localhost:3000/settings, record tab order; verify the Delete Account modal in src/components/Settings/DeleteAccountModal.tsx traps focus and Escape returns focus to the trigger.
+
+**Plugins:** none mapped for this goal yet.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -27,6 +29,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Enter plan mode. Design a REST API for multi-tenant project management (projects, tasks, comments, members): URL structure, schemas, error codes, versioning, tenant scoping, pagination for 10K+ tasks. No code.
 
+**Plugins:** `apollo-skills` ☑️ GraphQL (client, server, federation) · `postman` ☑️ collections, tests, and mocks.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](approaches/plan-mode.md) | Beginner | Starting a new API or major version from scratch | An API is a promise to consumers; planning the contract first finds design mistakes while fixing them is free |
@@ -40,6 +44,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Custom Agents — prototyping your agent as a ten-line `.claude/agents/` file answers most of the design questions (tools, model, instructions) before you write a single line of SDK code.
 
 **Exemplar move:** Enter plan mode. Design a support-inbox triage agent — classify severity, draft responses, escalate billing/data-loss to humans: what tools, forbidden actions, escalation boundaries, minimal first version worth shipping?
+
+**Plugins:** `agent-sdk-dev` ✅ Agent SDK scaffolding · `pydantic-ai` ☑️ and `atomic-agents` ☑️ framework-specific patterns · `aws-agents` ☑️ Bedrock AgentCore — 2 more in the catalog.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -55,6 +61,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Enter plan mode. Design MCP tool surface for incident management (search, read detail, comment, change status, page on-call): tools vs. left out, descriptions, read-only ones, damage potential.
 
+**Plugins:** `mcp-server-dev` ✅ guided server design · `mcp-apps` ☑️ MCP Apps SDK · `mcp-tunnels` ☑️ private-server tunnels.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](approaches/plan-mode.md) | Beginner | Not sure what the server should expose | Models select tools by description — a well-designed five-tool surface outperforms a twenty-tool REST dump |
@@ -69,6 +77,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Create .claude/skills/release-notes/SKILL.md: find latest git tag, categorize commits since by conventional-commit prefix into Features/Fixes/Breaking, prepend dated entry to CHANGELOG.md; run it and iterate.
 
+**Plugins:** `plugin-dev` ✅ guided plugin building · `skill-creator` ☑️ skill authoring and evals.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Custom Skills](approaches/custom-skills.md) | Beginner | A workflow you repeat and want to package | Skills fail on unclear instructions, and clarity is discovered by iteration — the standalone stage keeps iteration cost near zero |
@@ -82,6 +92,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Custom Agents — project-specific reviewer agents catch the issues only someone who knows your codebase would notice, automatically on every PR.
 
 **Exemplar move:** Write a GitHub Actions step running `claude -p` with `--output-format json` on every PR to main: find newly added TODO/FIXME/HACK comments, output JSON, post via `gh pr comment`.
+
+**Plugins:** `hookify` ✅ hooks from conversation patterns · `gitlab` ☑️ MRs and pipelines · vendor CI: `buildkite`, `mergify`, `teamcity-cli` (all ☑️).
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -100,6 +112,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Run `/code-review high` on the branch diff — focus on src/services/billing/ discount stacking edge cases and Stripe webhook failure-mode error handling.
 
+**Plugins:** `pr-review-toolkit` ✅ 6-agent deep review · `github` ☑️ PR management · `sonarqube` ☑️ and `qodo-skills` ☑️ quality/security scanning.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Built-In Review Skills](approaches/built-in-review-skills.md) | Beginner | Quick review of a focused diff or your own pre-PR code | Most review value is systematic checking — codified reviewer instincts applied consistently to every line |
@@ -116,6 +130,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Enter plan mode. Trace one payment end-to-end through services/payment-gateway/ — entry points, validation, fraud checks, processor integration, persistence, retry logic; produce an architecture summary with dependency diagram.
 
+**Plugins:** `context7` ✅ version-pinned library docs · `sourcegraph` ☑️ cross-repo search · `serena` ☑️ semantic analysis · `lumen` ☑️ local semantic search.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](approaches/plan-mode.md) | Beginner | Onboarding to a new team or project | Understanding is about building the right mental model — learn the shape of the system first, details later |
@@ -131,6 +147,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Hooks — wiring the failing test to run after every single edit is the tightest feedback loop in debugging, and almost nobody thinks of hooks as a debugging tool.
 
 **Exemplar move:** Enter plan mode. Job scheduler double-processes jobs under load — analyze the concurrency model in src/scheduler/worker_pool.go and src/scheduler/job_queue.go, give ranked hypotheses, don't fix anything yet.
+
+**Plugins:** `logrocket` ☑️ session-replay debugging for user-reported frontend bugs.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -149,6 +167,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** /deep-research Compare zod vs joi for our Node.js API (src/validators/): TypeScript integration, bundle size, performance, maintenance activity, breaking-change history, CVEs — must stay maintained 3+ years.
 
+**Plugins:** `sonatype-guide` ☑️ vulnerability and version analysis · `ai-plugins` ☑️ (Endor Labs) supply-chain scanning.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Deep Research](approaches/deep-research.md) | Beginner | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |
@@ -163,6 +183,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Worktree Isolation — rendering `terraform plan` or `helm template` in a disposable copy lets you evaluate risky infra changes with zero blast radius.
 
 **Exemplar move:** Enter plan mode. Split monolithic main.tf (VPC, three subnets, security groups, RDS, ECS, ALB) into per-service modules — map every cross-resource reference, give a safe extraction order.
+
+**Plugins:** `terraform` ☑️ IaC · `firebase` ☑️ · `linear`/`asana` ☑️ trackers · `session-report` ✅ usage reports — ~75 more vendor integrations (clouds, databases, observability, messaging) in the catalog; grep by vendor.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -179,6 +201,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Read src/api/routes/payments.ts, src/api/middleware/auth.ts, docs/openapi.yaml, and the Notion design doc linked in docs/DESIGN_DECISIONS.md; generate payments API reference with auth, schemas, error codes, rate limits.
 
+**Plugins:** `claude-md-management` ✅ CLAUDE.md audits · `project-artifact` ✅ living status pages · `mintlify` ☑️ docs sites · `notion`/`atlassian` ☑️ knowledge bases.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [MCP Context](approaches/mcp-context.md) | Intermediate | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |
@@ -192,6 +216,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Custom Skills — encoding your conventions as a scaffold command before writing feature #2 pays off for every feature after it.
 
 **Exemplar move:** Enter plan mode. Design a notification service (email, Slack, in-app; consumes Kafka events) — module structure, data models, API surface, delivery retries, per-channel rate limiting. Architecture only, no code.
+
+**Plugins:** `feature-dev` ✅ guided feature workflow · `frontend-design` ✅ production-grade UI · `figma` ☑️ design-to-code · `laravel-boost` ☑️ — ~35 more stack starters in the catalog; grep by framework.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -209,6 +235,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Connect to Grafana and Datadog MCP servers. payment-service returns 503s on ~12% of requests — pull error timeline, latest deploy, top service:payment-service log errors; correlate spike with deploy timestamp.
 
+**Plugins:** `sentry` · `datadog` · `grafana-mcp` · `pagerduty` · `rootly` — all ☑️, all need the vendor account already in use at your org.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [MCP Context](approaches/mcp-context.md) | Intermediate | Error spike correlating with a recent deploy | Incidents are data problems — MCP makes Claude a unified query layer across your observability stack, collapsing data-gathering |
@@ -225,6 +253,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Enter plan mode. Design AI-generated ticket summaries: prompt strategy, UI handling of bad/refused summaries, eval plan, model tier and cost per 1K tickets, latency budget. No code.
 
+**Plugins:** `langfuse` ☑️ tracing and evals · `huggingface-skills` ☑️ models and datasets · `pinecone` ☑️ vector search — 6 more in the catalog.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](approaches/plan-mode.md) | Beginner | Designing the feature before building | The hard part isn't calling the API — measurable quality and graceful failure are design decisions code inherits |
@@ -238,6 +268,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Worktree Isolation — running the upgrade in a disposable copy first turns "should we migrate?" from changelog speculation into a concrete damage report.
 
 **Exemplar move:** Enter plan mode. Migrate React Router v5 to v6: 34 routes in src/routes/, useHistory in ~20 components, guards in src/auth/ProtectedRoute.tsx — map changes, categorize, order to stay functional.
+
+**Plugins:** `code-modernization` ✅ legacy-codebase migration (COBOL, old Java, monoliths) · `ui5-modernization`/`ui5-typescript-conversion` ☑️ SAPUI5 · `aws-transform`/`migration-to-aws` ☑️ moves to AWS — grep the catalog when the user names a stack.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -255,6 +287,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Pull the Confluence "Engineering Onboarding" guide and #platform-team pinned messages, cross-reference with README.md and docker-compose.yml — flag outdated steps, produce one consolidated setup guide.
 
+**Plugins:** `claude-code-setup` ✅ repo-tailored automation recommendations · `learn-with-coursera` ☑️ learning paths.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [MCP Context](approaches/mcp-context.md) | Intermediate | Team knowledge scattered across Confluence, Slack, Notion, and READMEs | The onboarding bottleneck is finding information, not understanding it — MCP brings every source into one queryable context |
@@ -270,6 +304,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Enter plan mode. /api/v2/orders averages 2.4s — trace src/controllers/orders_controller.py through OrderService.list_with_details() and OrderRepository, rank bottlenecks (N+1 queries, missing indexes), no code changes yet.
 
+**Plugins:** `codspeed` ☑️ benchmarking and flamegraphs · `clickhouse-best-practices` ☑️ query/schema optimization.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](approaches/plan-mode.md) | Beginner | Not sure where the bottleneck actually is | Performance budgets are finite and intuition unreliable — analysis sends effort where the data says it should go |
@@ -284,6 +320,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Checkpoints & Rewind — knowing any restructuring is instantly reversible changes which refactors you dare to attempt.
 
 **Exemplar move:** Enter plan mode. Extract auth from ~800-line src/controllers/user_controller.rb into AuthService — which methods move, new interfaces, which callers update, change order keeping tests passing each step.
+
+**Plugins:** none recommended — the ⚠️-flagged `code-simplifier` duplicates the built-in /simplify; lead with the built-in.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -301,6 +339,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Create .claude/skills/release-notes/SKILL.md: /release-notes finds the latest git tag, categorizes commits by conventional prefixes, prepends a versioned changelog entry to CHANGELOG.md, adds migration notes for BREAKING CHANGE footers.
 
+**Plugins:** `commit-commands` ✅ commit/PR workflow commands · `confidence` ☑️ feature flags and rollouts.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Custom Skills](approaches/custom-skills.md) | Intermediate | Need categorized release notes from commit history | Release prep is procedural — same steps, same order — so a skill removes forgotten or misordered steps |
@@ -315,6 +355,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** /deep-research Compare RabbitMQ, Kafka, NATS JetStream for ~50K events/sec, exactly-once payment delivery, Go and Python services — throughput, delivery guarantees, operational complexity, client maturity, AWS managed hosting.
 
+**Plugins:** `firecrawl` ☑️ crawling and structured extraction · `microsoft-docs` ☑️ Azure/.NET references · `zyte-web-data` ☑️ scraping — ~19 more domain-specific research tools in the catalog.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Deep Research](approaches/deep-research.md) | Beginner | Comparing libraries, frameworks, or SaaS tools | Automates the 30-browser-tab workflow into a cited, cross-referenced report you can present to your team |
@@ -328,6 +370,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Hooks — a PreToolUse guard on auth configs and crypto files prevents the accidental security regressions that no scanner catches.
 
 **Exemplar move:** Run /security-review on the current branch — special attention to auth middleware in src/middleware/auth.ts and raw database queries in src/services/; security audit next week.
+
+**Plugins:** `security-guidance` ✅ per-edit security hooks · `semgrep` ☑️ scanning · `42crunch-api-security-testing` ☑️ API security · `auth0` ☑️ authn/authz · `vanta` ☑️ compliance — 9 more in the catalog.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
@@ -345,6 +389,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 
 **Exemplar move:** Spawn four parallel agents auditing src/: duplication clusters, deprecated APIs (TODO/FIXME/@deprecated), test-coverage gaps vs tests/, functions over cyclomatic complexity 10 — consolidate into one prioritized report.
 
+**Plugins:** none mapped for this goal yet.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Subagent Delegation](approaches/subagent-delegation.md) | Advanced | Multi-dimensional audit across the whole codebase | Each debt dimension needs a different scanning strategy — specialized agents apply the right one without conflating them |
@@ -359,6 +405,8 @@ Condensed 2026-07-03 from the former `goals/` essays; the full prose is recovera
 **Hidden gem:** Hooks — a PreToolUse hook that blocks edits to fixtures stops the AI from "fixing" a failing test by changing the expected output.
 
 **Exemplar move:** /goal Raise src/services/order-processing/ coverage from 52% to 80% — run `npx jest --coverage --collectCoverageFrom='src/services/order-processing/**/*.ts'`, target untested branches and error paths, keep existing tests passing.
+
+**Plugins:** `playwright` ☑️ browser E2E automation · `fakechat` ☑️ channel-flow testing.
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
