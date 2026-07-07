@@ -7,11 +7,11 @@ Model & Effort Selection lets you match the model and the reasoning depth to wha
 
 ## Why It Works
 
-No single model configuration is best at everything. Deep reasoning models at high effort excel at architecture and debugging but are slower and more expensive than routine work justifies, while fast models handle boilerplate and mechanical edits efficiently but miss subtleties in multi-file reasoning. Matching the model to the task is the same engineering principle as choosing between a profiler, a debugger, and a linter — the right tool for the job. Because subagents can each run their own model, you can compose both in one workflow: a strong model orchestrates while cheap models handle the volume.
+No single model configuration is best at everything; matching the model and effort to the task — and composing them, a strong orchestrator over cheap volume workers — is the right-tool-for-the-job principle applied to reasoning depth.
 
 ## When to Use It
 
-- Optimizing costs by running routine tasks on cheaper models and reserving Opus or high effort for complex reasoning
+- Optimizing costs by running routine tasks on cheaper models and reserving the deep-reasoning models (Fable, Opus) or high effort for complex reasoning
 - Long sessions where most turns are mechanical — drop the effort level, then raise it for the hard debugging moment
 - Delegating bulk work to subagents: Haiku agents for repetitive checks, Opus agents for security review
 - Architecture decisions, tricky debugging, or security analysis where maximum reasoning depth pays for itself
@@ -27,7 +27,7 @@ No single model configuration is best at everything. Deep reasoning models at hi
 ### Basic (Beginner)
 
 1. Check your current model with `/model` — it lists available models and saves your choice as the default for new sessions.
-2. Switch based on the task ahead: pick Opus before a gnarly debugging session, Haiku for a batch of mechanical renames.
+2. Switch based on the task ahead: pick Fable or Opus before a gnarly debugging session, Haiku for a batch of mechanical renames.
 3. Adjust reasoning depth with `/effort` (`low`, `medium`, `high`, `xhigh`, `max`, or `auto`) — lower effort responds faster and costs less, higher effort thinks longer on hard problems.
 4. On Opus, toggle `/fast` for fast mode: the same model with faster output at a higher cost per token — worth it for interactive back-and-forth where latency matters more than cost.
 5. Continue working. The conversation context carries over — the model you switch to sees everything discussed so far, though the first turn after a switch re-reads the history without cached context, so switch at natural task boundaries.
@@ -50,33 +50,6 @@ No single model configuration is best at everything. Deep reasoning models at hi
 - **Running everything at max effort**: High effort on trivial tasks buys latency, not quality. Reserve `xhigh` and `max` for problems where reasoning depth is the bottleneck.
 - **Using a fast model for subtle work**: Haiku is excellent at well-specified mechanical tasks and weaker at multi-file reasoning and nuanced review. If a cheap agent's output needs constant correction, the time cost exceeds the token savings.
 - **Forgetting the setting persists**: `/model` saves your choice as the default for new sessions. If you dropped to a fast model for a batch job, remember to switch back before your next deep session.
-
-## Real-World Example
-
-You are building a new GraphQL API layer for an existing REST backend. The work has three distinct phases, each suited to a different configuration.
-
-First, you need to design the schema. You switch to Opus at high effort:
-
-```
-/model opus
-/effort high
-> Analyze the REST endpoints in src/api/routes/ and propose a GraphQL schema
-  that consolidates the N+1 query patterns in the order and inventory endpoints.
-```
-
-Claude produces a schema in `src/graphql/schema.graphql` with thoughtful type relationships and resolver structure. This took careful reasoning about data dependencies.
-
-Second, you need to generate 14 resolver files — mostly mechanical translation from REST handlers. You delegate to cheap subagents:
-
-```
-> Spawn one Haiku subagent per type in schema.graphql. Each generates the
-  resolver for its type, following the pattern in src/graphql/resolvers/user.ts
-  and mapping to the corresponding REST client in src/api/clients/.
-```
-
-The agents generate all 14 files in parallel in under two minutes at a fraction of the cost.
-
-Third, you need DataLoader batching logic to solve the N+1 queries — the subtle part. You return to Opus at `xhigh` effort for the batching design, then run `npm test` — all 31 new tests pass. Total session cost: well under half of what running everything on the deep-reasoning configuration would have been.
 
 ## Sources
 

@@ -7,7 +7,7 @@ Official Plugins are ready-made packages from Anthropic's curated marketplace �
 
 ## Why It Works
 
-Most development workflows are not unique. Code review, commit message generation, feature scaffolding, language-server integration — thousands of teams do these the same way, and the official marketplace captures that shared knowledge into packages curated by Anthropic. Installing beats building on three axes at once: zero development time, someone else's testing, and someone else's maintenance as Claude Code evolves. The best automation is the kind you do not have to build.
+Installing beats building on three axes at once: zero development time, someone else's testing, and someone else's maintenance as Claude Code evolves.
 
 ## When to Use It
 
@@ -50,24 +50,6 @@ Most development workflows are not unique. Code review, commit message generatio
 - **Plugin sprawl**: many plugins with overlapping functionality lead to conflicts — two plugins formatting the same file, competing commit hooks. Audit your installed plugins periodically and remove redundancies.
 - **Assuming plugins are maintained**: partner-maintained plugins evolve on the partner's schedule. Disable marketplace auto-update where stability matters, and test updates before adopting them across your team.
 - **Expecting un-namespaced commands**: installing `commit-commands` gives you `/commit-commands:commit`, not `/commit`. Plugin skills always carry the plugin prefix — factor that into your muscle memory and docs.
-
-## Real-World Example
-
-A team of six is starting a new TypeScript microservice. The tech lead wants productive AI workflows from day one without spending a week configuring everything.
-
-She runs:
-```
-claude plugin install commit-commands@claude-plugins-official
-claude plugin install pr-review-toolkit@claude-plugins-official
-claude plugin install feature-dev@claude-plugins-official
-```
-
-In 30 seconds, the team has:
-- `/commit-commands:commit` — reads the diff, generates a conventional commit message following the project's type prefixes, and handles the git workflow
-- `pr-review-toolkit` — six specialized review agents covering correctness, test thoroughness, error handling, and type design, triggered by asking for a review (e.g. "review this PR's error handling")
-- `/feature-dev:feature-dev` — guides developers through feature implementation with a structured plan-then-execute workflow
-
-Two weeks later, a developer notices the `pr-review-toolkit` plugin does not check for their company's required error handling patterns. Instead of replacing the plugin, the team creates a custom `/error-review` skill focused on their conventions. The plugin handles the general case; the custom skill handles the specific one — and nobody spent a day rebuilding what the marketplace already provided.
 
 ## Sources
 

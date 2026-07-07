@@ -7,7 +7,7 @@ Channels push events from outside systems into your already-running Claude Code 
 
 ## Why It Works
 
-Other remote integrations spawn a fresh session (Claude Code on the web, Slack), wait to be asked (a standard MCP server Claude queries mid-task), or need you actively driving (Remote Control). Channels fill the gap: the event arrives in the session that already has your files open and remembers what you were debugging. That context is the whole value — a CI failure webhook landing in the session that just touched the failing code gets triaged with everything loaded, instead of by a cold-started agent reconstructing state. And because the reply path runs through the same channel, your phone becomes a steering wheel for work executing on your real machine against your real files.
+The event arrives in the session that already has your files open and remembers what you were debugging — context a cold-started agent would have to reconstruct, and the reply path makes your phone a steering wheel for work executing on your real machine.
 
 ## When to Use It
 
@@ -50,20 +50,6 @@ Other remote integrations spawn a fresh session (Claude Code on the web, Slack),
 - **Forgetting `--channels` is per-session**: installing the plugin isn't enough, and being in `.mcp.json` isn't either; a server must be named in `--channels` at launch to push messages.
 - **Unattended sessions hitting permission prompts**: the session pauses until someone responds. Decide the permission story first (allowlist rules, permission relay, or an isolated environment) before treating a channel session as autonomous.
 - **Over-trusting the allowlist**: pairing your own account is the intended default. Adding teammates to a permission-relaying channel gives them approval authority over your session — that's a role, not a convenience.
-
-## Real-World Example
-
-Your error tracker pages you at lunch: payment webhooks are failing. This morning's session — still open on your machine — was working in that exact service. The tracker's webhook, wired to a custom channel server, has already pushed the alert into the session.
-
-From your phone, you message the session through Telegram:
-
-```
-Look at that webhook alert — is it related to the retry change from this morning?
-```
-
-Claude reads the alert payload, greps the code it touched two hours ago, reproduces the failing signature check against the staging endpoint, and replies in the thread: the new retry sends a stale timestamp on the second attempt; one-line fix in `src/payments/webhook.ts`; tests pass locally.
-
-You reply "commit it on a branch and open a draft PR." Claude does, and posts the PR link in the chat. Total incident time: eleven minutes, none of them at a desk — and the diagnosis quality came from the session's morning context, which a cold cloud session wouldn't have had.
 
 ## Sources
 

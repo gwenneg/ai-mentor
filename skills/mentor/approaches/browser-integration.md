@@ -7,7 +7,7 @@ Browser Integration connects Claude Code to your real Chrome or Edge browser thr
 
 ## Why It Works
 
-Code and its visual output are two different things, and bugs frequently hide in the gap between them. A developer debugging a CSS layout issue does not just read the stylesheet — they open the browser, inspect the element, and look at the computed styles; Browser Integration gives the AI the same ability. By interacting with the running application, the AI can verify its fixes immediately rather than reasoning abstractly about what a CSS change might look like. This closes the feedback loop between code change and visual result, which is particularly valuable for frontend work where the rendered output is the product.
+Code and its visual output are two different things, and bugs hide in the gap between them — interacting with the running application closes the feedback loop between code change and rendered result.
 
 ## When to Use It
 
@@ -27,7 +27,7 @@ Code and its visual output are two different things, and bugs frequently hide in
 ### Basic (Beginner)
 
 1. Start your application locally (e.g., `npm run dev` on `localhost:3000`)
-2. Install the [Claude in Chrome extension](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) from the Chrome Web Store (works in Chrome and Edge)
+2. Install the Claude in Chrome extension from the Chrome Web Store (works in Chrome and Edge; the official docs in Sources link the extension)
 3. Launch Claude Code with `claude --chrome`, or run `/chrome` in an existing session, then ask in plain language: "Open localhost:3000/settings and check whether the save button is disabled when no fields have changed"
 4. Claude opens a new tab, navigates, inspects the DOM and console, and reports what it finds — pausing and handing control to you at login pages and CAPTCHAs. If there is a bug, Claude edits the source, waits for hot reload, and checks the browser again to verify the fix
 5. Run `/chrome` at any time to check connection status, manage permissions, or reconnect; selecting "Enabled by default" removes the need for the flag, at the cost of browser tools always loaded in context
@@ -50,25 +50,6 @@ Code and its visual output are two different things, and bugs frequently hide in
 - **Forgetting the browser acts as you**: Claude shares your browser's login state and can access any site you're signed into. That is the feature — but scope your asks accordingly, and manage site-level permissions in the Chrome extension settings for sites Claude should not touch.
 - **Relying on screenshots for pixel-precision**: Browser Integration is excellent for "is this element visible and functional" and poor for "is this exactly 16px from the left edge." For pixel-precise visual regression testing, use dedicated tools like Chromatic or Percy.
 - **Stale connection after idle periods**: The extension's service worker can go idle during long sessions, and browser commands stop responding. Run `/chrome` and select "Reconnect extension" rather than restarting everything.
-
-## Real-World Example
-
-A user reports that the date picker in your scheduling form shows the wrong month when opened for the second time. You can reproduce it locally but cannot figure out why from the code alone.
-
-```
-claude --chrome
-> Open localhost:3000/schedule/new. Open the date picker, select June 15,
-  close it, then open it again. Tell me what month is showing and check
-  the console for errors.
-```
-
-Claude opens a tab, navigates to the page, clicks the date input, selects June 15, closes the picker, then reopens it. It reports: "The picker shows January 1970 on second open. Console shows: `Warning: Invalid time value` from `DatePicker.tsx:42`."
-
-Claude reads `src/components/DatePicker.tsx` and finds that on line 42, `new Date(selectedDate)` is called where `selectedDate` is a Unix timestamp in seconds, but the `Date` constructor expects milliseconds. The first open works because the default is `new Date()` (current date), but after selection, the stored timestamp is interpreted as milliseconds, producing a date in January 1970.
-
-Claude changes `new Date(selectedDate)` to `new Date(selectedDate * 1000)`, the hot reload triggers, and it reopens the date picker to confirm it now shows June correctly. It also checks the console — the `Invalid time value` warning is gone.
-
-Total debugging time: under two minutes. Without the browser, this would have required reading the component code, mentally tracing the date flow through two state updates, guessing at the constructor behavior, and hoping the fix was correct — a process that took the original developer 45 minutes before they filed the bug report.
 
 ## Sources
 

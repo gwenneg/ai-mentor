@@ -21,7 +21,7 @@ import (
 const (
 	datePat          = `\d{4}-\d{2}-\d{2}`
 	minGoalRows      = 3
-	minApproachLines = 60
+	minApproachLines = 40
 )
 
 var (
@@ -48,11 +48,15 @@ var (
 	// routing.md sections that are not goal categories
 	nonGoalSections = map[string]bool{"extraction-notes": true}
 
+	// "## Real-World Example" is deliberately absent: it is optional — kept
+	// only where the example embeds exact syntax (see templates/approach.md).
+	// When present it must sit between Common Pitfalls and Sources
+	// (checkApproach enforces that).
 	approachSections = []string{
 		"## What It Is", "## Why It Works", "## When to Use It", "## When NOT to Use It",
 		"## How It Works", "### Basic (Beginner)",
 		"### Composing with Other Approaches (Intermediate)", "### Advanced Patterns",
-		"## Common Pitfalls", "## Real-World Example", "## Sources",
+		"## Common Pitfalls", "## Sources",
 	}
 )
 
@@ -192,6 +196,15 @@ func (a *auditor) checkApproach(path string) {
 			a.issue(path, "section '%s' out of order", s)
 		default:
 			pos = ln
+		}
+	}
+
+	find := func(s string) int {
+		return slices.IndexFunc(ls, func(l string) bool { return strings.Contains(l, s) })
+	}
+	if ex := find("## Real-World Example"); ex >= 0 {
+		if src := find("## Sources"); ex < find("## Common Pitfalls") || (src >= 0 && ex > src) {
+			a.issue(path, "section '## Real-World Example' out of order")
 		}
 	}
 

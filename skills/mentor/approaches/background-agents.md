@@ -7,7 +7,7 @@ Background Agents are full Claude Code sessions that keep running without a term
 
 ## Why It Works
 
-Most engineering tasks don't need you watching them. A test-suite fix, a long audit, a mechanical refactor — the work is real but your attention adds nothing between kickoff and review. Background agents convert attention-bound work into queue-bound work: you spend thirty seconds specifying the task and ten minutes reviewing the result, and the hour in between belongs to something else. Because each session automatically moves into its own git worktree before editing, parallel agents can't trample each other or your working copy — the isolation that makes "fire and forget" actually safe.
+Background agents convert attention-bound work into queue-bound work: thirty seconds specifying the task, ten minutes reviewing the result, and the hour in between belongs to something else.
 
 ## When to Use It
 
@@ -52,18 +52,6 @@ Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"
 - **Forgetting the work lands in a worktree**: your working directory won't show the changes. Check the session's worktree (peek shows the path) or wait for the draft PR rather than concluding the agent did nothing.
 - **Deleting sessions carelessly**: deleting a session from agent view also removes the worktree Claude created for it, *including uncommitted changes*. Merge or push what you want to keep first.
 - **Dispatching conflicting tasks**: two agents editing the same module produce two divergent branches you must reconcile. Split parallel work along module boundaries, not within them.
-
-## Real-World Example
-
-Monday morning triage leaves you with three independent chores: a flaky date test in `packages/reports`, lint debt in `services/gateway`, and a missing integration test for last week's webhook handler. Instead of doing them serially, you open `claude agents` and dispatch all three, each with a concrete finish line:
-
-```text
-fix the flaky date test in packages/reports — done when pnpm test --filter reports passes 20 consecutive runs
-```
-
-You spend the morning on design work. The tab title reads `1 awaiting input · claude agents` around 11 — the lint agent found a rule violation that needs a human call. You peek, reply "disable that rule for generated files only", and go back to your doc.
-
-By lunch, all three rows sit under Ready for review, each with a draft PR. You review three focused diffs in twenty minutes. Total attention spent on three chores: the dispatch minute, one peek, and the reviews — the rest of the work happened while you weren't looking.
 
 ## Sources
 

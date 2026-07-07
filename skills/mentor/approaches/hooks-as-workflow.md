@@ -7,7 +7,7 @@ Hooks are automatic actions that fire when Claude Code does something — edits 
 
 ## Why It Works
 
-The biggest productivity losses in development come from delayed feedback. A bug caught at edit time costs seconds to fix; the same bug caught in CI costs minutes, and in production, hours. Hooks shift feedback left to the earliest possible moment — the instant Claude makes a change — by automating the checks that developers intend to do but often skip under pressure.
+Hooks shift feedback left to the earliest possible moment — the instant Claude makes a change — automating the checks developers intend to do but skip under pressure.
 
 ## When to Use It
 
@@ -66,19 +66,6 @@ Example — auto-format after every file edit:
 - **Slow hooks kill productivity**: A hook that runs `npm test` on every edit adds 10+ seconds of latency per change. Scope tests to the changed file (e.g. `jest --findRelatedTests`). If the full suite is needed, run it asynchronously.
 - **Over-blocking with PreToolUse**: Too many "are you sure?" prompts train developers to click yes without reading. Reserve blocking hooks for genuinely dangerous operations.
 - **Forgetting hook scope**: Hooks in `.claude/settings.json` apply to the project. Hooks in `~/.claude/settings.json` apply globally. A formatting hook for a JavaScript project should not fire in a Go project.
-
-## Real-World Example
-
-You are debugging a flaky integration test in `tests/integration/billing_test.py`. The test passes individually but fails when run with the full suite. You suspect shared database state.
-
-```
-> Add a PostToolUse hook that runs `pytest tests/integration/billing_test.py -x -v`
-  after every edit to files in `src/billing/`. Also add a PreToolUse hook that
-  blocks any edit to `tests/conftest.py` — I don't want to accidentally change
-  the shared fixtures while debugging.
-```
-
-Claude adds both hooks to `.claude/settings.json`. Now every time you edit billing code, the failing test runs instantly. You discover the issue in `src/billing/invoice.py` — a class-level cache that persists between test runs. The PostToolUse hook confirms the fix immediately: the test passes. You remove the hooks and run the full suite to verify.
 
 ## Sources
 

@@ -7,7 +7,7 @@ Worktree Isolation gives each AI coding session its own independent copy of your
 
 ## Why It Works
 
-Isolation is one of the oldest reliability principles in software engineering — from process isolation in operating systems to container isolation in deployment. When AI agents edit code, they face the same concurrency problems that humans do: two agents editing the same file at the same time will produce conflicts. Worktrees solve this at the git level by giving each session a physically separate working directory on its own branch. This means you can run aggressive, speculative changes without risking your working branch, and you can run multiple agents in parallel without coordination overhead.
+A physically separate working directory on its own branch lets aggressive, speculative changes run in parallel without coordination overhead or risk to your working branch.
 
 ## When to Use It
 
@@ -47,25 +47,10 @@ Isolation is one of the oldest reliability principles in software engineering �
 
 ## Common Pitfalls
 
-- **Forgetting to set `worktree.baseRef`**: By default, worktrees branch from `origin/<default-branch>`. If you want to branch from your current HEAD instead, set `worktree.baseRef` to `head` in your Claude settings.
+- **Forgetting to set `worktree.baseRef`**: By default, worktrees branch from `origin/<default-branch>`. If you want to branch from your current HEAD instead, set `worktree.baseRef` to `head` in your Claude settings. Uncommitted changes never carry over into a new worktree — commit first if the work must build on them.
 - **Forgetting `.worktreeinclude`**: Your worktree will not have `.env`, local configs, or other gitignored files unless you list them. If your app fails to start in the worktree, this is almost always why.
 - **Worktree accumulation**: Each worktree is a full working copy of your project files on disk (git history is shared). If you forget to clean them up, they consume disk space. Use `git worktree list` periodically and remove stale ones.
 - **Merging divergent worktrees**: If two worktrees edit overlapping files, you still get merge conflicts when combining them — isolation defers the conflict, it does not eliminate it. Plan your parallel work to minimize overlap.
-
-## Real-World Example
-
-You need to upgrade your project from React Router v5 to v6, but you are not sure it will go smoothly. You also have a teammate waiting on a bug fix in the same codebase.
-
-```
-claude --worktree router-upgrade
-> Upgrade all React Router v5 APIs to v6 in src/routes/ and src/components/.
-  Update useHistory to useNavigate, Switch to Routes, and component prop
-  to element prop.
-```
-
-Claude creates `.claude/worktrees/router-upgrade/` on branch `worktree-router-upgrade`, then methodically updates 14 files. Meanwhile, you open a second terminal and work on the bug fix in your normal working directory — no conflicts, no stashing, no branch switching.
-
-After Claude finishes, you run `npm test` in the worktree directory. Three tests fail in `src/routes/__tests__/ProtectedRoute.test.tsx` because the test setup still uses `MemoryRouter` from v5. You ask Claude to fix the tests, it does, and all 47 tests pass. You merge the branch into `main` and remove the worktree with a clean history. Your teammate's bug fix, developed concurrently on the main working directory, never experienced a single conflict.
 
 ## Sources
 

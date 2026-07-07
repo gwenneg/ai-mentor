@@ -20,10 +20,9 @@ reading this paragraph.]
 
 ## Why It Works
 
-[2-4 sentences explaining the PRINCIPLE — the lasting insight, not
-the mechanics. Why does this approach produce better results than
-doing the task manually? What cognitive or process bottleneck does
-it address?]
+[ONE sentence stating the PRINCIPLE — the lasting insight, not the
+mechanics. The model consuming this file already knows the generic
+argument for the technique; one sharp sentence beats four soft ones.]
 
 ## When to Use It
 
@@ -74,11 +73,11 @@ not theoretical warnings.]
 
 ## Real-World Example
 
-[A concrete, end-to-end scenario with specific details — file
-names, module names, realistic problem descriptions. Include a
-code block showing the prompt or command. Follow with a narrative
-describing what happens and the outcome. The example should feel
-like something that actually happened, not a contrived demo.]
+[OPTIONAL — include only when the example embeds exact syntax
+(a settings JSON, a workflow YAML, an orchestration script) that
+appears nowhere else in the file. A narrative that only re-uses
+commands already shown above is filler for the model that consumes
+this file: omit the section entirely in that case.]
 
 ## Sources
 
@@ -93,9 +92,9 @@ verified against.]
 
 ## Rules
 
-- **At least 60 lines** per file — long enough to be useful; keep it focused so it fits in a context window alongside other files
-- **"Why It Works" teaches a principle** — not "it saves time" but the specific cognitive or process insight that makes the approach effective
-- **Real-World Example must feel real** — specific file names, realistic module names, a plausible problem with a concrete resolution
+- **At least 40 lines** per file — long enough to be useful; keep it focused so it fits in a context window alongside other files
+- **"Why It Works" is exactly one sentence** — not "it saves time" but the specific cognitive or process insight that makes the approach effective
+- **Real-World Example is optional and must earn its place** — include it only when it embeds exact syntax shown nowhere else in the file; otherwise omit the section
 - **Common Pitfalls come from experience** — describe mistakes developers actually make, not obvious warnings
 - **`## Sources` lists at least one official external link** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
 - **No extra sections** beyond the template — keep the structure consistent across all approach files

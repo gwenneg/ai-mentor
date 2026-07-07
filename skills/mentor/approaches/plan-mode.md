@@ -3,11 +3,11 @@
 
 ## What It Is
 
-Plan Mode tells your AI coding tool to read your code and propose a plan before making any changes. Instead of jumping straight to editing files, the AI analyzes the problem, outlines its approach, and waits for your approval. You stay in control of the strategy while the AI handles the analysis and execution.
+Plan Mode tells Claude Code to read your code and propose a plan before making any changes. Instead of jumping straight to editing files, the AI analyzes the problem, outlines its approach, and waits for your approval. You stay in control of the strategy while the AI handles the analysis and execution.
 
 ## Why It Works
 
-Planning before acting is a fundamental engineering discipline, and it applies equally when the "actor" is an AI agent. By separating analysis from execution, Plan Mode forces a structured reasoning step that catches flawed assumptions early — before they become flawed code spread across ten files. It also preserves your architectural authority: you can redirect the approach at the outline stage, where changes are cheap, rather than after the AI has already rewritten half your codebase.
+Separating analysis from execution catches flawed assumptions at the outline stage, where redirection is cheap — before they become flawed code spread across ten files.
 
 ## When to Use It
 
@@ -50,26 +50,6 @@ Planning before acting is a fundamental engineering discipline, and it applies e
 - **Over-planning simple tasks**: If you use Plan Mode for a one-line fix, you waste time reviewing a plan that is more complex than the change itself. Reserve it for tasks where a wrong approach has real cost.
 - **Rubber-stamping plans**: The value comes from actually reading and questioning the plan. If you approve without reviewing, you get the latency cost of planning with none of the safety benefit.
 - **Stale context after replanning**: If you reject a plan and redirect multiple times, the conversation can get long and confused. Consider starting a fresh session with your refined requirements.
-
-## Real-World Example
-
-You notice that `TestOrderCheckout_WithExpiredCoupon` is failing intermittently in CI. Rather than guessing, you start Claude in Plan Mode:
-
-```
-claude --permission-mode plan
-> TestOrderCheckout_WithExpiredCoupon fails about 30% of the time in CI
-  but passes locally. Find the root cause and propose a fix.
-```
-
-Claude reads `tests/checkout_test.go`, `services/coupon_validator.go`, and `services/clock.go`. It reports:
-
-> The test uses `time.Now()` to generate a coupon expiry timestamp, then compares
-> against a separately called `time.Now()` in the validator. When the test crosses
-> a second boundary, the coupon appears valid instead of expired. Proposed fix:
-> inject a `Clock` interface into `CouponValidator` and use a fixed-time clock
-> in tests.
-
-You approve, and Claude implements the interface, updates the test, and updates the three call sites that construct `CouponValidator`.
 
 ## Sources
 

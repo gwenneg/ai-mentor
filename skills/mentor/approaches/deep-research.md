@@ -7,7 +7,7 @@ Deep Research lets you ask a complex question and get back a thoroughly sourced 
 
 ## Why It Works
 
-Single-source answers are fragile: when you take one page's answer at face value, you inherit that source's biases, omissions, and potential inaccuracies. Deep Research applies the same adversarial verification that good journalism and peer review use: multiple independent sources must agree before a claim is treated as established. The fan-out search pattern also surfaces information you would not find in a single query, because different search terms hit different parts of the web. The result is a report you can actually make decisions from, not a guess you have to double-check yourself.
+Deep Research applies the same adversarial verification that good journalism and peer review use: multiple independent sources must agree before a claim is treated as established.
 
 ## When to Use It
 
@@ -29,7 +29,7 @@ Single-source answers are fragile: when you take one page's answer at face value
 
 1. First, check whether your question is specific enough. If it is too broad, Claude will ask clarifying questions before starting the research.
 2. Type: `/deep-research Why does React 19 drop support for defaultProps on function components, and what is the recommended migration path?` and approve the run when Claude Code asks. Deep Research is a bundled dynamic workflow — available on all paid plans (on Pro, turn on Dynamic workflows in `/config`) — and it needs the WebSearch tool available
-3. The run continues in the background while your session stays free: Claude fans out roughly 5 parallel web searches with different query variations, then fetches and reads the actual content of the most relevant pages — not just snippet previews. Check progress anytime with `/workflows`
+3. The run continues in the background while your session stays free: Claude fans out multiple parallel web searches with different query variations, then fetches and reads the actual content of the most relevant pages — not just snippet previews. Check progress anytime with `/workflows`
 4. Independent verification agents adversarially cross-check each claim, and claims that do not survive verification are filtered out of the report
 5. Claude synthesizes a cited report with confidence levels and source URLs for each finding, so you can verify any claim that matters to your decision
 
@@ -52,24 +52,6 @@ Single-source answers are fragile: when you take one page's answer at face value
 - **Using it for speed-sensitive decisions**: Deep Research takes longer than a simple prompt because it runs multiple searches, fetches pages, and verifies claims. If you need a quick answer in 10 seconds, use a regular prompt. Deep Research is for decisions that are worth spending a minute or two to get right.
 - **Asking multiple unrelated questions in one prompt**: Each Deep Research session works best with a single focused question. If you need to research both "best ORM for our stack" and "CI provider comparison," run them as separate sessions. A combined prompt dilutes the search queries and produces a shallower report on both topics.
 
-## Real-World Example
-
-**Scenario**: Choosing a replacement for a deprecated library under time pressure.
-
-Your team is considering replacing Moment.js with a lighter alternative in a large application. You need to make a recommendation to the team lead by end of day.
-
-```
-/deep-research Compare date-fns, Day.js, and Luxon as Moment.js replacements.
-  Consider: bundle size, tree-shaking support, timezone handling, locale support,
-  TypeScript types, active maintenance status, and migration effort from Moment.js.
-  Our app uses Moment's timezone features heavily in src/scheduling/.
-```
-
-Claude runs parallel searches for each library, fetches their documentation pages, npm download stats, GitHub issue trackers, and recent blog posts comparing them. It finds that one blog post claims Day.js has "full timezone support" but a verification agent discovers this requires the `dayjs/plugin/timezone` plugin which has an open issue about DST edge cases in recurring events. The final report flags this with "moderate confidence" and cites the specific GitHub issue.
-
-The report arrives as a structured comparison with a recommendation section: Day.js for most use cases, but Luxon for your project specifically because of the heavy timezone reliance in `src/scheduling/`. Each claim has a citation linking to the original source. You forward the report to your team lead with minor edits, and the decision is made in the same meeting — saving several hours of manual research across documentation sites, npm pages, and GitHub issue trackers.
-
 ## Sources
 
 - [Dynamic workflows](https://code.claude.com/docs/en/workflows) — Official docs for the bundled /deep-research workflow: availability, approval, and monitoring runs with /workflows
-- [Claude Code Expertise](https://www.anthropic.com/research/claude-code-expertise) — Anthropic research on how Claude Code is used in practice

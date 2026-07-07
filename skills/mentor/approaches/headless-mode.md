@@ -7,7 +7,7 @@ Headless Mode runs Claude without a terminal interface and without human interac
 
 ## Why It Works
 
-Interactive tools are powerful for exploration, but they cannot be scheduled, piped, or embedded in scripts. Headless Mode turns Claude from an interactive assistant into a Unix-style command-line tool that follows the standard input/output contract. This means it composes with everything else in your toolchain: shell scripts, CI/CD pipelines, cron jobs, GitHub Actions, `xargs`, `jq`, and any other tool that speaks stdin/stdout. The same capability that helps you debug at your desk can now run unattended at 3 AM when a PR is opened.
+Headless mode turns Claude from an interactive assistant into a Unix-style command-line tool that follows the stdin/stdout contract, so it composes with everything else in your toolchain — and can run unattended at 3 AM when a PR is opened.
 
 ## When to Use It
 
@@ -52,7 +52,7 @@ Interactive tools are powerful for exploration, but they cannot be scheduled, pi
 
 ## Real-World Example
 
-Your team wants automated PR reviews on every pull request. You create a GitHub Actions workflow:
+Your team wants automated PR reviews on every pull request. The maintained `claude-code-action` (see Sources) packages this pattern ready-made; hand-roll the workflow as below when you need full control of the pipeline:
 
 ```yaml
 # .github/workflows/claude-review.yml

@@ -3,11 +3,11 @@
 
 ## What It Is
 
-Autonomous Loops let you give your AI coding tool a measurable goal — like "all tests pass" or "test coverage above 80%" — and then step away while it works toward that goal on its own. The AI writes code, runs tests, reads errors, fixes problems, and repeats until the condition you set is satisfied. You define the finish line; the AI figures out how to cross it.
+Autonomous Loops let you give Claude a measurable goal — like "all tests pass" or "test coverage above 80%" — and then step away while it works toward that goal on its own. The AI writes code, runs tests, reads errors, fixes problems, and repeats until the condition you set is satisfied. You define the finish line; the AI figures out how to cross it.
 
 ## Why It Works
 
-Feedback loops are how all iterative processes converge on a solution. Autonomous Loops automate the change-test-observe cycle by letting the AI act as both developer and evaluator: after each turn, a fast model checks whether the goal condition is met, and if not, the AI keeps working. This removes the bottleneck of a human reading each intermediate result and typing "try again" — low-value labor when the success criterion is already well-defined. The key insight is that many development tasks have a clear, machine-verifiable definition of "done" — and for those tasks, human supervision of each iteration adds latency without adding judgment.
+Many development tasks have a clear, machine-verifiable definition of "done" — and for those, human supervision of each iteration adds latency without adding judgment.
 
 ## When to Use It
 
@@ -49,25 +49,8 @@ Feedback loops are how all iterative processes converge on a solution. Autonomou
 
 - **Vague conditions**: A goal like "improve performance" gives the evaluator nothing measurable to check. The AI will either stop after one change or loop indefinitely — a goal runs until the evaluator judges the condition met or you run `/goal clear`. Always use conditions that produce a clear pass/fail signal.
 - **Superficial fixes**: The AI optimizes for the stated condition. If your goal is "all tests pass," it might delete a failing test, add `@pytest.mark.skip`, or catch-and-swallow an exception. Review the diff carefully — start with `git diff --stat` for the blast radius — passing tests are necessary but not sufficient for correct code.
-- **Over-long loops**: If the AI has not converged after 15-20 turns, the goal may be underspecified or the problem may require a different approach entirely. There is no built-in turn limit, so bound the run in the condition itself, e.g. `/goal tests pass, or stop after 20 turns`.
+- **Over-long loops**: If the AI has not converged after 15-20 turns, the goal may be underspecified or the problem may require a different approach entirely. There is no built-in turn limit — check progress with `/goal` and stop a non-converging run yourself with `/goal clear`.
 - **Cost blindness**: Each iteration consumes tokens. A 20-turn loop that reads large files and runs long test suites can cost significantly more than a focused interactive session. Monitor iteration count and set the goal scope appropriately — target a specific directory or test file rather than the entire project.
-
-## Real-World Example
-
-**Scenario**: Upgrading a dependency with cascading test failures.
-
-You are upgrading `axios` from v0.x to v1.x in a Node.js project. After updating `package.json` and running `npm install`, you run the test suite and 23 tests fail across `tests/api/` because the error response structure changed (`error.response.data` vs. `error.response`).
-
-```
-claude
-> /goal all tests in tests/api/ pass
-```
-
-Claude reads the first failing test in `tests/api/orders.test.ts`, sees `TypeError: Cannot read properties of undefined (reading 'message')` at line 47, and traces it to the error handler in `src/api/client.ts`. It updates the error destructuring from `error.response.data.message` to `error.response?.data?.message` with a fallback. It runs the test suite again — 18 still fail.
-
-It reads the next failure, finds that `src/api/interceptors.ts` references `error.request.headers` which moved to `error.config.headers` in axios v1. It fixes that — 9 failures remain. Over four more edit-test cycles, Claude updates the request config shape in `src/api/upload.ts` and fixes a changed default for `transformResponse` in `src/api/client.ts`. All 23 tests pass.
-
-Total time: about three minutes, seven iterations. You run `git diff` and review 4 files changed, 31 insertions, 19 deletions — all mechanical changes to match the new axios API. You scan the diff to make sure nothing was skipped or hacked around, confirm the fixes are correct, and commit.
 
 ## Sources
 

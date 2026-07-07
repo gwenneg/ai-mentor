@@ -7,7 +7,7 @@ Custom Skills let you package a repeatable workflow into a slash command that an
 
 ## Why It Works
 
-Most engineering teams have workflows that are done the same way every time but never get automated because they fall in the gap between "too complex for a shell script" and "not worth building a full tool for." Skills close that gap. They capture the judgment calls, file conventions, and sequencing that a senior engineer would follow — and make that knowledge executable. The next person who needs to do the task does not need to know the steps; they just invoke the command.
+Skills capture the judgment calls, file conventions, and sequencing a senior engineer would follow — and make that knowledge executable by anyone as a single command.
 
 ## When to Use It
 
@@ -64,27 +64,6 @@ Steps:
 - **Skipping the deterministic parts**: If a step should always produce the same output (timestamps, UUIDs, boilerplate), use a bundled script instead of asking the AI to generate it. AI adds variance where you want consistency.
 - **Forgetting to version the skill**: Skills live in your repo. When your project conventions change (new test framework, different directory structure), update the skill or it will generate outdated scaffolding.
 - **Overloading a single skill**: A skill that handles creation, updating, deletion, and listing is four skills pretending to be one. Keep each skill focused on one workflow.
-
-## Real-World Example
-
-Your team builds a Django REST API. Every new endpoint requires five files: a serializer, a view, a URL route entry, a test file, and an OpenAPI schema fragment. Developers forget steps, name files inconsistently, and skip the schema update.
-
-You create `/create-endpoint`:
-
-```
-> /create-endpoint PATCH /api/v2/orders/{id}/cancel CancelOrderRequest
-```
-
-The skill reads `$ARGUMENTS`, splits them into method, path, and request type, then:
-1. Runs `${CLAUDE_SKILL_DIR}/scaffold.sh` to create empty files with correct names in the right directories
-2. Reads `api/serializers/order_serializer.py` to understand existing patterns
-3. Generates `api/serializers/cancel_order_serializer.py` matching the existing style
-4. Generates the view in `api/views/cancel_order_view.py` with proper permission classes
-5. Adds the URL route to `api/urls/v2.py`
-6. Creates `tests/api/test_cancel_order.py` with happy path, validation error, and permission denied test cases
-7. Appends the endpoint definition to `openapi/paths/orders.yaml`
-
-What used to take 25-30 minutes and a review for forgotten steps now takes 2 minutes and produces consistent output every time.
 
 ## Sources
 
