@@ -13,7 +13,7 @@ Learn the Claude Code capabilities you didn't know existed. ai-mentor is a disco
 
 ## The profile
 
-The mentor keeps one small markdown file at `~/.ai-mentor/profile.md`: one line per capability (shown / adopted / declined). It's machine-local, never committed, never uploaded, and yours to edit or delete — a hand edit always wins over anything the mentor inferred. It requires no setup and no permission prompts.
+The mentor keeps one small markdown file at `~/.ai-mentor/profile.md`: one line per capability (shown / adopted / declined). It's machine-local, never committed, never uploaded, and yours to edit or delete — a hand edit always wins over anything the mentor inferred. It requires no setup and no permission prompts. Machine-local is a deliberate trade-off: on a second machine the mentor starts from scratch (it will re-learn quickly from your setup signals, but it will re-offer things you declined elsewhere). If that bothers you, the file is plain markdown — copy it over.
 
 ## Install
 
