@@ -29,6 +29,7 @@ Facts future maintainers must not "fix" (each verified by test, not assumption):
 
 - The rule family must be `Edit(...)`: path-scoped `Edit` rules cover all file-editing tools including Write, whereas a path-scoped `Write(...)` rule does not match and is silently ineffective.
 - The `~/` anchor works in frontmatter and settings rules alike and keeps rules portable across users — do not expand it to an absolute path. Conversely, a rule built from `${CLAUDE_PLUGIN_ROOT}` needs a leading `/` (yielding `//abs/path`), because a single leading slash is project-root-relative.
+- The *tool calls* must use the literal `~/.ai-mentor/...` path too, never an absolute home path inferred from repo paths in context (verified 2026-07-07: in an isolated-HOME session the model guessed `/Users/<name>/...` from the plugin path, the `~`-anchored grant expanded against the real `$HOME` and did not match, and every profile read/write was denied). The file tools expand `~` against the session's `$HOME`, which is always the profile's true location.
 - Never use Bash `mkdir` for the profile directory — the Write tool creates missing parents under the same Edit rule; a `mkdir` would trigger a separate Bash prompt.
 - Write the profile immediately when a status changes, within the mentor's own flow — never defer to "session end". Writes are silent, so there is nothing to batch, and the frontmatter grant is only guaranteed active while the skill is executing; a deferred flush many turns later would be betting on unverified permission-scope semantics.
 

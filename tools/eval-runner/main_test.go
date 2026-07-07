@@ -262,7 +262,7 @@ func TestRunCaseStubbed(t *testing.T) {
 	}
 
 	jp := argAfter(judge, "-p")
-	if argAfter(judge, "--model") != "judge-model" || argAfter(judge, "--max-turns") != "1" {
+	if argAfter(judge, "--model") != "judge-model" || argAfter(judge, "--max-turns") != "5" {
 		t.Errorf("judge call flags wrong: %v", judge)
 	}
 	for _, want := range []string{"growth-mode lesson", "never offered", "STRICT JSON", "fan-out-workflows"} {

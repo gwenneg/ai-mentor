@@ -212,6 +212,11 @@ func (r *runner) runCase(c evalCase) result {
 		return errResult(c, err)
 	}
 	defer os.RemoveAll(home)
+	// macOS temp dirs live behind a /var -> /private/var symlink; resolve so
+	// HOME matches the paths the CLI's file tools report and match rules on.
+	if resolved, rerr := filepath.EvalSymlinks(home); rerr == nil {
+		home = resolved
+	}
 	env, err := caseEnv(home)
 	if err != nil {
 		return errResult(c, err)
@@ -425,7 +430,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string) resul
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, ".", os.Environ(),
-		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "1")
+		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "5")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
