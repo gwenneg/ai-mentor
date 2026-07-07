@@ -74,6 +74,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if [ ! -f eval-report.md ]; then
+            echo "No eval report produced — the runner failed before writing one." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           cat eval-report.md >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${{ github.event.pull_request.number }}" ]; then
             gh pr comment ${{ github.event.pull_request.number }} --body-file eval-report.md \

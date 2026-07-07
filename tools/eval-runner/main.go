@@ -592,7 +592,7 @@ func fatal(err error) {
 func main() {
 	groups := flag.String("groups", "A,B,C", "comma-separated groups to run")
 	ids := flag.String("cases", "", "comma-separated case IDs to run (default: all in the groups)")
-	repo := flag.String("repo", ".", "plugin repo root")
+	repo := flag.String("repo", "", "plugin repo root (default: walk up to the directory containing skills/mentor)")
 	fixture := flag.String("fixture", "", "fixture project dir (default <repo>/evals/fixture)")
 	out := flag.String("out", "eval-report.md", "markdown report path")
 	gate := flag.Bool("gate", false, "exit 1 when any case fails or errors")
@@ -601,6 +601,9 @@ func main() {
 	flag.Parse()
 
 	repoAbs, err := filepath.Abs(*repo)
+	if *repo == "" {
+		repoAbs, err = findRoot(".")
+	}
 	if err != nil {
 		fatal(err)
 	}
@@ -654,5 +657,27 @@ func main() {
 	fmt.Println(summary(results))
 	if *gate && slices.ContainsFunc(results, func(r result) bool { return r.verdict != vPass }) {
 		os.Exit(1)
+	}
+}
+
+// findRoot walks upward from dir to the first directory containing
+// skills/mentor, so the runner works from anywhere in the repo — including
+// tools/eval-runner itself, where `go -C tools/eval-runner run .` lands.
+// Keep in sync with the copies in tools/structural-audit/main.go and
+// tools/catalog-drift/main.go.
+func findRoot(dir string) (string, error) {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "skills", "mentor")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("no skills/mentor directory found here or above")
+		}
+		dir = parent
 	}
 }
