@@ -39,6 +39,7 @@ var (
 	reBuiltin  = regexp.MustCompile("`/([a-z0-9-]+)`")
 	reBuiltinL = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
 	reRegID    = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
+	reRowSlug  = regexp.MustCompile(`\]\(\.\./approaches/([a-z0-9-]+)\.md\)`)
 	reRegGoals = regexp.MustCompile(`^goals: (.+)$`)
 	reSkillRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount    = regexp.MustCompile(`(\d+) goal categories`)
@@ -66,6 +67,7 @@ type auditor struct {
 	skill                    string // skills/mentor directory
 	issues                   []string
 	goals, approaches, weeks int
+	membership               map[string]map[string]bool // approach slug -> routing goals
 }
 
 func (a *auditor) issue(path, format string, args ...any) {
@@ -147,6 +149,12 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog, regi
 					a.issue(f, "row numbering not sequential at row %d", len(rows)+1)
 				}
 				rows = append(rows, m[2])
+				if s := reRowSlug.FindStringSubmatch(l); s != nil {
+					if a.membership[s[1]] == nil {
+						a.membership[s[1]] = map[string]bool{}
+					}
+					a.membership[s[1]][strings.TrimSuffix(filepath.Base(f), ".md")] = true
+				}
 				if cs := cells(l); len(cs) > 3 && !slices.Contains(levels, cs[3]) {
 					a.issue(f, "invalid level %s", cs[3])
 				}
@@ -336,6 +344,7 @@ func (a *auditor) run() error {
 		catalog[m[1]] = true
 	}
 
+	a.membership = map[string]map[string]bool{}
 	registry := a.checkRegistry(filepath.Join(a.skill, "registry", "builtin-commands.md"))
 	usedBuiltins := map[string]bool{}
 	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog, registry, usedBuiltins)
@@ -346,6 +355,9 @@ func (a *auditor) run() error {
 		}
 	}
 	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "builtin-commands.md"), goals)
+	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "integrations.md"), goals)
+	a.checkIntegrations(filepath.Join(a.skill, "registry", "integrations.md"), registry)
+	a.checkTechniques(filepath.Join(a.skill, "registry", "techniques.md"), names)
 	for _, f := range files {
 		a.checkApproach(f)
 	}
@@ -429,6 +441,91 @@ func (a *auditor) checkRegistryGoals(path string, goals []string) {
 			g = strings.TrimSpace(g)
 			if !slices.Contains(goals, g) {
 				a.issue(path, "registry goals name '%s', which has no routing/%s.md", g, g)
+			}
+		}
+	}
+}
+
+// checkIntegrations audits registry/integrations.md: date line, unique ids
+// that don't collide with builtin-command ids.
+func (a *auditor) checkIntegrations(path string, builtins map[string]bool) {
+	ls := lines(path)
+	if ls == nil {
+		a.issue(path, "missing integrations registry")
+		return
+	}
+	a.dateLine(path, "Last verified", ls)
+	seen := map[string]bool{}
+	for _, l := range ls {
+		if m := reRegID.FindStringSubmatch(l); m != nil {
+			if seen[m[1]] || builtins[m[1]] {
+				a.issue(path, "duplicate registry id '%s'", m[1])
+			}
+			seen[m[1]] = true
+		}
+	}
+	if len(seen) == 0 {
+		a.issue(path, "integrations registry parsed to zero records — format drift?")
+	}
+}
+
+// checkTechniques audits registry/techniques.md: exactly one record per
+// approach file, and each record's goals line mirrors the approach's actual
+// routing membership — the lockstep that lets the registry be trusted as
+// the machine view of routing.
+func (a *auditor) checkTechniques(path string, approachNames []string) {
+	ls := lines(path)
+	if ls == nil {
+		a.issue(path, "missing techniques registry")
+		return
+	}
+	a.dateLine(path, "Last verified", ls)
+	recGoals := map[string]string{}
+	cur := ""
+	for _, l := range ls {
+		if m := reRegID.FindStringSubmatch(l); m != nil {
+			if _, dup := recGoals[m[1]]; dup {
+				a.issue(path, "duplicate registry id '%s'", m[1])
+			}
+			cur = m[1]
+			recGoals[cur] = ""
+			continue
+		}
+		if m := reRegGoals.FindStringSubmatch(l); m != nil && cur != "" {
+			recGoals[cur] = m[1]
+			cur = ""
+		}
+	}
+	var ids []string
+	for id := range recGoals {
+		ids = append(ids, id)
+	}
+	missing, stale := diff(approachNames, ids)
+	for _, x := range missing {
+		a.issue(path, "approach '%s' has no techniques-registry record", x)
+	}
+	for _, x := range stale {
+		a.issue(path, "record '%s' has no matching approach file", x)
+	}
+	for id, goalsLine := range recGoals {
+		want := a.membership[id]
+		if want == nil {
+			continue // stale record already reported
+		}
+		got := map[string]bool{}
+		for _, g := range strings.Split(goalsLine, ",") {
+			if g = strings.TrimSpace(g); g != "" {
+				got[g] = true
+			}
+		}
+		for g := range want {
+			if !got[g] {
+				a.issue(path, "record '%s' missing goal '%s' (present in routing/%s.md)", id, g, g)
+			}
+		}
+		for g := range got {
+			if !want[g] {
+				a.issue(path, "record '%s' lists goal '%s' but routing/%s.md has no row for it", id, g, g)
 			}
 		}
 	}

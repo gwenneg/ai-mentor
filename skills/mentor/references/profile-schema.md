@@ -49,7 +49,7 @@ Last new-capability check: <what's-new week slug, e.g. 2026-w26 — always a wee
 | fan-out-workflows | declined | 2026-07-03 | "Too token-heavy for us" |
 ```
 
-`Capability` is an approach file basename (the enumerable set in `adoption-signals.md`). A capability with no row is **unknown** — a discovery candidate.
+`Capability` is a registry id: an approach file basename (kind: technique — the enumerable set in `adoption-signals.md`), a built-in command or integration id from `registry/`, or a marketplace plugin name from `references/official-plugins.md`. All kinds share the table and the statuses; ids are additive across versions and existing rows are never orphaned by schema changes — a user's hand-edited row always stays valid. A capability with no row is **unknown** — a discovery candidate (plugins only when stack/goal-relevant).
 
 ## Statuses and transitions
 
