@@ -41,7 +41,8 @@ The **no-fabrication comparison between arms** remains the headline metric. The 
 
 ## Cadence
 
-- Run Groups A-C before every release tag; Group D whenever the frontmatter `description` changes (it's the trigger's tuning dial).
-- Re-run the baseline arm when a new Claude model ships — the baseline improves over time, and the differentiation claim should be re-measured, not assumed.
+- **Groups A-C run in CI** (`.github/workflows/evals.yml`, via `tools/eval-runner`): automatically on the standing release PR (`release/next`) — so every state that could be tagged gets a run — and on manual dispatch for feature branches (`gh workflow run evals.yml -f cases=A19,A20`). Report-only for now: results post to the job summary and as a PR comment; flip the gate input once the suite has proven stable across a few releases. Each case runs with an isolated `HOME`, so profile fixtures never touch a real profile.
+- Group D (trigger calibration) stays interactive-only: run it by hand whenever the frontmatter `description` changes (it's the trigger's tuning dial).
+- Re-run the baseline arm when a new Claude model ships — the baseline improves over time, and the differentiation claim should be re-measured, not assumed. The baseline arm is not part of the CI run; it measures the differentiation claim, not regressions.
 
 The skill-creator plugin (`/plugin install skill-creator@claude-plugins-official`) provides tooling for skill evals, including trigger-accuracy testing, and can replace this manual harness once the case set stabilizes.
