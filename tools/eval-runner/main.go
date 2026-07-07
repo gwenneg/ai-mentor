@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -243,8 +244,8 @@ func (r *runner) runCase(c evalCase) result {
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
 // the isolated temp dir. When no ANTHROPIC_API_KEY is present (local runs),
-// the real ~/.claude/.credentials.json is copied in so auth still works; in
-// CI the API key env var passing through is the whole auth story.
+// the developer's credential is copied in so auth still works; in CI the
+// API key env var passing through is the whole auth story.
 func caseEnv(home string) ([]string, error) {
 	env := slices.DeleteFunc(os.Environ(), func(kv string) bool {
 		return strings.HasPrefix(kv, "HOME=")
@@ -253,19 +254,37 @@ func caseEnv(home string) ([]string, error) {
 	if os.Getenv("ANTHROPIC_API_KEY") != "" {
 		return env, nil
 	}
-	realHome, err := os.UserHomeDir()
+	creds, err := localCredentials()
 	if err != nil {
 		return nil, err
-	}
-	creds, err := os.ReadFile(filepath.Join(realHome, ".claude", ".credentials.json"))
-	if err != nil {
-		return nil, fmt.Errorf("no ANTHROPIC_API_KEY and no credentials file: %w", err)
 	}
 	dir := filepath.Join(home, ".claude")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, err
 	}
 	return env, os.WriteFile(filepath.Join(dir, ".credentials.json"), creds, 0o600)
+}
+
+// localCredentials finds the developer's Claude Code credential for local
+// runs: ~/.claude/.credentials.json where the CLI stores it as a file
+// (Linux), or the login keychain on macOS, where no file exists.
+func localCredentials() ([]byte, error) {
+	realHome, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	creds, err := os.ReadFile(filepath.Join(realHome, ".claude", ".credentials.json"))
+	if err == nil {
+		return creds, nil
+	}
+	if runtime.GOOS == "darwin" {
+		out, kerr := exec.Command("security", "find-generic-password",
+			"-s", "Claude Code-credentials", "-w").Output()
+		if kerr == nil {
+			return bytes.TrimSpace(out), nil
+		}
+	}
+	return nil, fmt.Errorf("no ANTHROPIC_API_KEY, no credentials file, no macOS keychain entry: %w", err)
 }
 
 // hookedFixture copies the fixture project to a temp dir and adds a
