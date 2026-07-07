@@ -7,7 +7,7 @@ Visual Artifacts turn Claude Code's terminal output into rendered, shareable web
 
 ## Why It Works
 
-Some information is spatial, not linear. A dependency graph, an incident timeline, or a before/after comparison carries most of its meaning in layout — position, grouping, color — which terminal text physically cannot express. Rendering to a page moves the output into a medium that matches the information's shape. The second effect is persistence and audience: terminal output dies with the scrollback and is visible only to you, while an artifact survives the session at a stable URL and can be handed to a teammate who was never in the conversation — the output stops being a transcript and becomes a deliverable.
+Some information is spatial, not linear: layout carries meaning terminal text cannot express, and a stable URL turns the output from a transcript into a deliverable.
 
 ## When to Use It
 
@@ -51,21 +51,6 @@ Some information is spatial, not linear. A dependency graph, an incident timelin
 - **Linking external assets**: Artifact pages block requests to external hosts (CDN scripts, remote images, web fonts). Everything must be inlined; a page that looks fine in a local preview can silently break when published.
 - **Publishing a wall of text**: Rendering prose to HTML does not make it scannable. The value comes from structure — tables, diagrams, severity groupings — so ask for the layout, not just "make it a page."
 - **Forgetting the content leaves the machine**: Publishing uploads the page to claude.ai hosting. For proprietary code excerpts or unreleased plans, confirm that is acceptable before rendering.
-
-## Real-World Example
-
-Your team inherits a payment-gateway service after a reorg, and you spend a session exploring it: entry points, the fraud-check chain, retry logic, and two undocumented dead code paths. The findings are solid but live in 400 lines of terminal scrollback that nobody else will ever read.
-
-```
-> Publish this as an artifact: a service map of payment-gateway with one
-  card per module, a diagram showing the request flow from API route to
-  processor call, and a "gotchas" section for the retry double-fire and
-  the two dead code paths. Keep it to one page.
-```
-
-Claude writes a self-contained HTML page — flow diagram at the top, module cards below, gotchas highlighted — and returns a link. You spot that the diagram shows the fraud check after authorization; you reply "fraud check runs before auth, swap those nodes," and the same URL updates in seconds.
-
-You drop the link in the team channel. Two engineers who never saw your session use the map in their next on-call shift, and the "gotchas" section short-circuits a bug hunt a week later. The exploration cost one session; the artifact made it reusable by the whole team.
 
 ## Sources
 

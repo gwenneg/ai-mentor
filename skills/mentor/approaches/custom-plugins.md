@@ -7,7 +7,7 @@ Custom Plugins are how you package your own AI workflow — skills, hooks, agent
 
 ## Why It Works
 
-Team knowledge compounds only when it's distributable. A brilliant skill in one engineer's `.claude/skills/` helps one engineer; the same skill in an installable, versioned plugin becomes the team default, survives laptop changes, and improves in one place for everyone at once. Versioned distribution also beats copy-paste on trust: teammates receive deliberate releases instead of whatever state your config was in when they copied it, and updates ship as decisions rather than drift.
+Team knowledge compounds only when it's distributable: versioned releases ship as decisions rather than drift, survive laptop changes, and improve in one place for everyone at once.
 
 ## When to Use It
 
@@ -50,21 +50,6 @@ Team knowledge compounds only when it's distributable. A brilliant skill in one 
 - **Forgetting namespacing when naming**: your skill invocations become `/plugin-name:skill-name`. A plugin named `ai-mentor` with a skill named `ai-mentor` produces the awkward `/ai-mentor:ai-mentor` — name the skill for how the combination reads.
 - **Shipping noisy hooks**: a hook that misfires on every edit gets your whole plugin disabled by annoyed teammates. Test hooks thoroughly before they ship to anyone.
 - **Ambient versioning**: leaving `version` unset means every push to your marketplace repo is an update. Fine for a personal plugin; for a team, explicit versions make updates reviewable events, and `displayName` gives the listing a human-readable name without changing the install name.
-
-## Real-World Example
-
-After three microservices, a platform team notices every new repo gets the same ritual: someone copies the `/release-notes` skill from the last project, recreates the changelog-format hook, and pastes the security-reviewer agent definition from a gist. Each copy drifts.
-
-They package the trio as `service-workflows`: manifest in `.claude-plugin/plugin.json` (`"name": "service-workflows"`, explicit `"version": "1.0.0"`), the skill under `skills/release-notes/`, the hook in `hooks/hooks.json`, the reviewer under `agents/`. `claude plugin validate` passes; a `--plugin-dir` session confirms `/service-workflows:release-notes` behaves.
-
-They push it to an internal repo set up as a marketplace. The next microservice's setup is two commands:
-
-```
-/plugin marketplace add acme-platform/claude-workflows
-/plugin install service-workflows@claude-workflows
-```
-
-Three months later they improve the changelog format once, bump to `1.1.0`, and every service picks it up on its next marketplace update — the drift problem is structurally gone, and the team's workflow knowledge finally lives in exactly one place.
 
 ## Sources
 

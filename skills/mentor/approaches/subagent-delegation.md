@@ -7,7 +7,7 @@ Subagent Delegation lets you spawn separate AI worker agents from your main sess
 
 ## Why It Works
 
-This mirrors the way effective engineering teams work: a tech lead breaks a problem into pieces and assigns each piece to a specialist, rather than trying to hold every detail in their own head. AI context windows are finite and degrade in quality as they fill up. By delegating subtasks to fresh agents with clean context, each agent operates at peak effectiveness on a narrow problem. The main agent acts as an orchestrator — it synthesizes results and makes architectural decisions without being buried in implementation details.
+Context windows are finite and degrade as they fill; delegating subtasks to fresh agents with clean context lets each operate at peak effectiveness while the orchestrator keeps only the summaries.
 
 ## When to Use It
 
@@ -26,11 +26,11 @@ This mirrors the way effective engineering teams work: a tech lead breaks a prob
 
 ### Basic (Beginner)
 
-1. In your Claude Code session, describe a task that has separable pieces
-2. Claude spawns a subagent: it creates a new agent with a specific prompt and task scope
-3. The subagent reads files, searches code, or makes edits independently
-4. When the subagent finishes, it returns a summary to the main session
-5. The main session uses the summary to inform its next steps or synthesize a final answer
+1. Describe a task with separable pieces, or ask for delegation outright: "Use a subagent to find every caller of the legacy API". Claude spawns subagents through its `Agent` tool — automatically when a side task would flood your context, or whenever you ask
+2. Built-in agent types cover the common cases: `Explore` (fast, read-only search — Claude picks a thoroughness level from quick to very thorough), `Plan` (research during plan mode), and `general-purpose` (reads and writes, multi-step tasks)
+3. The subagent works in its own context window and returns only a summary — the search results, logs, and file dumps it processed never enter your main conversation
+4. Name a custom subagent to invoke it directly: "Use the code-improver agent to suggest improvements in this project". Definitions live in `.claude/agents/` (see Custom Agent Definitions)
+5. The main session synthesizes the summaries and makes the decisions
 
 For example:
 
@@ -42,7 +42,7 @@ Claude can spawn one subagent for correctness review and another for security re
 
 ### Composing with Other Approaches (Intermediate)
 
-- **Subagents with worktree isolation**: Give each subagent `isolation: "worktree"` so they can all edit code in parallel without conflicts. Each produces a branch you can review independently. Note that subagent worktrees branch from your default branch by default — set `worktree.baseRef` to `"head"` in settings so they carry your unpushed commits and feature-branch state (uncommitted changes never carry over; commit first if agents must build on them).
+- **Subagents with worktree isolation**: Give each subagent `isolation: "worktree"` so they can all edit code in parallel without conflicts. Each produces a branch you can review independently; see Worktree Isolation for the `worktree.baseRef` and uncommitted-changes details.
 - **Plan Mode then subagent execution**: Use Plan Mode to design the overall approach, then spawn subagents to execute each step of the plan. The plan becomes the task breakdown.
 - **Subagent results into review skills**: After subagents make parallel changes, run `/code-review` on each worktree branch to verify the changes before merging.
 
@@ -58,25 +58,6 @@ Claude can spawn one subagent for correctness review and another for security re
 - **Lost nuance in summaries**: Subagents return summaries, not full transcripts. If a subagent found a subtle race condition, the summary might flatten it to "found a concurrency issue." For critical findings, ask the main agent to follow up with specific questions.
 - **Context fragmentation**: If you spawn too many subagents with overlapping scopes, you get redundant work and potentially contradictory findings. Give each agent a clear, non-overlapping scope.
 - **Ignoring agent types**: Using a general-purpose agent for a pure search task is slower and uses more resources than an Explore agent. Match the agent type to the task.
-
-## Real-World Example
-
-You are reviewing a large PR (47 files changed) that adds a new payment provider integration. Instead of asking one agent to review everything, you delegate:
-
-```
-> Review PR #342 which adds Stripe Connect support. I want three
-  separate reviews: (1) correctness of the payment flow logic in
-  services/payments/, (2) security review of the webhook handler
-  in api/webhooks/stripe.go, and (3) test coverage analysis of the
-  new test files in tests/payments/.
-```
-
-Claude spawns three subagents:
-- Agent 1 reads `services/payments/stripe_connect.go` and `services/payments/payout.go`, finds that the idempotency key is generated after the API call instead of before, which could cause duplicate charges on retry.
-- Agent 2 reads `api/webhooks/stripe.go`, confirms the webhook signature verification is correct but flags that the endpoint does not validate the event type before processing.
-- Agent 3 reads the test files, reports that `TestPayoutCreation` does not cover the error path when the Stripe API returns a `402 Payment Required`.
-
-Claude synthesizes all three reports into a unified review with prioritized findings, and you now have a thorough, multi-dimensional review that would have taken a single agent (or a single human) much longer.
 
 ## Sources
 

@@ -89,10 +89,10 @@ For each `.md` file in `skills/mentor/approaches/`:
    - `### Composing with Other Approaches (Intermediate)`
    - `### Advanced Patterns`
 8. `## Common Pitfalls`
-9. `## Real-World Example`
+9. `## Real-World Example` — optional; kept only where the example embeds exact syntax not shown elsewhere in the file. When present it sits between Common Pitfalls and Sources.
 10. `## Sources` (at least one entry, each a markdown link with a one-line description)
 
-**Line count check** — flag files under 60 lines.
+**Line count check** — flag files under 40 lines.
 
 **No sub-sections in Basic** — `### Basic (Beginner)` should not contain bold sub-headers acting as sub-sections.
 

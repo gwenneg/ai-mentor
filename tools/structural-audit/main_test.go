@@ -152,9 +152,14 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/approaches/alpha.md"] = a + "## Why It Works\n\nfiller\n"
 		}, "out of order"},
 		{"approach too short", func(f map[string]string) {
+			f["skills/mentor/approaches/alpha.md"] = strings.ReplaceAll(
+				f["skills/mentor/approaches/alpha.md"], "filler\n", "")
+		}, "(expected at least 40)"},
+		{"optional example section out of order", func(f map[string]string) {
 			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], strings.Repeat("filler\n", 30), "", 1)
-		}, "(expected at least 60)"},
+				f["skills/mentor/approaches/alpha.md"], "## Common Pitfalls",
+				"## Real-World Example\n\nfiller\n\n## Common Pitfalls", 1)
+		}, "section '## Real-World Example' out of order"},
 		{"no sources", func(f map[string]string) {
 			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
 				f["skills/mentor/approaches/alpha.md"], "- [Doc](https://example.com/doc)\n", "", 1)

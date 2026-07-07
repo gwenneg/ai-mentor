@@ -7,7 +7,7 @@ LSP Self-Correction feeds real-time compiler and type-checker diagnostics direct
 
 ## Why It Works
 
-Software engineering has long relied on fast feedback loops — unit tests, type checkers, linters, CI — where each layer catches errors the previous one missed, and the faster the feedback, the cheaper the fix. LSP Self-Correction applies this principle to AI code generation by inserting the compiler into the generation loop itself. Instead of "generate, copy, paste, compile, read error, re-prompt" (five manual steps), the loop becomes "generate, diagnose, fix" — and it happens inside a single AI turn. This is the same principle behind test-driven development, applied at the type-system level.
+Inserting the compiler into the generation loop replaces "generate, copy, paste, compile, read error, re-prompt" with "generate, diagnose, fix" — and it happens inside a single AI turn.
 
 ## When to Use It
 
@@ -51,26 +51,6 @@ Software engineering has long relied on fast feedback loops — unit tests, type
 - **Over-trusting zero diagnostics**: Zero LSP errors means the code compiles, not that it is correct. Type-safe code can still have logic errors, performance problems, and security vulnerabilities. LSP Self-Correction handles syntactic and type-level correctness; you still need tests for behavioral correctness.
 - **Missing LSP server installation**: The self-correction loop only works if the LSP server for your language is installed and reachable. If you are working in Rust but `rust-analyzer` is not installed, there are no diagnostics to feed back. Verify your LSP setup if you notice the agent producing code with obvious type errors.
 - **Conflicting LSP configurations**: Project-level LSP settings (like `tsconfig.json` paths or Go build tags) can cause the LSP to report errors that do not match your actual build. Ensure the LSP configuration matches your build system.
-
-## Real-World Example
-
-You are adding a new endpoint to a Go API service. The endpoint needs to accept a request body, validate it, call two internal services, and return a combined response. With the `gopls-lsp` plugin installed, you ask Claude:
-
-```
-> Add a POST /api/v1/reconcile endpoint to cmd/server/routes.go that accepts
-  a ReconcileRequest, calls InventoryService.CheckStock and
-  PricingService.GetQuote, and returns a ReconcileResponse with both results.
-```
-
-The agent generates the handler in `cmd/server/routes.go` and the request/response types in `internal/types/reconcile.go`. On the first pass, `gopls` reports three diagnostics:
-
-1. `InventoryService.CheckStock` returns `(StockResult, error)`, but the agent assigned the result to a single variable.
-2. `PricingService.GetQuote` expects a `ProductSKU` type, but the agent passed a plain `string`.
-3. The `ReconcileResponse` struct references `StockResult` without importing the `inventory` package.
-
-The agent reads these diagnostics and fixes each one: it destructures the `CheckStock` return into `stockResult, err`, wraps the string argument with `inventory.ProductSKU(req.SKU)`, and adds `import "myapp/internal/inventory"` to the import block. On the second pass, `gopls` reports zero diagnostics.
-
-You run `go build ./...` to confirm — clean build, no warnings. You run `go test ./cmd/server/...` and the three new tests pass. The handler was correct on the first human-visible iteration because the agent handled three type errors internally in a single correction round, each caught and resolved by the LSP feedback loop.
 
 ## Sources
 

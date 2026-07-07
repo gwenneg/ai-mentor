@@ -7,7 +7,7 @@ Session & Context Management is the discipline of keeping your AI session's work
 
 ## Why It Works
 
-Context windows are finite, and response quality degrades as they fill with stale tool output, abandoned tangents, and half-relevant history. The model pays attention to everything in context — including the noise. Managing context is the same principle as managing working memory on a team: summarize what's settled, archive what's done, and start focused threads for new topics. Developers who treat the conversation as an infinite scrollback get mysteriously worse results over long sessions; developers who curate context keep the model operating at full quality for hours.
+The model pays attention to everything in context, including the noise — curating what stays keeps it operating at full quality for hours.
 
 ## When to Use It
 
@@ -50,20 +50,6 @@ Context windows are finite, and response quality degrades as they fill with stal
 - **Using the main thread for everything**: every "quick question" answered in the main conversation permanently occupies context. `/btw` exists precisely for this — use it.
 - **Preserving conversations that should die**: nursing a confused 3-hour session is usually worse than `/clear` plus a two-sentence restatement of where you are. The restatement forces clarity the old context lacked.
 - **Confusing conversation memory with project memory**: anything you'd be sad to lose in a `/clear` belongs in CLAUDE.md or auto memory. If losing the conversation would lose knowledge, the knowledge is in the wrong place.
-
-## Real-World Example
-
-You're four hours into a gnarly migration in a monorepo. Claude starts re-asking about the package layout it knew earlier — the classic saturation sign. `/context` confirms it: the window is dominated by old test output from the morning's debugging.
-
-You run:
-
-```
-/compact keep the migration checklist, the three remaining failing packages, and the decision to use the compat shim
-```
-
-The session shrinks to a tight summary plus your project's CLAUDE.md, which re-injects automatically. Claude's next answer is sharp again — it names the three failing packages without being reminded.
-
-Mid-afternoon, a teammate pings you about an unrelated production question. Instead of contaminating the migration session, you ask it via `/btw` — answered, gone, zero context cost. At the end of the day you `/rename` the session `pkg-migration` and close the laptop. Tomorrow, `/resume pkg-migration` puts you exactly where you left off — checklist, decisions, and all.
 
 ## Sources
 

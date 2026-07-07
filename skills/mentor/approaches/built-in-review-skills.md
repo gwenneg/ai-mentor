@@ -9,7 +9,7 @@ Two companion skills close the loop from the behavior side: `/verify` exercises 
 
 ## Why It Works
 
-Code review quality depends heavily on structure. A human reviewer who "just reads through the diff" catches fewer bugs than one who follows a checklist: error handling, edge cases, concurrency, input validation. Built-in review skills apply this principle mechanically — each skill runs a defined review methodology against your changes, ensuring that common bug categories are never skipped. By separating review concerns (correctness vs. security vs. simplification), each pass can go deep on its category rather than doing a shallow scan of everything.
+A reviewer following a defined methodology catches more than one who "just reads through the diff" — and separating correctness, security, and simplification into distinct passes lets each go deep on its category.
 
 ## When to Use It
 
@@ -48,7 +48,7 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 
 - **CI pipeline integration**: Run reviews on every PR without a manual step: use the `claude-code-action` GitHub Action with a review skill as the prompt, so findings post as inline comments alongside the diff. From any CI script, `claude ultrareview` runs the deep cloud review non-interactively.
 - **Targeted review with context**: Before running the review, tell Claude about specific concerns: "This change modifies our rate limiter. Run /security-review with extra attention to bypass vectors." The skill uses your context to focus its analysis.
-- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits (roughly $5-20 per run after 3 free runs on Pro/Max). Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively.
+- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits — see the ultrareview docs for current pricing. Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively.
 
 ## Common Pitfalls
 
@@ -56,33 +56,6 @@ Code review quality depends heavily on structure. A human reviewer who "just rea
 - **Treating AI review as authoritative**: These skills catch real bugs, but they also produce false positives. A finding that says "possible null pointer" might be guarded by an upstream check the AI did not trace. Always evaluate findings with your domain knowledge.
 - **Ignoring effort levels**: Running high-effort review on every trivial change wastes time. Use low/medium for routine work, save high effort for complex or risky changes.
 - **Not using `--comment` in team workflows**: If you review locally but do not post comments, your teammates do not benefit. Use `--comment` to make findings visible on the PR.
-
-## Real-World Example
-
-You have just finished adding request validation to your API's `/users` endpoint. The change touches `api/handlers/users.go`, `api/middleware/validation.go`, and `api/handlers/users_test.go`.
-
-```
-> /code-review
-```
-
-Claude analyzes the diff and reports:
-
-> **High**: In `api/handlers/users.go:47`, the email regex validation accepts
-> strings up to 10,000 characters before checking format. A malicious request
-> with a 10KB email field will cause catastrophic regex backtracking. Move the
-> length check before the regex match.
->
-> **Medium**: In `api/handlers/users_test.go:89`, `TestCreateUser_InvalidEmail`
-> asserts status 400 but does not check the error message body. If the handler
-> returns 400 for a different reason, this test passes silently.
-
-You fix the regex ordering, then run `/simplify`:
-
-> The validation logic in `api/middleware/validation.go:23-45` duplicates the
-> email format check already present in `api/handlers/users.go:44`. Extract to
-> `internal/validate/email.go` and call from both locations.
-
-Claude applies the extraction automatically. You run `/security-review` as a final pass — it confirms the length-before-regex fix resolves the ReDoS vector and finds no additional issues. Three focused review passes, each catching something the others would not have prioritized.
 
 ## Sources
 

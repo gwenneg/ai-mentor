@@ -7,7 +7,7 @@ Scheduled & Recurring Agents run Claude Code without you starting it. A routine 
 
 ## Why It Works
 
-Recurring maintenance work fails for one reason: someone has to remember to do it — backlog grooming, dependency health checks, docs drift review are all valuable but never urgent, so they lose to whatever is on fire. Scheduling removes the remembering. The same shift that made CI the default for testing applies here: work that runs automatically happens every time, and work that requires initiative happens until the third busy week. Routines also change the economics of small recurring tasks — a job too minor to justify anyone's morning is perfectly justified as a nightly run someone reviews in thirty seconds.
+Work that runs automatically happens every time; work that requires initiative happens until the third busy week — the same shift that made CI the default for testing.
 
 ## When to Use It
 
@@ -50,22 +50,6 @@ Recurring maintenance work fails for one reason: someone has to remember to do i
 - **Over-connected routines**: all your connectors are included by default, and the routine can use any of their tools — including writes — without asking. Strip a routine down to the connectors it actually needs.
 - **Forgetting runs act as you**: commits, PRs, Slack messages, and ticket updates from a routine carry your identity. Anything embarrassing it does, it does under your name.
 - **Set-and-forget rot**: a routine written for last quarter's repo layout degrades silently. Skim recent run transcripts periodically — the run list won't flag task-level failure on its own.
-
-## Real-World Example
-
-Your team's dependency PRs pile up because nobody owns triage. You create a routine: nightly at 6am, against the service repo, with this prompt:
-
-```
-Check open Renovate PRs. For each: read the changelog diff, run the
-test suite, and if tests pass and the change is a patch or minor bump
-with no breaking-change notes, approve and label auto-verified. For
-major bumps or failures, comment with a summary of the breaking
-changes and the failing tests. Never merge anything.
-```
-
-The first morning, three patch bumps carry `auto-verified` labels and one major bump has a comment summarizing the two API changes that break your usage — with file paths. Triage that used to eat the first coffee of whoever felt guilty now takes one person five minutes of reviewing pre-analyzed PRs.
-
-Two weeks later you add a second trigger: your deploy script POSTs to the routine's API endpoint after each production deploy, and the same routine runs a smoke-check pass with the deploy log as context. One routine, two triggers, zero humans remembering anything.
 
 ## Sources
 

@@ -7,7 +7,7 @@ Custom Agent Definitions let you create reusable, specialized agent types that l
 
 ## Why It Works
 
-Specialization produces better results than generalization. A general-purpose agent asked to do a security review will do a passable job. An agent explicitly scoped to security — given only Read and Grep tools, running on a high-reasoning model, armed with your company's security checklist — will do a thorough job. Custom agent definitions encode this specialization so it is consistent across invocations and across team members, rather than depending on whoever happens to write the best prompt that day.
+Specialization encoded in a definition is consistent across invocations and across team members, rather than depending on whoever happens to write the best prompt that day.
 
 ## When to Use It
 
@@ -59,8 +59,8 @@ and a recommended fix. If you find nothing, say so — do not invent issues.
 ### Advanced Patterns
 
 - **Model-tiered agent families**: Define the same agent at different cost levels. A `quick-review` agent uses haiku and checks for obvious issues in seconds. A `deep-review` agent uses opus and performs thorough analysis. Developers choose based on the stakes — haiku for draft PRs, opus for release candidates.
-- **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var): Define multiple agents that share a task list and communicate via peer messages. For example, the team lead breaks the work into shared tasks, then a `coder` teammate implements each task and a `reviewer` teammate checks each implementation. They coordinate without a human orchestrating every handoff.
-- **Custom agents as background sessions**: To run several custom agents at once (five reviewers on five services), dispatch each as its own background session with `claude --agent <name> --bg "<task>"`, then run `claude agents` to monitor them all from one screen and step in when one needs input. Agent view lists background sessions only — subagents spawned inside a session appear in that session's agent panel, not in agent view.
+- **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var): define agents as teammates that share a task list and coordinate via peer messages — see Subagent Delegation for when a team beats simple subagents.
+- **Custom agents as background sessions**: To run several custom agents at once (five reviewers on five services), dispatch each as its own background session with `claude --agent <name> --bg "<task>"`, then run `claude agents` to monitor them all from one screen and step in when one needs input.
 
 ## Common Pitfalls
 
@@ -68,33 +68,6 @@ and a recommended fix. If you find nothing, say so — do not invent issues.
 - **Wrong model for the job**: Using opus for a simple formatting check wastes money and time. Using haiku for a nuanced security review misses subtle vulnerabilities. Match the model to the complexity of the task.
 - **Duplicating what subagent delegation does**: If you only need a specialized agent once, use ad-hoc subagent delegation with a detailed prompt. Custom agent definitions pay off when you invoke the same specialization repeatedly.
 - **Stale instructions**: When your codebase conventions change (new ORM, new test framework, new security requirements), the agent definition must be updated too. Treat agent files as living documentation that is reviewed alongside your code.
-
-## Real-World Example
-
-A platform team maintains 12 microservices and performs database migrations frequently. Each migration must follow specific rules: use reversible operations, avoid locking tables over 1M rows, include a rollback script, and update the schema registry. Different developers write migrations with varying quality.
-
-The team creates `.claude/agents/migration-helper.md`:
-
-```markdown
----
-name: migration-helper
-description: Generate safe, reversible PostgreSQL migrations following team conventions
-model: opus
-tools: Read, Edit, Bash
----
-
-You are a database migration specialist for our PostgreSQL services.
-
-Rules:
-- Read the current schema from db/schema.sql before writing any migration
-- All migrations must be reversible (include both up and down)
-- For tables over 1M rows (check db/table_stats.json), use concurrent index creation and batched updates
-- Generate a rollback script in db/rollbacks/
-- Update the schema registry entry in services/schema-registry/schemas/
-- Follow naming convention: YYYYMMDD_HHMMSS_description.sql
-```
-
-Now any developer on the team can invoke this agent when they need a migration. A junior developer who has never written a migration for a high-traffic table gets the same quality output as the senior DBA. The agent reads the table stats, sees that the `orders` table has 4.2M rows, and automatically uses `CREATE INDEX CONCURRENTLY` and batched `ALTER TABLE` operations. It generates the rollback script, updates the schema registry, and follows the naming convention — all without the developer knowing these rules existed.
 
 ## Sources
 

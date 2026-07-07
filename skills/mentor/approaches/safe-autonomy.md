@@ -7,7 +7,7 @@ Permissions & Safe Autonomy is the practice of tuning what your AI agent may do 
 
 ## Why It Works
 
-Autonomy is a function of trust boundaries, not model capability. An agent that prompts for every `npm test` trains you to approve without reading — which is *less* safe, not more. An agent with crisp boundaries (these commands always fine, these paths never touchable, everything else asks) can run long autonomous stretches while the dangerous surface stays provably closed. This is least-privilege from security engineering applied to AI: precision about what's denied is what makes broad allowance safe — and crucially, permission rules are enforced by Claude Code itself, so unlike CLAUDE.md instructions they hold regardless of what the model decides.
+An agent that prompts for every `npm test` trains you to approve without reading; crisp boundaries — enforced by Claude Code itself, unlike CLAUDE.md instructions — let long autonomous stretches run while the dangerous surface stays provably closed.
 
 ## When to Use It
 

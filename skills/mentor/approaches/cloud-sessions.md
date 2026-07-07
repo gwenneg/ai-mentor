@@ -7,7 +7,7 @@ Cloud Sessions run Claude Code on Anthropic-managed infrastructure instead of yo
 
 ## Why It Works
 
-Your machine is a bottleneck: one checkout, one environment, and it goes to sleep when you do. Cloud sessions decouple the work from the workstation — tasks run in parallel sandboxes that don't compete for your CPU or your working copy, keep going after you leave, and are reachable from whatever device you have. The handoff pattern also enforces a healthy division of labor: you do the judgment-heavy part (planning, reviewing) where interaction is cheap, and ship the execution-heavy part to an environment where autonomy is safe by construction.
+Cloud sessions decouple the work from the workstation: you keep the judgment-heavy parts where interaction is cheap and ship the execution-heavy parts to an environment where autonomy is safe by construction.
 
 ## When to Use It
 
@@ -52,20 +52,6 @@ Your machine is a bottleneck: one checkout, one environment, and it goes to slee
 - **Auto-fix in automation-heavy repos**: Claude replies to review threads under your GitHub account (labeled as Claude Code). If PR comments trigger automation like Atlantis or Terraform Cloud, a reply can run privileged workflows — review your repo's comment triggers before enabling auto-fix.
 - **Expecting conflict resolution**: GitHub emits no webhook when the base branch advances into conflict, so auto-fix can't react to merge conflicts — open the session and ask for a rebase.
 - **Under-provisioned environments**: a session without your setup script or required env vars fails in ways that look like model failure. If the task needs dependencies installed, configure the environment before dispatching.
-
-## Real-World Example
-
-Friday, 4pm: three bug tickets left, none hard, all tedious. You push your branch and dispatch each as its own cloud session, with two more like this one:
-
-```
-claude --cloud "Fix the null-avatar crash in ProfileCard (ticket #841):
-  reproduce via the failing test in tests/profile.test.tsx, fix, and
-  make the suite pass"
-```
-
-On the train, the mobile app shows two sessions done and one asking whether to also fix the same pattern it found in `TeamCard`. You reply "yes, same fix" from your phone.
-
-Monday morning, three PRs wait for review. One has a red CI check — you run `/autofix-pr` on its branch and the watching session picks up the flaky-test failure, fixes the race in the test setup, and pushes. You review three green PRs before standup. The tedious work happened on infrastructure that doesn't have weekends.
 
 ## Sources
 

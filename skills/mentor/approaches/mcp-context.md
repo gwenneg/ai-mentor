@@ -3,11 +3,11 @@
 
 ## What It Is
 
-MCP Context lets your AI coding tool pull information from external systems — issue trackers, design documents, databases, monitoring dashboards, Slack threads — directly into the conversation. Instead of copy-pasting context into your prompt, you configure connections once and the AI queries them as needed. It turns your AI assistant from a tool that only sees files on disk into one that can reach across your entire development ecosystem.
+MCP Context lets Claude Code pull information from external systems — issue trackers, design documents, databases, monitoring dashboards, Slack threads — directly into the conversation. Instead of copy-pasting context into your prompt, you configure connections once and the AI queries them as needed. It turns Claude from a tool that only sees files on disk into one that can reach across your entire development ecosystem.
 
 ## Why It Works
 
-The quality of AI-generated code is directly proportional to the quality of context it receives. Most coding mistakes happen not because the AI cannot write code, but because it lacks the requirements, constraints, or domain knowledge that a human developer would check before writing. MCP closes that gap by giving the AI access to the same sources of truth you would consult: the ticket describing the feature, the architecture decision record explaining why the system is structured this way, the monitoring data showing how the code actually behaves in production.
+Most coding mistakes happen not because the AI cannot write code, but because it lacks the requirements, constraints, or domain knowledge a human developer would check before writing — MCP gives it the same sources of truth you would consult.
 
 ## When to Use It
 
@@ -27,9 +27,9 @@ The quality of AI-generated code is directly proportional to the quality of cont
 ### Basic (Beginner)
 
 1. Identify the external context your task needs. For example: "I need to implement the feature described in PROJ-1234."
-2. Ensure the relevant MCP server is configured in your `.mcp.json` (project-scoped) or `~/.claude.json` (user-scoped) — your project may already have this set up. If not, add it once with `claude mcp add --transport http <name> <server-url>`, or ask Claude: "Help me set up the Jira MCP server so I can pull ticket details directly."
+2. Ensure the relevant MCP server is configured in your `.mcp.json` (project-scoped) or `~/.claude.json` (user-scoped) — your project may already have this set up. If not, add it once with `claude mcp add --transport http <name> <server-url>`, or ask Claude: "Help me set up the Jira MCP server so I can pull ticket details directly." Check connection status anytime with `/mcp`, which also handles OAuth sign-in for remote servers.
 3. Ask Claude to pull the context: "Read the requirements from PROJ-1234 and summarize what needs to change."
-4. Claude calls the MCP tool (e.g., `jira_get_issue`), retrieves the ticket, and now has the acceptance criteria in its context window.
+4. Claude calls the server's issue-lookup tool, retrieves the ticket, and now has the acceptance criteria in its context window.
 5. Continue your task with the AI grounded in real requirements: "Now implement the changes described in that ticket."
 
 ### Composing with Other Approaches (Intermediate)
@@ -50,26 +50,6 @@ The quality of AI-generated code is directly proportional to the quality of cont
 - **Skipping server setup when it would solve the problem**: If you find yourself repeatedly pasting context from an external system, that is the signal to configure an MCP server. Do the setup once, then focus on workflow.
 - **Stale external data**: MCP queries return point-in-time snapshots. If your Jira ticket gets updated mid-session, Claude still has the old version. Re-fetch if requirements may have changed.
 - **Sensitive data exposure**: MCP servers can expose production databases, customer data, or internal communications. Understand what data each MCP tool can access and whether your organization permits it in AI contexts.
-
-## Real-World Example
-
-You are assigned BILLING-892: "Customers on the annual plan see incorrect proration when upgrading mid-cycle." Before writing any code, you ground Claude in the real requirements:
-
-```
-> Fetch the details of BILLING-892 from Jira.
-```
-
-Claude calls `jira_get_issue` and retrieves the ticket, including acceptance criteria: proration should be calculated from the upgrade date to the next renewal date, using the daily rate difference. It also pulls two linked tickets with customer-reported examples showing specific dollar amounts.
-
-```
-> Now query the billing database schema for the subscriptions and invoices tables.
-```
-
-Claude calls `postgres_query` via the database MCP server and retrieves the column definitions, revealing that `proration_start_date` is stored as a `DATE` but the billing calculation in `src/billing/proration.ts` treats it as a UTC timestamp, causing off-by-one errors at certain times of day.
-
-Claude proposes a fix in `calculateProration()` on line 47 of `src/billing/proration.ts`, normalizing the date comparison to use date-only arithmetic. You verify the fix against the customer examples from the linked tickets — the dollar amounts now match exactly.
-
-You ask Claude to pull the requirements one more time and verify each acceptance criterion against the implementation. All three criteria are satisfied. The entire debugging session used real requirements and real schema, not guesswork about what the code was supposed to do.
 
 ## Sources
 

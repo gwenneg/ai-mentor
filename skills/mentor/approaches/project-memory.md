@@ -3,11 +3,11 @@
 
 ## What It Is
 
-Project Memory gives your AI assistant persistent knowledge that survives across sessions. Two mechanisms work together: `CLAUDE.md` files hold instructions you write — build commands, conventions, architecture facts — and auto memory holds notes Claude writes for itself as it learns your project. Both load at the start of every conversation, so each session begins already knowing what previous sessions had to be told.
+Project Memory gives Claude persistent knowledge that survives across sessions. Two mechanisms work together: `CLAUDE.md` files hold instructions you write — build commands, conventions, architecture facts — and auto memory holds notes Claude writes for itself as it learns your project. Both load at the start of every conversation, so each session begins already knowing what previous sessions had to be told.
 
 ## Why It Works
 
-Every session starts with a fresh context window; without persistent memory, you re-explain the same conventions forever and the AI re-makes the same mistakes. Writing knowledge down once converts a per-session cost into a one-time cost — the same reason teams write onboarding docs instead of re-explaining the codebase to every new hire. The quality of AI output is proportional to the quality of its context, and project memory is the highest-leverage context there is: a 50-line CLAUDE.md improves every response in every future session.
+Writing knowledge down once converts a per-session cost into a one-time cost — a 50-line CLAUDE.md improves every response in every future session.
 
 ## When to Use It
 
@@ -52,13 +52,6 @@ Every session starts with a fresh context window; without persistent memory, you
 - **Contradicting yourself**: conflicting instructions across CLAUDE.md, nested files, and rules make Claude pick one arbitrarily. Review periodically and delete stale entries.
 - **Never auditing auto memory**: Claude's own notes are plain markdown under `~/.claude/projects/<project>/memory/` — browse them via `/memory` occasionally and delete anything wrong, or it stays wrong in every future session.
 
-## Real-World Example
-
-You inherit a Go service where the previous owner left no docs. First session, you run `/init` — Claude generates a CLAUDE.md capturing the `make test-integration` command, the `internal/` package layout, and the fact that migrations run through a custom `./scripts/migrate.sh` wrapper.
-
-Over the next week you append the corrections you catch yourself repeating:
-
-```markdown
 ## Rules
 - gRPC handlers must call `auth.Verify()` before touching the store
 - The `orders` table is append-only — never generate UPDATE migrations against it

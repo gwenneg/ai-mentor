@@ -7,7 +7,7 @@ Fan-Out Workflows let you orchestrate tens to hundreds of AI agents through a Ja
 
 ## Why It Works
 
-Some problems are embarrassingly parallel: reviewing 50 files, migrating 200 API endpoints, or checking a codebase against 30 security rules. A single agent doing these sequentially would take hours and degrade as its context fills up. Fan-out workflows apply the same principle as MapReduce or CI pipeline matrices — decompose the problem into independent units, process them in parallel with fresh-context agents, then aggregate. The key insight is that verification scales the same way: you can spawn "skeptic" agents to challenge findings, creating an adversarial review loop that catches false positives before they reach you.
+Embarrassingly parallel problems decompose into independent units processed in parallel by fresh-context agents — and verification scales the same way, with skeptic agents challenging findings before they reach you.
 
 ## When to Use It
 
