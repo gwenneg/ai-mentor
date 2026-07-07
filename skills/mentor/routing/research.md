@@ -7,6 +7,8 @@
 
 **Plugins:** `firecrawl` ☑️ crawling and structured extraction · `microsoft-docs` ☑️ Azure/.NET references · `zyte-web-data` ☑️ scraping — ~19 more domain-specific research tools in the catalog.
 
+**Built-ins:** `/deep-research` — multi-source, adversarially verified report. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Deep Research](../approaches/deep-research.md) | Beginner | Comparing libraries, frameworks, or SaaS tools | Automates the 30-browser-tab workflow into a cited, cross-referenced report you can present to your team |

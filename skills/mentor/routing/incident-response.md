@@ -7,6 +7,8 @@
 
 **Plugins:** `sentry` · `datadog` · `grafana-mcp` · `pagerduty` · `rootly` — all ☑️, all need the vendor account already in use at your org.
 
+**Built-ins:** `/loop` — poll the deploy or error rate while you investigate; `/deep-research` — check whether the root cause is a known upstream issue. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Error spike correlating with a recent deploy | Incidents are data problems — MCP makes Claude a unified query layer across your observability stack, collapsing data-gathering |

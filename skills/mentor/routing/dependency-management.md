@@ -7,6 +7,8 @@
 
 **Plugins:** `sonatype-guide` ☑️ vulnerability and version analysis · `ai-plugins` ☑️ (Endor Labs) supply-chain scanning.
 
+**Built-ins:** `/deep-research` — due diligence on a candidate dependency; `/schedule` — nightly dependency-PR triage. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Deep Research](../approaches/deep-research.md) | Beginner | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |

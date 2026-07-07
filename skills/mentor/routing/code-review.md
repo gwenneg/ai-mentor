@@ -7,6 +7,8 @@
 
 **Plugins:** `pr-review-toolkit` ✅ 6-agent deep review · `github` ☑️ PR management · `sonarqube` ☑️ and `qodo-skills` ☑️ quality/security scanning.
 
+**Built-ins:** `/code-review` — structured correctness pass on the diff; `/security-review` — security lens on pending changes; `/verify` — watch the change actually work before merging. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Built-In Review Skills](../approaches/built-in-review-skills.md) | Beginner | Quick review of a focused diff or your own pre-PR code | Most review value is systematic checking — codified reviewer instincts applied consistently to every line |

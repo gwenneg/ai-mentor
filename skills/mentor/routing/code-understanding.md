@@ -7,6 +7,8 @@
 
 **Plugins:** `context7` ✅ version-pinned library docs · `sourcegraph` ☑️ cross-repo search · `serena` ☑️ semantic analysis · `lumen` ☑️ local semantic search.
 
+**Built-ins:** `/init` — capture what you learn into a starter CLAUDE.md. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Onboarding to a new team or project | Understanding is about building the right mental model — learn the shape of the system first, details later |

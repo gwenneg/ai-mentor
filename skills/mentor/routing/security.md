@@ -7,6 +7,8 @@
 
 **Plugins:** `security-guidance` ✅ per-edit security hooks · `semgrep` ☑️ scanning · `42crunch-api-security-testing` ☑️ API security · `auth0` ☑️ authn/authz · `vanta` ☑️ compliance — 9 more in the catalog.
 
+**Built-ins:** `/security-review` — security review of the branch's pending changes. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Built-In Review Skills](../approaches/built-in-review-skills.md) | Beginner | Quick security scan before a release or audit | Vulnerabilities follow well-known patterns — encoded checks applied exhaustively to every changed line beat manual review |

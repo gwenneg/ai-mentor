@@ -63,7 +63,7 @@ Then, silently:
 3. **Scan the current conversation** for session signals (commands used, capabilities exercised) and for struggle (repeated manual steps, hand-run loops, pasted tool output). Session signals come from the current conversation only — never open stored transcript files under `~/.claude/projects/`; their format is internal and unstable.
 4. **Reconcile silently**: a signal-positive capability with no profile row → record it as `adopted` without comment (they already knew it). Evidence beats memory: disk state wins over stale profile rows.
 
-The **ignorance map** is what remains: every approach in the catalog with no `adopted`/`shown`/`declined` row and no positive signal — ranked by leverage for the work you observed.
+The **ignorance map** is what remains: every approach in the catalog and every built-in command in `registry/builtin-commands.md` with no `adopted`/`shown`/`declined` row and no positive signal — ranked by leverage for the work you observed. Registry records carry their own `session_signal` line for the reconcile step; profile rows for built-ins use the record's `id`, same table, same statuses.
 
 Then select the mode and **read that mode's file from the plugin root** — it is the playbook for the rest of the interaction; the other mode's file stays unread:
 

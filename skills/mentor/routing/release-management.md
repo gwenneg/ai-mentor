@@ -7,6 +7,8 @@
 
 **Plugins:** `commit-commands` ✅ commit/PR workflow commands · `confidence` ☑️ feature flags and rollouts.
 
+**Built-ins:** `/schedule` — scheduled release chores on cloud infrastructure. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Custom Skills](../approaches/custom-skills.md) | Intermediate | Need categorized release notes from commit history | Release prep is procedural — same steps, same order — so a skill removes forgotten or misordered steps |

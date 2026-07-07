@@ -7,6 +7,8 @@
 
 **Plugins:** `logrocket` ☑️ session-replay debugging for user-reported frontend bugs.
 
+**Built-ins:** `/run` — drive the real app to reproduce the symptom; `/goal` — machine-verifiable finish line, mechanical iteration. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Complex bug with multiple possible causes | Bugs survive because developers jump to the first plausible explanation; enumerating all possibilities cuts time to resolution |
