@@ -106,7 +106,7 @@ For file-writing actions, always show the change before applying it, and never o
 
 - Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — never Bash (`ls`, `cat`, `find`, ...): no Bash rule covers those paths, so every such call interrupts the user with a permission prompt
 - The plugin-path Read grant is invocation-scoped: prompt-free only while composing the first response. Read everything follow-ups will need before finishing it; on later turns, warn before any plugin-file read and handle the prompt gracefully
-- Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator; never skip it
+- Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator; never skip it. In problem mode it accompanies the move; in growth mode the lesson itself IS the pick — never add a second capability on top
 - Never re-teach `shown`, never re-offer `declined`, never explain `adopted` — check the profile before every recommendation
 - Write profile changes immediately, in-flow; announce the profile's existence and path exactly once, at creation
 - Session signals come from the current conversation only; never parse stored transcript files
