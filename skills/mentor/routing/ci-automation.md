@@ -7,6 +7,8 @@
 
 **Plugins:** `hookify` ✅ hooks from conversation patterns · `gitlab` ☑️ MRs and pipelines · vendor CI: `buildkite`, `mergify`, `teamcity-cli` (all ☑️).
 
+**Built-ins:** `/loop` — recur on a time interval in this session; `/schedule` — recurring cloud runs that survive a closed laptop. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Headless Mode](../approaches/headless-mode.md) | Intermediate | Running Claude in GitHub Actions or GitLab CI | CI systems are stdin/stdout/exit-code machines; headless mode adapts Claude to that interface with parseable JSON output |

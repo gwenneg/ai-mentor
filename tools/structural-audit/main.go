@@ -36,6 +36,10 @@ var (
 	reDate     = regexp.MustCompile(`^` + datePat + `$`)
 	reDateTail = regexp.MustCompile(`^` + datePat + `\*`)
 	reSignal   = regexp.MustCompile(`^\| ([a-z0-9-]+) \|`)
+	reBuiltin  = regexp.MustCompile("`/([a-z0-9-]+)`")
+	reBuiltinL = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
+	reRegID    = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
+	reRegGoals = regexp.MustCompile(`^goals: (.+)$`)
 	reSkillRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount    = regexp.MustCompile(`(\d+) goal categories`)
 )
@@ -105,7 +109,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 // checkRouting audits every per-goal file under skills/mentor/routing/:
 // date line, hidden gem, Plugins line with catalog-known tokens, at least
 // minGoalRows sequentially numbered rows, cross-references, and orphans.
-func (a *auditor) checkRouting(dir string, approachNames []string, catalog map[string]bool) []string {
+func (a *auditor) checkRouting(dir string, approachNames []string, catalog, registry map[string]bool, usedBuiltins map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing routing directory (per-goal files)")
@@ -128,6 +132,14 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog map[s
 					if !catalog[m[1]] {
 						a.issue(f, "Plugins line names '%s', not found in references/official-plugins.md", m[1])
 					}
+				}
+			}
+			if reBuiltinL.MatchString(l) {
+				for _, m := range reBuiltin.FindAllStringSubmatch(l, -1) {
+					if !registry[m[1]] {
+						a.issue(f, "Built-ins line names '/%s', not found in registry/builtin-commands.md", m[1])
+					}
+					usedBuiltins[m[1]] = true
 				}
 			}
 			if m := reRow.FindStringSubmatch(l); m != nil {
@@ -324,8 +336,16 @@ func (a *auditor) run() error {
 		catalog[m[1]] = true
 	}
 
-	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog)
+	registry := a.checkRegistry(filepath.Join(a.skill, "registry", "builtin-commands.md"))
+	usedBuiltins := map[string]bool{}
+	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog, registry, usedBuiltins)
 	a.goals = len(goals)
+	for id := range registry {
+		if !usedBuiltins[id] {
+			a.issue(filepath.Join(a.skill, "registry", "builtin-commands.md"), "registry id '%s' not referenced by any Built-ins line", id)
+		}
+	}
+	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "builtin-commands.md"), goals)
 	for _, f := range files {
 		a.checkApproach(f)
 	}
@@ -370,6 +390,48 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 		}
 	}
 	return
+}
+
+// checkRegistry parses registry/builtin-commands.md: date line, unique
+// record ids. Returns the id set (empty map when the file is missing, which
+// is itself an issue).
+func (a *auditor) checkRegistry(path string) map[string]bool {
+	ids := map[string]bool{}
+	ls := lines(path)
+	if ls == nil {
+		a.issue(path, "missing builtin-commands registry")
+		return ids
+	}
+	a.dateLine(path, "Last verified", ls)
+	for _, l := range ls {
+		if m := reRegID.FindStringSubmatch(l); m != nil {
+			if ids[m[1]] {
+				a.issue(path, "duplicate registry id '%s'", m[1])
+			}
+			ids[m[1]] = true
+		}
+	}
+	if len(ids) == 0 {
+		a.issue(path, "registry parsed to zero records — format drift?")
+	}
+	return ids
+}
+
+// checkRegistryGoals verifies every record's goals line names only real
+// goal slugs (files under routing/).
+func (a *auditor) checkRegistryGoals(path string, goals []string) {
+	for _, l := range lines(path) {
+		m := reRegGoals.FindStringSubmatch(l)
+		if m == nil {
+			continue
+		}
+		for _, g := range strings.Split(m[1], ",") {
+			g = strings.TrimSpace(g)
+			if !slices.Contains(goals, g) {
+				a.issue(path, "registry goals name '%s', which has no routing/%s.md", g, g)
+			}
+		}
+	}
 }
 
 // findRoot walks upward from dir to the first directory containing

@@ -7,6 +7,8 @@
 
 **Plugins:** `code-modernization` ✅ legacy-codebase migration (COBOL, old Java, monoliths) · `ui5-modernization`/`ui5-typescript-conversion` ☑️ SAPUI5 · `aws-transform`/`migration-to-aws` ☑️ moves to AWS — grep the catalog when the user names a stack.
 
+**Built-ins:** `/goal` — converge on zero errors after a mechanical migration. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Large migration touching dozens of files | Migrations are dependency graphs, not task lists — planning reveals the structure so you traverse it in the right order |

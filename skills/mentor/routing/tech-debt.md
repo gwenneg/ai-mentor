@@ -7,6 +7,8 @@
 
 **Plugins:** none mapped for this goal yet.
 
+**Built-ins:** `/code-review` — find the bugs before tidying; `/simplify` — reuse/simplification cleanup, quality only. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Subagent Delegation](../approaches/subagent-delegation.md) | Advanced | Multi-dimensional audit across the whole codebase | Each debt dimension needs a different scanning strategy — specialized agents apply the right one without conflating them |

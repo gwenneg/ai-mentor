@@ -29,6 +29,8 @@ func validTree() map[string]string {
 
 **Plugins:** ` + "`alpha-tool`" + ` ☑️ something useful.
 
+**Built-ins:** ` + "`/testcmd`" + ` — does the thing.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Alpha](approaches/alpha.md) | Beginner | x | y |
@@ -51,6 +53,16 @@ func validTree() map[string]string {
 | alpha | some signal |
 | beta | some signal |
 | gamma | some signal |
+`,
+		"skills/mentor/registry/builtin-commands.md": `# Registry
+*Last verified: 2026-07-03*
+
+## testcmd
+
+id: testcmd
+kind: builtin-command
+goals: test-goal
+best_when: testing the audit
 `,
 		"skills/mentor/references/official-plugins.md": `# Catalog
 *Last synced: 2026-07-03*
@@ -203,6 +215,23 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"missing routing directory", func(f map[string]string) {
 			delete(f, routing)
 		}, "missing routing directory"},
+		{"phantom builtin token", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "`/testcmd`", "`/ghostcmd`", 1)
+		}, "Built-ins line names '/ghostcmd', not found"},
+		{"orphan registry id", func(f map[string]string) {
+			f["skills/mentor/registry/builtin-commands.md"] += "\n## other\n\nid: othercmd\nkind: builtin-command\ngoals: test-goal\n"
+		}, "registry id 'othercmd' not referenced"},
+		{"duplicate registry id", func(f map[string]string) {
+			f["skills/mentor/registry/builtin-commands.md"] += "\nid: testcmd\n"
+		}, "duplicate registry id 'testcmd'"},
+		{"registry goals name unknown goal", func(f map[string]string) {
+			f["skills/mentor/registry/builtin-commands.md"] = strings.Replace(
+				f["skills/mentor/registry/builtin-commands.md"], "goals: test-goal", "goals: no-such-goal", 1)
+		}, "registry goals name 'no-such-goal'"},
+		{"missing registry", func(f map[string]string) {
+			delete(f, "skills/mentor/registry/builtin-commands.md")
+			f[routing] = strings.Replace(f[routing], "\n**Built-ins:** `/testcmd` — does the thing.\n", "", 1)
+		}, "missing builtin-commands registry"},
 		{"missing ledger", func(f map[string]string) {
 			delete(f, "skills/mentor/references/processed-changelogs.md")
 		}, "missing processed-changelog ledger"},

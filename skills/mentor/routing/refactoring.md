@@ -7,6 +7,8 @@
 
 **Plugins:** none recommended — the ⚠️-flagged `code-simplifier` duplicates the built-in /simplify; lead with the built-in.
 
+**Built-ins:** `/simplify` — apply reuse and simplification cleanups to changed code. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Complex refactor that could go sideways | Refactoring is dependency management — planning reveals the graph before cutting instead of one crash at a time |

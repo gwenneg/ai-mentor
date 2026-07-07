@@ -7,6 +7,8 @@
 
 **Plugins:** `claude-code-setup` ✅ repo-tailored automation recommendations · `learn-with-coursera` ☑️ learning paths.
 
+**Built-ins:** `/init` — generate the repo's starter CLAUDE.md. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Team knowledge scattered across Confluence, Slack, Notion, and READMEs | The onboarding bottleneck is finding information, not understanding it — MCP brings every source into one queryable context |

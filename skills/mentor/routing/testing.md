@@ -7,6 +7,8 @@
 
 **Plugins:** `playwright` ☑️ browser E2E automation · `fakechat` ☑️ channel-flow testing.
 
+**Built-ins:** `/verify` — confirm the feature works end-to-end, not just green tests; `/run` — launch the app and see the change working; `/goal` — iterate unattended until the suite is green. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Autonomous Loops](../approaches/autonomous-loops.md) | Intermediate | Coverage must reach a specific threshold to merge | Coverage improvement is iterative optimization — find the gap, write a test, measure, repeat without getting bored |

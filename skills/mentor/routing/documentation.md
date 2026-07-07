@@ -7,6 +7,8 @@
 
 **Plugins:** `claude-md-management` ✅ CLAUDE.md audits · `project-artifact` ✅ living status pages · `mintlify` ☑️ docs sites · `notion`/`atlassian` ☑️ knowledge bases.
 
+**Built-ins:** `/init` — bootstrap CLAUDE.md so sessions stop re-learning the repo. Facts and pitfalls per command: `registry/builtin-commands.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |
