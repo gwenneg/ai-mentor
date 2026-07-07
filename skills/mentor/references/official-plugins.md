@@ -1,7 +1,7 @@
 # Official Claude Code Plugins Catalog
 *Last synced: 2026-07-08 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest · Evaluation passes: 2026-07-03 (52 desk-checked; 15 exercised hands-on), 2026-07-08 (204 desk-checked)*
 
-All plugins below are in the official marketplace and installable via `/plugin install <name>@claude-plugins-official`. None are installed by default. This catalog lists every plugin in the marketplace manifest (255 as of 2026-07-08): the Anthropic-built and repo-hosted partner plugins in the sections below, plus all externally-hosted partner plugins in the final section. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored. The goal column names the routing-table section (`routing.md`) each plugin maps to.
+All plugins below are in the official marketplace and installable via `/plugin install <name>@claude-plugins-official`. None are installed by default. This catalog lists every plugin in the marketplace manifest (255 as of 2026-07-08): the Anthropic-built and repo-hosted partner plugins in the sections below, plus all externally-hosted partner plugins in the final section. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored. The goal column names the goal routing file (`routing/<goal>.md`) each plugin maps to.
 
 Verdicts are produced by the repeatable protocol in `evals/plugin-evaluation.md` — same fixture, same per-plugin exercises, same criteria on every run, so evaluations stay comparable over time.
 

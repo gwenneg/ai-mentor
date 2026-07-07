@@ -45,9 +45,6 @@ var (
 
 	levels = []string{"Beginner", "Intermediate", "Advanced"}
 
-	// routing.md sections that are not goal categories
-	nonGoalSections = map[string]bool{"extraction-notes": true}
-
 	// "## Real-World Example" is deliberately absent: it is optional — kept
 	// only where the example embeds exact syntax (see templates/approach.md).
 	// When present it must sit between Common Pitfalls and Sources
@@ -105,29 +102,52 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 	}
 }
 
-func (a *auditor) checkRouting(path string, approachNames []string, catalog map[string]bool) []string {
-	ls := lines(path)
-	if ls == nil {
-		a.issue(path, "missing routing table")
+// checkRouting audits every per-goal file under skills/mentor/routing/:
+// date line, hidden gem, Plugins line with catalog-known tokens, at least
+// minGoalRows sequentially numbered rows, cross-references, and orphans.
+func (a *auditor) checkRouting(dir string, approachNames []string, catalog map[string]bool) []string {
+	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
+	if len(files) == 0 {
+		a.issue(dir, "missing routing directory (per-goal files)")
 		return nil
 	}
-	a.dateLine(path, "Last verified", ls)
-
 	var goals []string
-	section, rows, gem, plugs := "", []string{}, "", false
-	flush := func() {
-		if section == "" || nonGoalSections[section] {
-			return
+	var all strings.Builder
+	for _, f := range files {
+		ls := lines(f)
+		goals = append(goals, strings.TrimSuffix(filepath.Base(f), ".md"))
+		a.dateLine(f, "Last verified", ls)
+		rows, gem, plugs := []string{}, "", false
+		for _, l := range ls {
+			if m := reGem.FindStringSubmatch(l); m != nil {
+				gem = m[1]
+			}
+			if rePlugLine.MatchString(l) {
+				plugs = true
+				for _, m := range rePlugTok.FindAllStringSubmatch(l, -1) {
+					if !catalog[m[1]] {
+						a.issue(f, "Plugins line names '%s', not found in references/official-plugins.md", m[1])
+					}
+				}
+			}
+			if m := reRow.FindStringSubmatch(l); m != nil {
+				if n, _ := strconv.Atoi(m[1]); n != len(rows)+1 {
+					a.issue(f, "row numbering not sequential at row %d", len(rows)+1)
+				}
+				rows = append(rows, m[2])
+				if cs := cells(l); len(cs) > 3 && !slices.Contains(levels, cs[3]) {
+					a.issue(f, "invalid level %s", cs[3])
+				}
+			}
 		}
-		goals = append(goals, section)
 		if len(rows) < minGoalRows {
-			a.issue(path, "section %s: only %d rows (expected at least %d)", section, len(rows), minGoalRows)
+			a.issue(f, "only %d rows (expected at least %d)", len(rows), minGoalRows)
 		}
 		if !plugs {
-			a.issue(path, "section %s: missing Plugins line", section)
+			a.issue(f, "missing Plugins line")
 		}
 		if gem == "" {
-			a.issue(path, "section %s: missing Hidden gem line", section)
+			a.issue(f, "missing Hidden gem line")
 		} else {
 			g := strings.ToLower(strings.TrimSpace(gem))
 			ok := slices.ContainsFunc(rows, func(r string) bool {
@@ -135,48 +155,22 @@ func (a *auditor) checkRouting(path string, approachNames []string, catalog map[
 				return strings.Contains(g, rl) || strings.Contains(rl, g)
 			})
 			if !ok {
-				a.issue(path, "section %s: Hidden gem '%s' does not match any ranked row", section, strings.TrimSpace(gem))
+				a.issue(f, "Hidden gem '%s' does not match any ranked row", strings.TrimSpace(gem))
 			}
 		}
+		all.WriteString(strings.Join(ls, "\n"))
+		all.WriteString("\n")
 	}
-	for _, l := range ls {
-		if strings.HasPrefix(l, "## ") {
-			flush()
-			section, rows, gem, plugs = l[3:], nil, "", false
-			continue
-		}
-		if m := reGem.FindStringSubmatch(l); m != nil {
-			gem = m[1]
-		}
-		if rePlugLine.MatchString(l) {
-			plugs = true
-			for _, m := range rePlugTok.FindAllStringSubmatch(l, -1) {
-				if !catalog[m[1]] {
-					a.issue(path, "section %s: Plugins line names '%s', not found in references/official-plugins.md", section, m[1])
-				}
-			}
-		}
-		if m := reRow.FindStringSubmatch(l); m != nil {
-			if n, _ := strconv.Atoi(m[1]); n != len(rows)+1 {
-				a.issue(path, "section %s: row numbering not sequential at row %d", section, len(rows)+1)
-			}
-			rows = append(rows, m[2])
-			if cs := cells(l); len(cs) > 3 && !slices.Contains(levels, cs[3]) {
-				a.issue(path, "invalid level %s", cs[3])
-			}
-		}
-	}
-	flush()
 
-	text := strings.Join(ls, "\n")
+	text := all.String()
 	for _, ref := range dedup(reRef.FindAllString(text, -1)) {
 		if _, err := os.Stat(filepath.Join(a.skill, ref)); err != nil {
-			a.issue(path, "broken reference %s", ref)
+			a.issue(dir, "broken reference %s", ref)
 		}
 	}
 	for _, name := range approachNames {
 		if !strings.Contains(text, "approaches/"+name+".md") {
-			a.issue(filepath.Join(a.skill, "approaches", name+".md"), "orphan: not referenced by the routing table")
+			a.issue(filepath.Join(a.skill, "approaches", name+".md"), "orphan: not referenced by any routing file")
 		}
 	}
 	return goals
@@ -330,14 +324,14 @@ func (a *auditor) run() error {
 		catalog[m[1]] = true
 	}
 
-	goals := a.checkRouting(filepath.Join(a.skill, "routing.md"), names, catalog)
+	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog)
 	a.goals = len(goals)
 	for _, f := range files {
 		a.checkApproach(f)
 	}
 	a.checkLedger(filepath.Join(a.skill, "references", "processed-changelogs.md"))
 	a.checkSignals(filepath.Join(a.skill, "references", "adoption-signals.md"), names)
-	a.checkSkillMD(filepath.Join(a.skill, "SKILL.md"), goals)
+	a.checkSkillMD(filepath.Join(a.skill, "problem-mode.md"), goals)
 	return nil
 }
 

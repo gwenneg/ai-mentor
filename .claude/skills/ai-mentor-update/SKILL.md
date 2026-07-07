@@ -64,14 +64,15 @@ Wait for the user's response, then run the selected steps in order. *(Auto mode:
 
 Read `templates/approach.md` from this skill's directory for the approach-file structure; the routing-table structure is specified inline below.
 
-### Routing table
+### Goal routing files
 
-For `skills/mentor/routing.md`:
+For each per-goal file in `skills/mentor/routing/`:
 
 - `*Last verified: YYYY-MM-DD*` on line 2
-- One `## <slug>` section per goal in SKILL.md's Phase 1 classification table (and no extras)
-- Each section: a `**Hidden gem:**` line naming an approach that appears in that section's rows, and a ranked table with sequential numbering, at least 3 rows, valid Setup values (Beginner/Intermediate/Advanced), and approach links that resolve
+- One `routing/<slug>.md` file per goal in problem-mode.md's classification table (and no extras)
+- Each file: a `**Hidden gem:**` line naming an approach that appears in its rows, and a ranked shortlist with sequential numbering, at least 3 rows, valid Setup values (Beginner/Intermediate/Advanced), and approach links that resolve
 - Row content: "Best when" is one short clause; "Why it fits" is one sentence of goal-specific judgment — flag rows that have drifted into generic filler
+- The shortlist is curated, not exhaustive: top picks plus the hidden gem. Every approach file must still be referenced by at least one routing file (the audit's orphan check)
 
 ### Approach files
 
@@ -136,7 +137,7 @@ Ask the user:
 > Verify all files or a specific one?
 >
 > - **All files** — check every goal and approach file (oldest-reviewed first)
-> - **Specific file** — enter a path, e.g. `approaches/plan-mode.md`, or `routing.md` for the goal rankings
+> - **Specific file** — enter a path, e.g. `approaches/plan-mode.md`, or `routing/<goal>.md` for one goal's rankings
 
 Wait for the user's response. *(Auto mode: skip the question — process the `--files` N oldest-verified files.)*
 
@@ -149,11 +150,11 @@ For each file in scope, use web search to verify claims against current tool doc
 - **Missing features**: Are there significant new Claude Code features related to this approach that the file doesn't mention?
 - **"How It Works" accuracy**: Are the step-by-step instructions still correct?
 
-### For the routing table (`routing.md`), also check:
+### For the goal routing files (`routing/<goal>.md`), also check:
 
 - **Rankings**: Is the most broadly useful approach ranked first per goal?
 - **Hidden gems**: Does each still name the most non-obvious high-value approach, present in its section's rows?
-- **Missing approaches**: Cross-check against all approach files — is any relevant approach missing from a goal section?
+- **Missing approaches**: Cross-check against all approach files — is any relevant approach missing from a goal's shortlist?
 - **Misplaced approaches**: Are any rows a poor fit for their goal?
 
 ### Output
@@ -191,7 +192,7 @@ This is the routine maintenance path. New Claude Code capabilities are announced
    - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
-4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and routing.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
+4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and routing/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
 
 For breaking changes the digests may not mention (renamed flags, removed features), also skim the release-level changelog at `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md` for the same period — these matter to "Try it now" prompts even when they are not "notable".
 
@@ -253,7 +254,7 @@ For each new plugin, take its `description` (and `author`, to label Anthropic-bu
 
 Ask the user which additions and removals to apply *(auto mode: apply all — the API is authoritative)*. For confirmed changes, edit `references/official-plugins.md` and update its `*Last synced*` date to today.
 
-Then reconcile `routing.md`'s per-goal `**Plugins:**` lines: a removed plugin's token is deleted from any line naming it (mechanical — apply directly); a new plugin is only *suggested* for a goal's line when it clearly beats the current picks (editorial — list under suggested actions, never auto-applied). The structural audit fails on routing plugin tokens missing from the catalog, so removals must not be skipped.
+Then reconcile the `**Plugins:**` lines in `routing/<goal>.md`: a removed plugin's token is deleted from any line naming it (mechanical — apply directly); a new plugin is only *suggested* for a goal's line when it clearly beats the current picks (editorial — list under suggested actions, never auto-applied). The structural audit fails on routing plugin tokens missing from the catalog, so removals must not be skipped.
 
 The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
 
