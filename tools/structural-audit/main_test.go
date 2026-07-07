@@ -22,10 +22,8 @@ func approachMD() string {
 
 func validTree() map[string]string {
 	return map[string]string{
-		"skills/mentor/routing.md": `# Routing
+		"skills/mentor/routing/test-goal.md": `# test-goal
 *Last verified: 2026-07-03*
-
-## test-goal
 
 **Hidden gem:** Alpha — because.
 
@@ -59,7 +57,7 @@ func validTree() map[string]string {
 
 | ` + "`alpha-tool`" + ` | does a thing | ` + "`test-goal`" + ` | ☑️ desk-checked |
 `,
-		"skills/mentor/SKILL.md": `# Skill
+		"skills/mentor/problem-mode.md": `# Problem mode
 
 | ` + "`test-goal`" + ` | keywords |
 
@@ -96,7 +94,7 @@ func TestValidTreePasses(t *testing.T) {
 // Every corruption must produce at least one issue mentioning the expected
 // text — i.e. every check must be able to fail the gate, not just print.
 func TestCorruptionsAreCaught(t *testing.T) {
-	routing := "skills/mentor/routing.md"
+	routing := "skills/mentor/routing/test-goal.md"
 	cases := []struct {
 		name   string
 		mutate func(f map[string]string)
@@ -190,21 +188,21 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"duplicate signals row", func(f map[string]string) {
 			f["skills/mentor/references/adoption-signals.md"] += "| alpha | some signal |\n"
 		}, "duplicate signals row"},
-		{"goal missing from SKILL.md", func(f map[string]string) {
-			f["skills/mentor/SKILL.md"] = strings.Replace(
-				f["skills/mentor/SKILL.md"], "`test-goal`", "`other-goal`", 1)
+		{"goal missing from classification table", func(f map[string]string) {
+			f["skills/mentor/problem-mode.md"] = strings.Replace(
+				f["skills/mentor/problem-mode.md"], "`test-goal`", "`other-goal`", 1)
 		}, "missing from the Phase 1 classification table"},
-		{"stale SKILL.md row", func(f map[string]string) {
-			f["skills/mentor/SKILL.md"] = strings.Replace(
-				f["skills/mentor/SKILL.md"], "`test-goal`", "`other-goal`", 1)
+		{"stale classification row", func(f map[string]string) {
+			f["skills/mentor/problem-mode.md"] = strings.Replace(
+				f["skills/mentor/problem-mode.md"], "`test-goal`", "`other-goal`", 1)
 		}, "has no matching routing section"},
 		{"wrong goal count in prose", func(f map[string]string) {
-			f["skills/mentor/SKILL.md"] = strings.Replace(
-				f["skills/mentor/SKILL.md"], "1 goal categories", "24 goal categories", 1)
+			f["skills/mentor/problem-mode.md"] = strings.Replace(
+				f["skills/mentor/problem-mode.md"], "1 goal categories", "24 goal categories", 1)
 		}, "prose says '24 goal categories' but there are 1"},
-		{"missing routing table", func(f map[string]string) {
+		{"missing routing directory", func(f map[string]string) {
 			delete(f, routing)
-		}, "missing routing table"},
+		}, "missing routing directory"},
 		{"missing ledger", func(f map[string]string) {
 			delete(f, "skills/mentor/references/processed-changelogs.md")
 		}, "missing processed-changelog ledger"},

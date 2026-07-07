@@ -26,7 +26,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A16 | `package our release workflow so the whole team can use it` | building-skills-plugins | |
 | A17 | `add an AI summary box to our dashboard` | llm-features | Must not route to greenfield or UI work |
 | A18 | `my long session keeps getting dumber` | (no dedicated goal) | Should surface session-context-management, not misclassify |
-| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (✅, from the routing section's Plugins line) as the move or its tool |
+| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (✅, from the goal routing file's Plugins line) as the move or its tool |
 | A20 | `convert our SAPUI5 app from JavaScript to TypeScript` | migration | Stack-match rule: must surface `ui5-typescript-conversion` with the "not hands-on evaluated" label |
 
 ### Group A output-shape expectations (every classified case)
