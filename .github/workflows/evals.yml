@@ -13,7 +13,7 @@
 # expectations in evals/cases.md — classification, fabrication, grounding,
 # output shape, never-repeat, profile hygiene — objective criteria the judge
 # scores mechanically. If a fuzzy quality rubric is ever added, it must stay
-# advisory: it informs, never blocks (NEXT_VERSION.md D5). The report lands
+# advisory: it informs, never blocks. The report lands
 # in the job summary and as a PR comment either way.
 #
 # Group D (trigger calibration) is interactive-only and never runs here.

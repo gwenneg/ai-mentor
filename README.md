@@ -110,9 +110,11 @@ Ask anything mentor-shaped in a normal session — "what's the best way to use A
 
 ## AI workflow approaches
 
-Each approach file covers: what it is, why it works, when to use it (and when not to), beginner through advanced usage, common pitfalls, a real-world example, and verified official sources.
+Each approach file covers: what it is, why it works, when to use it (and when not to), beginner through advanced usage, common pitfalls, and verified official sources — plus a real-world example where exact syntax earns it.
 
 Approaches include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Model & Effort Selection, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Official Plugins, Custom Plugins, Custom Agents, Project Memory & Context Docs, Session & Context Management, Background Agents, Scheduled & Recurring Agents, Cloud Sessions & Remote Work, Permissions & Safe Autonomy, Visual Artifacts, and Channels.
+
+Approaches are one slice of the catalog: built-in commands (`/verify`, `/code-review`, ...) and integrations (the GitHub Action, the Agent SDK, key official docs) are first-class teachable units too, tracked in the same profile under the same never-repeat rule — and official marketplace plugins are recommended when one matches your stack or goal.
 
 ## License
 

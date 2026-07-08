@@ -1,7 +1,7 @@
 # Capability Registry — integrations & docs
 *Last verified: 2026-07-06*
 
-The `kind: integration` and `kind: doc` slice of the capability registry (NEXT_VERSION.md D1/D6): recommendable things that are neither marketplace plugins nor techniques — a GitHub Action, an SDK, an official doc page that IS the right answer. Records carry enough dated facts inline that the mentor never needs to fetch a URL mid-invocation (a runtime web fetch is a permission prompt and a latency cliff); the URL is for the human. Facts below are drawn from the approach files' verified content and carry that verification date. These records are teachable by default — same ignorance-map citizenship as techniques and built-in commands; profile rows use the record `id`.
+The `kind: integration` and `kind: doc` slice of the capability registry: recommendable things that are neither marketplace plugins nor techniques — a GitHub Action, an SDK, an official doc page that IS the right answer. Records carry enough dated facts inline that the mentor never needs to fetch a URL mid-invocation (a runtime web fetch is a permission prompt and a latency cliff); the URL is for the human. Facts below are drawn from the approach files' verified content and carry that verification date. These records are teachable by default — same ignorance-map citizenship as techniques and built-in commands; profile rows use the record `id`.
 
 ## claude-code-action
 

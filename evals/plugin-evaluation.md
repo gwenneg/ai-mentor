@@ -2,7 +2,7 @@
 
 The repeatable procedure behind the verdicts in `skills/mentor/references/official-plugins.md`. Any future evaluation MUST follow this protocol so results stay comparable across runs; if the protocol itself must change, change this file in the same PR as the re-evaluated verdicts and note the break in comparability.
 
-First executed 2026-07-03 (all 52 desk-checked, 15 hands-on).
+First executed 2026-07-03 (all 52 plugins then in the catalog desk-checked, 15 hands-on). The catalog has since expanded to cover every externally-hosted marketplace plugin (204 more desk-checked 2026-07-08) — see the evaluation-passes line in `references/official-plugins.md`.
 
 ## When to re-run
 
