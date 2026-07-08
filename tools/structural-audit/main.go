@@ -41,7 +41,7 @@ var (
 	reRegID    = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
 	reRowSlug  = regexp.MustCompile(`\]\(\.\./approaches/([a-z0-9-]+)\.md\)`)
 	reRegGoals = regexp.MustCompile(`^goals: (.+)$`)
-	reSkillRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
+	reClassifyRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount    = regexp.MustCompile(`(\d+) goal categories`)
 )
 
@@ -298,20 +298,20 @@ func (a *auditor) checkSignals(path string, approachNames []string) {
 	}
 }
 
-func (a *auditor) checkSkillMD(path string, goals []string) {
+func (a *auditor) checkProblemMode(path string, goals []string) {
 	ls := lines(path)
 	var table []string
 	for _, l := range ls {
-		if m := reSkillRow.FindStringSubmatch(l); m != nil {
+		if m := reClassifyRow.FindStringSubmatch(l); m != nil {
 			table = append(table, m[1])
 		}
 	}
 	missing, stale := diff(goals, table)
 	for _, x := range missing {
-		a.issue(path, "routing goal %s missing from the Phase 1 classification table", x)
+		a.issue(path, "routing goal %s missing from the problem-mode classification table", x)
 	}
 	for _, x := range stale {
-		a.issue(path, "Phase 1 table row %s has no matching routing section", x)
+		a.issue(path, "classification table row %s has no matching routing section", x)
 	}
 	for _, l := range ls {
 		for _, m := range reCount.FindAllStringSubmatch(l, -1) {
@@ -363,7 +363,7 @@ func (a *auditor) run() error {
 	}
 	a.checkLedger(filepath.Join(a.skill, "references", "processed-changelogs.md"))
 	a.checkSignals(filepath.Join(a.skill, "references", "adoption-signals.md"), names)
-	a.checkSkillMD(filepath.Join(a.skill, "problem-mode.md"), goals)
+	a.checkProblemMode(filepath.Join(a.skill, "problem-mode.md"), goals)
 	return nil
 }
 

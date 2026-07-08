@@ -233,7 +233,7 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"goal missing from classification table", func(f map[string]string) {
 			f["skills/mentor/problem-mode.md"] = strings.Replace(
 				f["skills/mentor/problem-mode.md"], "`test-goal`", "`other-goal`", 1)
-		}, "missing from the Phase 1 classification table"},
+		}, "missing from the problem-mode classification table"},
 		{"stale classification row", func(f map[string]string) {
 			f["skills/mentor/problem-mode.md"] = strings.Replace(
 				f["skills/mentor/problem-mode.md"], "`test-goal`", "`other-goal`", 1)
