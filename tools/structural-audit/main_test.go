@@ -99,7 +99,10 @@ best_when: testing the audit
 
 | ` + "`alpha-tool`" + ` | does a thing | ` + "`test-goal`" + ` | ☑️ desk-checked |
 `,
+		"skills/mentor/references/profile-schema.md": "# Profile schema\n",
 		"skills/mentor/problem-mode.md": `# Problem mode
+
+Full schema: ` + "`references/profile-schema.md`" + `
 
 | ` + "`test-goal`" + ` | keywords |
 
@@ -161,6 +164,11 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"phantom plugin token", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`ghost-tool` ☑️ something useful", 1)
 		}, "Plugins line names 'ghost-tool', not found"},
+		{"plugins line names a goal slug (not a plugin)", func(f map[string]string) {
+			// `test-goal` is backticked in the catalog's goal column but is not a
+			// plugin — the old all-tokens parser let this pass.
+			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`test-goal` ☑️ something useful", 1)
+		}, "Plugins line names 'test-goal', not found"},
 		{"missing plugin catalog", func(f map[string]string) {
 			delete(f, "skills/mentor/references/official-plugins.md")
 		}, "missing official-plugins catalog"},
@@ -216,6 +224,20 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
 				f["skills/mentor/references/processed-changelogs.md"], "2026-07-01", "yesterday", 1)
 		}, "invalid processed date"},
+		{"impossible ledger date", func(f map[string]string) {
+			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
+				f["skills/mentor/references/processed-changelogs.md"], "2026-07-01", "2026-99-99", 1)
+		}, "invalid processed date"},
+		{"malformed short ledger row", func(f map[string]string) {
+			f["skills/mentor/references/processed-changelogs.md"] +=
+				"| [2026-w27](https://example.com) | 2026-07-02 |\n"
+		}, "is malformed"},
+		{"impossible routing date", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "*Last verified: 2026-99-99*", 1)
+		}, "line 2 must be"},
+		{"broken doc reference in a mode file", func(f map[string]string) {
+			delete(f, "skills/mentor/references/profile-schema.md")
+		}, "broken reference references/profile-schema.md"},
 		{"empty ledger outcome", func(f map[string]string) {
 			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
 				f["skills/mentor/references/processed-changelogs.md"], "| processed |", "|  |", 1)
@@ -306,6 +328,19 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			}
 			t.Errorf("no issue mentions %q; got:\n%s", tc.expect, strings.Join(issues, "\n"))
 		})
+	}
+}
+
+func TestPluginNamesIgnoresGoalSlugs(t *testing.T) {
+	catalog := strings.Join([]string{
+		"### Dev workflow",
+		"| `real-plugin` | desc | `debugging` | ✅ |",
+		"### Language servers (LSPs)",
+		"Family: `gopls-lsp` (Go).",
+	}, "\n")
+	got := strings.Join(pluginNames(catalog), ",")
+	if got != "real-plugin,gopls-lsp" {
+		t.Errorf("pluginNames = %q, want \"real-plugin,gopls-lsp\" (goal slug 'debugging' must be excluded)", got)
 	}
 }
 

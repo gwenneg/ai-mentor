@@ -27,7 +27,7 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 
 ### Basic (Beginner)
 
-1. Let turns run unattended (optional — `/goal` works in any permission mode, but you would otherwise approve each tool call): press Shift+Tab to cycle to "auto" mode if your account supports it, or start Claude with `--permission-mode auto`
+1. Let turns run unattended (optional — `/goal` works in any permission mode, but you would otherwise approve each tool call): press Shift+Tab to cycle to "auto" mode if your account supports it, or set `"defaultMode": "auto"` in `~/.claude/settings.json`
 2. Start a goal: `/goal all tests in tests/payment/ pass`
 3. Claude reads the first failing test output, edits code, runs `pytest tests/payment/`, reads the new failures, and edits again
 4. After each turn, a fast model evaluates the test output against your condition
@@ -43,7 +43,7 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 
 - **Headless goal loops**: Run `claude -p "/goal coverage above 85% for src/billing/"` in CI or a background terminal. The AI works unattended and exits when done. Combine with `--output-format json` to capture the final result programmatically.
 - **Compound conditions**: Goal conditions can be up to 4,000 characters. Use this to set multi-part goals: `/goal all tests pass AND no eslint errors AND no TypeScript errors`. The evaluator checks all parts.
-- **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence.
+- **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it or when Claude decides the work is done. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence.
 
 ## Common Pitfalls
 

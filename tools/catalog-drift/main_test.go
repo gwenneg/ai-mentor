@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -36,30 +37,46 @@ func TestFetchLiveNamesEmptyManifestIsError(t *testing.T) {
 	}
 }
 
-func TestDocumentedNames(t *testing.T) {
-	text := "The `code-review` and `security-guardian` plugins, plus `wordpress.com`, and prose like `pr` and `multi-word-token`."
-	got := documentedNames(text)
-	want := []string{"code-review", "security-guardian", "wordpress.com", "pr", "multi-word-token"}
+func TestPluginNames(t *testing.T) {
+	// Only names the catalog structurally declares: the first backticked token
+	// of each table row (a "(Vendor)" suffix is tolerated), and backticked
+	// tokens in the two prose-list sections. Goal slugs in later cells and
+	// tokens in intro prose must NOT be counted.
+	text := strings.Join([]string{
+		"Intro prose mentioning `ui5-modernization` as an example — not a declaration.",
+		"### Dev workflow",
+		"| Plugin | What it does | Relevant goal | Verdict |",
+		"|--------|-------------|--------------|---------|",
+		"| `security-guidance` | hooks | `security` | ✅ |",
+		"| `context7` (Upstash) | docs | `code-understanding` | ✅ |",
+		"### Language servers (LSPs)",
+		"Drop-in: `gopls-lsp` (Go), `pyright-lsp` (Python).",
+		"### Specialty",
+		"Listed for completeness: `math-olympiad` and `cwc-makers`.",
+		"### Database",
+		"| `alloydb` | db | Google | `devops` | ☑️ |",
+	}, "\n")
+	got := pluginNames(text)
+	want := []string{"security-guidance", "context7", "gopls-lsp", "pyright-lsp", "math-olympiad", "cwc-makers", "alloydb"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
-		t.Errorf("documentedNames = %v, want %v", got, want)
+		t.Errorf("pluginNames = %v, want %v", got, want)
+	}
+	for _, slug := range []string{"security", "code-understanding", "devops", "ui5-modernization"} {
+		if slices.Contains(got, slug) {
+			t.Errorf("goal slug / intro token %q must not be counted as a plugin: %v", slug, got)
+		}
 	}
 }
 
 func TestReportInSync(t *testing.T) {
 	var out strings.Builder
-	drift := report(&out, []string{"alpha-one", "beta-two"}, []string{"alpha-one", "beta-two", "prose", "stale-token"})
+	drift := report(&out, []string{"alpha-one", "beta-two"}, []string{"beta-two", "alpha-one"})
 	if drift {
-		t.Error("no missing plugins should not be drift")
+		t.Error("identical live and documented sets must not be drift")
 	}
 	s := out.String()
-	if !strings.Contains(s, "Marketplace plugins: 2; documented names found: 2") {
+	if !strings.Contains(s, "Marketplace plugins: 2; documented plugins: 2") {
 		t.Errorf("wrong summary:\n%s", s)
-	}
-	if !strings.Contains(s, "  ? stale-token") {
-		t.Errorf("multi-word stale token should be listed as advisory:\n%s", s)
-	}
-	if strings.Contains(s, "? prose") {
-		t.Errorf("single-word token must not be listed as advisory:\n%s", s)
 	}
 	if !strings.Contains(s, "Plugin catalog: in sync.") {
 		t.Errorf("missing in-sync line:\n%s", s)
@@ -68,16 +85,37 @@ func TestReportInSync(t *testing.T) {
 
 func TestReportDrift(t *testing.T) {
 	var out strings.Builder
-	drift := report(&out, []string{"alpha-one", "brand-new"}, []string{"alpha-one"})
+	drift := report(&out, []string{"alpha-one", "brand-new"}, []string{"alpha-one", "gone-away"})
 	if !drift {
-		t.Error("a live plugin missing from the catalog must be drift")
+		t.Error("a missing or removed plugin must be drift")
 	}
 	s := out.String()
 	if !strings.Contains(s, "NEW plugins not yet in the catalog:\n  + brand-new") {
 		t.Errorf("missing NEW listing:\n%s", s)
 	}
+	if !strings.Contains(s, "no longer in the marketplace (renamed or removed):\n  - gone-away") {
+		t.Errorf("missing removed listing:\n%s", s)
+	}
 	if !strings.Contains(s, "Drift detected") {
 		t.Errorf("missing drift verdict:\n%s", s)
+	}
+}
+
+// A live plugin whose name collides with a goal slug (e.g. a marketplace plugin
+// literally named "debugging") must still be reported as drift — the false
+// negative the precise parser closes.
+func TestGoalSlugCollisionIsDrift(t *testing.T) {
+	catalog := "### Dev workflow\n| `security-guidance` | hooks | `debugging` | ✅ |\n"
+	documented := pluginNames(catalog)
+	if slices.Contains(documented, "debugging") {
+		t.Fatalf("goal slug 'debugging' must not be counted as a plugin: %v", documented)
+	}
+	var out strings.Builder
+	if !report(&out, []string{"debugging", "security-guidance"}, documented) {
+		t.Error("live plugin 'debugging' colliding with a goal slug must be drift")
+	}
+	if !strings.Contains(out.String(), "+ debugging") {
+		t.Errorf("expected 'debugging' listed as NEW:\n%s", out.String())
 	}
 }
 

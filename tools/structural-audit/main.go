@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -29,11 +30,12 @@ var (
 	reGem      = regexp.MustCompile(`^\*\*Hidden gem:\*\* ([^—\n]+)`)
 	rePlugLine = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok  = regexp.MustCompile("`([a-z0-9.-]+)`")
+	reRowName  = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
+	reDocRef   = regexp.MustCompile(`(references|registry|routing|approaches)/[a-z0-9-]+\.md`)
 	reRef      = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
 	reSource   = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger   = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek     = regexp.MustCompile(`^\d{4}-w\d{2}$`)
-	reDate     = regexp.MustCompile(`^` + datePat + `$`)
 	reDateTail = regexp.MustCompile(`^` + datePat + `\*`)
 	reSignal   = regexp.MustCompile(`^\| ([a-z0-9-]+) \|`)
 	reBuiltin  = regexp.MustCompile("`/([a-z0-9-]+)`")
@@ -95,16 +97,67 @@ func cells(l string) []string {
 	return cs
 }
 
-// dateLine checks that line 2 is e.g. "*Last verified: 2026-07-03*".
+// validDate reports whether s is a real calendar date (rejects 2026-99-99,
+// which the format regex alone would accept).
+func validDate(s string) bool {
+	_, err := time.Parse("2006-01-02", s)
+	return err == nil
+}
+
+// pluginNames extracts the plugin ids the catalog declares: the first
+// backticked token of each table row plus the backticked tokens in the prose
+// sections (Language servers, Specialty). Nothing else — so goal slugs and
+// backticked command names are never mistaken for plugins. Keep in sync with
+// the copy in tools/catalog-drift/main.go.
+func pluginNames(text string) []string {
+	var names []string
+	proseList := false
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, "#") {
+			h := strings.ToLower(line)
+			proseList = strings.Contains(h, "language server") || strings.Contains(h, "specialty")
+			continue
+		}
+		if m := reRowName.FindStringSubmatch(line); m != nil {
+			names = append(names, m[1])
+			continue
+		}
+		if proseList {
+			for _, m := range rePlugTok.FindAllStringSubmatch(line, -1) {
+				names = append(names, m[1])
+			}
+		}
+	}
+	return names
+}
+
+// checkDocRefs verifies that catalog paths named in SKILL.md and the mode
+// files resolve — the load-bearing references (profile-schema, registries,
+// routing, approaches) that nothing else in the audit reads.
+func (a *auditor) checkDocRefs(files ...string) {
+	for _, f := range files {
+		text := strings.Join(lines(f), "\n")
+		for _, ref := range dedup(reDocRef.FindAllString(text, -1)) {
+			if _, err := os.Stat(filepath.Join(a.skill, ref)); err != nil {
+				a.issue(f, "broken reference %s", ref)
+			}
+		}
+	}
+}
+
+// dateLine checks that line 2 is e.g. "*Last verified: 2026-07-03*" with a
+// real date.
 func (a *auditor) dateLine(path, label string, ls []string) {
 	ok := false
 	if len(ls) >= 2 {
 		if rest, found := strings.CutPrefix(ls[1], "*"+label+": "); found {
-			ok = reDateTail.MatchString(rest)
+			if m := reDateTail.FindString(rest); m != "" {
+				ok = validDate(strings.TrimSuffix(m, "*"))
+			}
 		}
 	}
 	if !ok {
-		a.issue(path, "line 2 must be '*%s: YYYY-MM-DD*'", label)
+		a.issue(path, "line 2 must be '*%s: YYYY-MM-DD*' with a real date", label)
 	}
 }
 
@@ -261,13 +314,16 @@ func (a *auditor) checkLedger(path string) {
 			a.issue(path, "duplicate ledger row for '%s'", slug)
 		}
 		seen[slug] = true
-		if cs := cells(l); len(cs) > 3 {
-			if !reDate.MatchString(cs[2]) {
-				a.issue(path, "row '%s' has invalid processed date '%s'", slug, cs[2])
-			}
-			if cs[3] == "" {
-				a.issue(path, "row '%s' has an empty outcome", slug)
-			}
+		cs := cells(l)
+		if len(cs) < 5 {
+			a.issue(path, "row '%s' is malformed (need | Week | Processed | Outcome |)", slug)
+			continue
+		}
+		if !validDate(cs[2]) {
+			a.issue(path, "row '%s' has invalid processed date '%s'", slug, cs[2])
+		}
+		if cs[3] == "" {
+			a.issue(path, "row '%s' has an empty outcome", slug)
 		}
 	}
 }
@@ -340,8 +396,8 @@ func (a *auditor) run() error {
 	if catErr != nil {
 		a.issue(catPath, "missing official-plugins catalog")
 	}
-	for _, m := range rePlugTok.FindAllStringSubmatch(string(catText), -1) {
-		catalog[m[1]] = true
+	for _, n := range pluginNames(string(catText)) {
+		catalog[n] = true
 	}
 
 	a.membership = map[string]map[string]bool{}
@@ -364,6 +420,11 @@ func (a *auditor) run() error {
 	a.checkLedger(filepath.Join(a.skill, "references", "processed-changelogs.md"))
 	a.checkSignals(filepath.Join(a.skill, "references", "adoption-signals.md"), names)
 	a.checkProblemMode(filepath.Join(a.skill, "problem-mode.md"), goals)
+	a.checkDocRefs(
+		filepath.Join(a.skill, "SKILL.md"),
+		filepath.Join(a.skill, "problem-mode.md"),
+		filepath.Join(a.skill, "growth-mode.md"),
+	)
 	return nil
 }
 
