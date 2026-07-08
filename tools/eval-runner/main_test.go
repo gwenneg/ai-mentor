@@ -165,11 +165,19 @@ func newTestRunner(t *testing.T) *runner {
 	}
 	return &runner{
 		repo: t.TempDir(), fixture: t.TempDir(), judge: "judge-model",
-		timeout:    time.Minute,
-		shape:      shape,
-		statements: statementsByID(all["A"]),
-		approaches: []string{"plan-mode", "hooks-as-workflow"},
-		today:      "2026-07-07",
+		subjectModel: "subject-model",
+		timeout:      time.Minute,
+		shape:        shape,
+		statements:   statementsByID(all["A"]),
+		approaches:   []string{"plan-mode", "hooks-as-workflow"},
+		ground: groundTruth{
+			fixture:      []string{"package.json", "src/orders.js"},
+			plugins:      []string{"security-guidance", "code-modernization"},
+			commands:     []string{"/verify", "/loop"},
+			techniques:   []string{"plan-mode"},
+			integrations: []string{"github-actions"},
+		},
+		today: "2026-07-07",
 	}
 }
 
@@ -188,10 +196,12 @@ func stubClaude(t *testing.T, mentorOut, judgeOut string) *[][]string {
 			call = append(call, "profile="+readFile(filepath.Join(home, ".ai-mentor", "profile.md")))
 		}
 		*calls = append(*calls, call)
-		if slices.Contains(args, "--model") {
-			return judgeOut, nil
+		// The mentor runs with --plugin-dir; the judge runs in an empty dir
+		// without it. (Both now pass --model, so --model no longer discriminates.)
+		if slices.Contains(args, "--plugin-dir") {
+			return mentorOut, nil
 		}
-		return mentorOut, nil
+		return judgeOut, nil
 	}
 	return calls
 }
@@ -381,6 +391,30 @@ func TestSetupProfileFixtures(t *testing.T) {
 	if p := read(t, "C01"); !strings.Contains(p, "| plan-mode | adopted |") {
 		t.Errorf("C01 needs plan-mode adopted:\n%s", p)
 	}
+	if p := read(t, "C04"); !strings.Contains(p, "| background-agents | declined |") || !strings.Contains(p, "| plan-mode | shown |") {
+		t.Errorf("C04 needs a declined and a shown seeded row:\n%s", p)
+	}
+	if p := read(t, "C05"); !strings.Contains(p, "| plan-mode | declined |") {
+		t.Errorf("C05 needs plan-mode declined:\n%s", p)
+	}
+}
+
+func TestJudgePromptGroundTruth(t *testing.T) {
+	r := newTestRunner(t)
+	jp := r.judgePrompt(
+		evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"},
+		[]string{"resp"}, "")
+	for _, want := range []string{
+		"src/orders.js",     // fixture manifest inlined (grounding — #8)
+		"security-guidance", // authoritative plugin list inlined (fabrication — #6)
+		"COMPLETE list",     // plugin list framed as exhaustive
+		"is a fabrication",  // fabrication instruction present
+		"/verify",           // known-real commands listed
+	} {
+		if !strings.Contains(jp, want) {
+			t.Errorf("judge prompt missing %q", want)
+		}
+	}
 }
 
 func TestHookedFixtureForB04(t *testing.T) {
@@ -422,8 +456,10 @@ func TestTruncateLines(t *testing.T) {
 
 func TestPromptRules(t *testing.T) {
 	r := newTestRunner(t)
-	if _, err := r.prompts(evalCase{Group: "C", ID: "C01"}); err != nil {
-		t.Errorf("C01 should resolve A01's statement: %v", err)
+	for _, id := range []string{"C01", "C04", "C05"} {
+		if _, err := r.prompts(evalCase{Group: "C", ID: id}); err != nil {
+			t.Errorf("%s should resolve A01's statement: %v", id, err)
+		}
 	}
 	r.statements = map[string]string{}
 	if _, err := r.prompts(evalCase{Group: "C", ID: "C01"}); err == nil {

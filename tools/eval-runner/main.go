@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,6 +40,10 @@ const (
 var (
 	reCaseRow  = regexp.MustCompile(`^\| ([ABC]\d{2}) \|`)
 	profileRel = filepath.Join(".ai-mentor", "profile.md")
+	// Plugin-name extraction for the judge's ground-truth block. Keep in sync
+	// with the copies in tools/structural-audit and tools/catalog-drift.
+	reRowName = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
+	reTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 )
 
 // evalCase is one row from a cases.md group table. Statement holds the
@@ -189,6 +194,95 @@ func approachNames(repo string) ([]string, error) {
 	return names, nil
 }
 
+// groundTruth is the set of real capabilities and fixture paths inlined into
+// the judge prompt so fabrication and grounding are checked against the repo,
+// not the judge's own memory.
+type groundTruth struct {
+	fixture      []string
+	plugins      []string
+	commands     []string
+	techniques   []string
+	integrations []string
+}
+
+// buildGroundTruth reads the catalog and fixture once so every judge call can
+// check recommendations against them.
+func buildGroundTruth(repo, fixture string) groundTruth {
+	skill := filepath.Join(repo, "skills", "mentor")
+	gt := groundTruth{fixture: fixtureFiles(fixture)}
+	if b, err := os.ReadFile(filepath.Join(skill, "references", "official-plugins.md")); err == nil {
+		gt.plugins = pluginNames(string(b))
+	}
+	if files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*.md")); files != nil {
+		for _, f := range files {
+			gt.techniques = append(gt.techniques, strings.TrimSuffix(filepath.Base(f), ".md"))
+		}
+	}
+	gt.commands = registryIDs(filepath.Join(skill, "registry", "builtin-commands.md"), "/")
+	gt.integrations = registryIDs(filepath.Join(skill, "registry", "integrations.md"), "")
+	return gt
+}
+
+// fixtureFiles lists the fixture repo's files as repo-relative paths.
+func fixtureFiles(dir string) []string {
+	var out []string
+	filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		if rel, e := filepath.Rel(dir, p); e == nil {
+			out = append(out, rel)
+		}
+		return nil
+	})
+	slices.Sort(out)
+	return out
+}
+
+// registryIDs returns every `id:` value in a registry file, each with prefix
+// (e.g. "/" to render built-in commands as slash commands).
+func registryIDs(path, prefix string) []string {
+	var ids []string
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return ids
+	}
+	for _, l := range strings.Split(string(b), "\n") {
+		if id, ok := strings.CutPrefix(l, "id: "); ok {
+			if id = strings.TrimSpace(id); id != "" {
+				ids = append(ids, prefix+id)
+			}
+		}
+	}
+	return ids
+}
+
+// pluginNames extracts the plugin ids the catalog declares: the first
+// backticked token of each table row plus backticked tokens in the prose
+// sections (Language servers, Specialty). Keep in sync with the copies in
+// tools/structural-audit/main.go and tools/catalog-drift/main.go.
+func pluginNames(text string) []string {
+	var names []string
+	proseList := false
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, "#") {
+			h := strings.ToLower(line)
+			proseList = strings.Contains(h, "language server") || strings.Contains(h, "specialty")
+			continue
+		}
+		if m := reRowName.FindStringSubmatch(line); m != nil {
+			names = append(names, m[1])
+			continue
+		}
+		if proseList {
+			for _, m := range reTok.FindAllStringSubmatch(line, -1) {
+				names = append(names, m[1])
+			}
+		}
+	}
+	return names
+}
+
 // runClaude is the seam between the runner and the claude CLI; tests stub it.
 var runClaude = func(ctx context.Context, dir string, env []string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, "claude", args...)
@@ -215,10 +309,12 @@ var runClaude = func(ctx context.Context, dir string, env []string, args ...stri
 type runner struct {
 	repo, fixture string // absolute paths
 	judge         string
+	subjectModel  string // model the mentor under test runs on (pinned for gate stability)
 	timeout       time.Duration
 	shape         string            // Group A output-shape expectations, verbatim
 	statements    map[string]string // Group A ID -> problem statement
 	approaches    []string          // approach basenames, for the B06 fixture
+	ground        groundTruth       // capability + fixture facts inlined into judge prompts
 	today         string            // YYYY-MM-DD
 }
 
@@ -378,6 +474,12 @@ func (r *runner) setupProfile(c evalCase, home string) error {
 		content = r.profileMD(week, rows...)
 	case "C01":
 		content = r.profileMD(week, profileRow("plan-mode", "adopted", past, "uses plan mode daily"))
+	case "C04":
+		content = r.profileMD(week,
+			profileRow("background-agents", "declined", past, `"prefer local runs"`),
+			profileRow("plan-mode", "shown", past, "tried it once"))
+	case "C05":
+		content = r.profileMD(week, profileRow("plan-mode", "declined", past, `"too slow for me"`))
 	default:
 		return nil
 	}
@@ -404,7 +506,7 @@ func (r *runner) prompts(c evalCase) ([]string, error) {
 		return []string{mentorCmd + " " + c.Statement}, nil
 	case c.Group == "B":
 		return []string{mentorCmd}, nil
-	case c.ID == "C01", c.ID == "C03":
+	case c.ID == "C01", c.ID == "C03", c.ID == "C04", c.ID == "C05":
 		p, err := stmt("A01")
 		return []string{p}, err
 	case c.ID == "C02":
@@ -419,7 +521,8 @@ func (r *runner) invoke(prompt, dir string, env []string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, dir, env,
-		"-p", prompt, "--plugin-dir", r.repo, "--output-format", "stream-json", "--verbose", "--max-turns", "30")
+		"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
+		"--output-format", "stream-json", "--verbose", "--max-turns", "30")
 	if err != nil {
 		return "", err
 	}
@@ -535,9 +638,20 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 		b.WriteString("\nGroup A output-shape expectations (verbatim from cases.md; every classified case must satisfy all of them):\n")
 		b.WriteString(r.shape + "\n")
 		b.WriteString("\nThe case notes take precedence over the shape expectations when they conflict: a case whose notes say it is not classified (catalog browse, graceful decline) is judged on its notes, not on the classified-case shape.\n")
+		b.WriteString("For a problem about the fixture repo itself, a fenced prompt that cites a code path not in the fixture file list below is fabricated grounding — fail it (unless the case notes mark the prompt portable to a different repo).\n")
 	} else {
 		fmt.Fprintf(&b, "Setup / profile fixture: %s\nExpected behavior: %s\n", c.Statement, c.Expected)
 	}
+
+	b.WriteString("\n--- Ground truth: judge the response's recommendations against THIS, not your own memory ---\n")
+	if len(r.ground.fixture) > 0 {
+		b.WriteString("Fixture repo files (the only real paths in the fixture repo): " + strings.Join(r.ground.fixture, ", ") + "\n")
+	}
+	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
+	b.WriteString(strings.Join(r.ground.plugins, ", ") + "\n")
+	b.WriteString("Known-real built-in commands: " + strings.Join(r.ground.commands, ", ") + ". Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
+	b.WriteString("These command/technique/integration lists are NOT exhaustive of Claude Code (e.g. /plan, /model, /effort, --worktree, Shift+Tab are real but unlisted) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
+
 	for i, resp := range responses {
 		label := "Response"
 		if len(responses) > 1 {
@@ -700,6 +814,7 @@ func main() {
 	out := flag.String("out", "eval-report.md", "markdown report path")
 	gate := flag.Bool("gate", false, "exit 1 when any case fails or errors")
 	judge := flag.String("model-judge", "claude-sonnet-5", "judge model for scoring")
+	modelSubject := flag.String("model-subject", "claude-sonnet-5", "model the mentor under test runs on (pinned so a gate red is a regression, not CLI-default drift)")
 	timeout := flag.Int("timeout", 300, "per-case timeout in seconds")
 	flag.Parse()
 
@@ -740,11 +855,13 @@ func main() {
 
 	r := &runner{
 		repo: repoAbs, fixture: fix, judge: *judge,
-		timeout:    time.Duration(*timeout) * time.Second,
-		shape:      shape,
-		statements: statementsByID(all["A"]),
-		approaches: approaches,
-		today:      time.Now().Format("2006-01-02"),
+		subjectModel: *modelSubject,
+		timeout:      time.Duration(*timeout) * time.Second,
+		shape:        shape,
+		statements:   statementsByID(all["A"]),
+		approaches:   approaches,
+		ground:       buildGroundTruth(repoAbs, fix),
+		today:        time.Now().Format("2006-01-02"),
 	}
 	if err := preflight(r); err != nil {
 		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))

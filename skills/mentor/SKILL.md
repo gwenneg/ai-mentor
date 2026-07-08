@@ -21,6 +21,11 @@ allowed-tools:
   # absolute path, and permission rules treat a single leading slash as
   # project-root-relative — only '//' anchors at the filesystem root.
   - Read(/${CLAUDE_PLUGIN_ROOT}/**)
+  # Fallbacks so the first-turn read fan-out never hinges on one substitution:
+  # ${CLAUDE_SKILL_DIR} is a documented frontmatter variable covering the same
+  # plugin files, and ~/.claude/plugins is the installed-plugin cache location.
+  - Read(/${CLAUDE_SKILL_DIR}/**)
+  - Read(~/.claude/plugins/**)
   # The mentor profile. Edit(...) is the required family — Write(path) rules
   # never match. The Write tool auto-creates the directory; never use mkdir.
   - Read(~/.ai-mentor/**)
@@ -60,7 +65,7 @@ Then, silently:
 3. **Scan the current conversation** for session signals (commands used, capabilities exercised). Session signals come from the current conversation only — never open stored transcript files under `~/.claude/projects/`; their format is internal and unstable.
 4. **Reconcile silently**: a signal-positive capability with no profile row → record it as `adopted` without comment (they already knew it). Evidence beats memory: disk state wins over stale profile rows.
 
-The **ignorance map** is what remains, and it is kind-aware: every technique (`registry/techniques.md`), built-in command (`registry/builtin-commands.md`), and integration (`registry/integrations.md`) with no `adopted`/`shown`/`declined` row and no positive signal is teachable by default; marketplace plugins (`references/official-plugins.md`, the registry's plugin slice) enter only when their stack or goal matches the observed work — never as generic filler. Rank by leverage for the work you observed. Registry records carry their own `session_signal` line for the reconcile step; profile rows use the record's `id` — approach basename, command id, integration id, or plugin name — same table, same statuses.
+The **ignorance map** is what remains, and it is kind-aware: every technique (`registry/techniques.md`), built-in command (`registry/builtin-commands.md`), and integration (`registry/integrations.md`) with no `adopted`/`shown`/`declined` row and no positive signal is teachable by default; marketplace plugins (`references/official-plugins.md`, the registry's plugin slice) enter only when their stack or goal matches the observed work — never as generic filler. Rank by leverage for the work you observed. Registry records carry their own `session_signal` line for the reconcile step; profile rows use the record's `id` — approach basename, command id, integration id, or plugin name — same table, same statuses. Dedupe the map by `id`: a capability that appears under more than one kind with the same id (e.g. `deep-research`, both the technique and the `/deep-research` built-in command) is one entry and one profile row — teaching or detecting it in either form marks the single id known.
 
 Then select the mode and **read that mode's file from the plugin root** — it is the playbook for the rest of the interaction; the other mode's file stays unread:
 
@@ -104,7 +109,8 @@ For file-writing actions, always show the change before applying it, and never o
 
 ## Rules (every mode)
 
-- Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — never Bash (`ls`, `cat`, `find`, ...): no Bash rule covers those paths, so every such call interrupts the user with a permission prompt
+- Touch the catalog, the profile, and `~/.claude` paths only with the Read/Glob/Grep tools — never Bash (`ls`, `cat`, `find`, ...): those tools are granted for these paths and always run prompt-free, whereas Bash file access is prompt-free only for a narrow built-in set of read-only commands and prompts for anything outside it (pipes, flags, redirects, or an unlisted command)
+- Never Read `references/official-plugins.md` whole (~16k tokens): Grep it by the named technology so only matching rows enter context — the goal file's `**Plugins:**` line already carries each goal's top fits
 - The plugin-path Read grant is invocation-scoped: prompt-free only while composing the first response. Read everything follow-ups will need before finishing it; on later turns, warn before any plugin-file read and handle the prompt gracefully
 - Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator. In problem mode it accompanies the move (subject to problem-mode's relevance floor: omit rather than pad); in growth mode the lesson itself IS the pick — never add a second capability on top
 - Never re-teach `shown`, never re-offer `declined`, never explain `adopted` — check the profile before every recommendation. Declined means invisible: never name the declined capability at all, not even to say you're skipping it ("you waved off X, so I won't pitch it" is itself a re-reference)

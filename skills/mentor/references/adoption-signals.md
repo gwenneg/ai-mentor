@@ -15,7 +15,7 @@ Absence is weak evidence, graded by tier: no hooks in settings after months of u
 | Approach | Setup & repo signals | Session signals |
 |----------|---------------------|-----------------|
 | autonomous-loops | — | `/loop` or `/goal` in the transcript; goal-conditioned prompts |
-| background-agents | — | `claude agents`, `claude --bg`, or `/bg` usage; talks about dispatching tasks |
+| background-agents | — | `claude agents`, `claude --bg`, or `/background` usage; talks about dispatching tasks |
 | browser-integration | — | `claude --chrome` or `/chrome` usage; asks Claude to drive a browser |
 | built-in-review-skills | Review commands wired into CI workflows | `/code-review`, `/security-review`, `/simplify`, `/verify`, or `/run` in the transcript |
 | channels | A channel plugin installed (telegram, discord, imessage, fakechat) | `--channels` flag mentions; talks about pushing webhooks/chat into a session |

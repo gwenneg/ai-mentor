@@ -28,7 +28,7 @@ Hooks shift feedback left to the earliest possible moment — the instant Claude
 ### Basic (Beginner)
 
 1. Identify the trigger event: `PreToolUse` (before an action), `PostToolUse` (after an action), `Stop` (when Claude finishes responding), `SessionStart`, or `Notification` — among others; see the hooks reference for the full event list
-2. Write the hook action: a shell command, an HTTP request, or a prompt
+2. Write the hook action: a shell `command`, a `prompt` fed to the model, or an `agent`
 3. Add it to `.claude/settings.json` under the `hooks` key
 4. The hook fires automatically — no manual invocation needed
 

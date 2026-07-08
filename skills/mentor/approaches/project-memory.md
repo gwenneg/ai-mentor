@@ -52,6 +52,11 @@ Writing knowledge down once converts a per-session cost into a one-time cost —
 - **Contradicting yourself**: conflicting instructions across CLAUDE.md, nested files, and rules make Claude pick one arbitrarily. Review periodically and delete stale entries.
 - **Never auditing auto memory**: Claude's own notes are plain markdown under `~/.claude/projects/<project>/memory/` — browse them via `/memory` occasionally and delete anything wrong, or it stays wrong in every future session.
 
+## Real-World Example
+
+You keep re-explaining the same two constraints, so you write them into `CLAUDE.md`:
+
+```
 ## Rules
 - gRPC handlers must call `auth.Verify()` before touching the store
 - The `orders` table is append-only — never generate UPDATE migrations against it

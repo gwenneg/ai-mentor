@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -26,9 +27,11 @@ const manifestURL = "https://raw.githubusercontent.com/anthropics/claude-plugins
 var (
 	skillDir = filepath.Join("skills", "mentor")
 
-	// Dots are valid in plugin names (e.g. wordpress.com).
-	reToken     = regexp.MustCompile("`([a-z0-9.-]+)`")
-	reMultiWord = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)+$`)
+	// A plugin id is the first backticked token of a catalog table row (the
+	// name cell, which may carry a "(Vendor)" suffix) or a backticked token in
+	// the prose-list sections. Dots are valid in names (e.g. wordpress.com).
+	reRowName = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
+	reTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 )
 
 // fetchLiveNames downloads the marketplace manifest and returns every listed
@@ -62,11 +65,29 @@ func fetchLiveNames(client *http.Client, url string) ([]string, error) {
 	return names, nil
 }
 
-// documentedNames extracts every backticked kebab/word token from the catalog.
-func documentedNames(text string) []string {
+// pluginNames extracts the plugin ids the catalog declares — nothing else, so
+// goal slugs and command names backticked in prose or description cells are
+// never mistaken for plugins. Two sources: the first backticked token of each
+// table row, and every backticked token in the prose-list sections (Language
+// servers, Specialty). Keep in sync with the copy in tools/structural-audit/main.go.
+func pluginNames(text string) []string {
 	var names []string
-	for _, m := range reToken.FindAllStringSubmatch(text, -1) {
-		names = append(names, m[1])
+	proseList := false
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, "#") {
+			h := strings.ToLower(line)
+			proseList = strings.Contains(h, "language server") || strings.Contains(h, "specialty")
+			continue
+		}
+		if m := reRowName.FindStringSubmatch(line); m != nil {
+			names = append(names, m[1])
+			continue
+		}
+		if proseList {
+			for _, m := range reTok.FindAllStringSubmatch(line, -1) {
+				names = append(names, m[1])
+			}
+		}
 	}
 	return names
 }
@@ -75,26 +96,25 @@ func sortedUnique(xs []string) []string {
 	return slices.Compact(slices.Sorted(slices.Values(xs)))
 }
 
-// report prints the diff between the live and documented sets and returns
-// whether real drift (live plugins missing from the catalog) was found.
+// report prints the diff between the live and documented plugin sets and
+// returns whether drift was found: a live plugin missing from the catalog, or
+// a documented plugin gone from the marketplace (renamed or removed).
 func report(w io.Writer, live, documented []string) bool {
 	live, documented = sortedUnique(live), sortedUnique(documented)
 
-	var missing []string
+	var missing, removed []string
 	for _, l := range live {
 		if !slices.Contains(documented, l) {
 			missing = append(missing, l)
 		}
 	}
-	// Documented multi-word kebab tokens not in the marketplace (may be prose tokens)
-	var removed []string
 	for _, d := range documented {
-		if !slices.Contains(live, d) && reMultiWord.MatchString(d) {
+		if !slices.Contains(live, d) {
 			removed = append(removed, d)
 		}
 	}
 
-	fmt.Fprintf(w, "Marketplace plugins: %d; documented names found: %d\n", len(live), len(live)-len(missing))
+	fmt.Fprintf(w, "Marketplace plugins: %d; documented plugins: %d\n", len(live), len(documented))
 	if len(missing) > 0 {
 		fmt.Fprint(w, "\nNEW plugins not yet in the catalog:\n")
 		for _, m := range missing {
@@ -102,12 +122,12 @@ func report(w io.Writer, live, documented []string) bool {
 		}
 	}
 	if len(removed) > 0 {
-		fmt.Fprint(w, "\nDocumented names not in the marketplace (verify manually — may be prose tokens):\n")
+		fmt.Fprint(w, "\nDocumented plugins no longer in the marketplace (renamed or removed):\n")
 		for _, r := range removed {
-			fmt.Fprintf(w, "  ? %s\n", r)
+			fmt.Fprintf(w, "  - %s\n", r)
 		}
 	}
-	if len(missing) > 0 {
+	if len(missing) > 0 || len(removed) > 0 {
 		fmt.Fprint(w, "\nDrift detected: run the maintenance skill's catalog sync (step 5).\n")
 		return true
 	}
@@ -157,7 +177,7 @@ func main() {
 		fatal(err)
 	}
 
-	if report(os.Stdout, live, documentedNames(string(catalog))) {
+	if report(os.Stdout, live, pluginNames(string(catalog))) {
 		os.Exit(1)
 	}
 }
