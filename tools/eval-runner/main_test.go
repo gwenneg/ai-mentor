@@ -22,7 +22,7 @@ const casesSnippet = "# Eval cases\n\n" +
 	"| A01 | `debug a flaky test that only fails in CI` | debugging | The README's canonical example |\n" +
 	"| A03 | `refactor authentication across 30 files` | refactoring | Cross-file scale signal |\n\n" +
 	"### Group A output-shape expectations (every classified case)\n\n" +
-	"- Opens with the one-sentence Phase 0 announcement, then a diagnosis naming observed evidence — never a questionnaire\n" +
+	"- Opens with the one-sentence load-state announcement, then a diagnosis naming observed evidence — never a questionnaire\n" +
 	"- Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo\n\n" +
 	"## Group B — Growth mode (bare invocation)\n\n" +
 	"Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture.\n\n" +

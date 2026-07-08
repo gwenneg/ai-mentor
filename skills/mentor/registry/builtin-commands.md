@@ -1,7 +1,7 @@
 # Capability Registry — built-in commands
 *Last verified: 2026-07-06*
 
-The registry pilot (NEXT_VERSION.md S4/D1): every recommendable built-in command as one flat record. These are first-class mentoring units — they get profile rows under their `id`, direct routing via the `**Built-ins:**` line in `routing/<goal>.md`, and a place in the ignorance map. Goal membership is a slug list, **never a numeric fit score**; the model orders candidates at answer time from live evidence. `best_when` is one auditable sentence. Facts here are verified against the official docs on the `Last verified` date — syntax is quoted exactly; paraphrase it, never reconstruct it from training data.
+The built-in-command slice of the capability registry: every recommendable built-in command as one flat record. These are first-class mentoring units — they get profile rows under their `id`, direct routing via the `**Built-ins:**` line in `routing/<goal>.md`, and a place in the ignorance map. Goal membership is a slug list, **never a numeric fit score**; the model orders candidates at answer time from live evidence. `best_when` is one auditable sentence. Facts here are verified against the official docs on the `Last verified` date — syntax is quoted exactly; paraphrase it, never reconstruct it from training data.
 
 Record fields: `id` (profile row key), `kind`, `goals` (slugs from the classification table), `best_when`, `setup` (none | some | involved), `composes_with` (approach basenames or registry ids), `exemplar` (copy-ready line), `session_signal` (what marks it adopted from conversation evidence), `pitfalls`, `source`.
 

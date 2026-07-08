@@ -57,7 +57,7 @@ Choose **the move**: the goal file's #1 ranked approach, unless the evidence poi
 Respond in this shape, compact, no card walls:
 
 1. **Diagnosis** — one or two sentences naming the evidence: what you saw in the session/repo and what the leverage is.
-2. **The move** — name it, one sentence on the principle that makes it work, ONE ready-to-run prompt in a fenced block built from the real paths and commands you verified (never a second "if you don't have X" alternative block — commit to the path the evidence supports; a missing prerequisite becomes the move's setup line, not a fork), and a "Do it now" offer (SKILL.md Phase 4).
+2. **The move** — name it, one sentence on the principle that makes it work, ONE ready-to-run prompt in a fenced block built from the real paths and commands you verified (never a second "if you don't have X" alternative block — commit to the path the evidence supports; a missing prerequisite becomes the move's setup line, not a fork), and a "Do it now" offer (SKILL.md "Make it real").
 3. **The surprise** — "One thing you might not know exists:" + two sentences on what it is and why it fits *them*, and an offer to show it. A plugin named here carries its tier marker exactly like anywhere else in the response.
 4. **One closing line**, and it is the final text of the turn — nothing after it, not a recap, not "recommendation delivered", not save narration: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
 

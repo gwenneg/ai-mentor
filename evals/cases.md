@@ -1,6 +1,6 @@
 # Eval cases
 
-Cases for the discovery-first skill, in four groups: classification (problem mode routes correctly), output shape (the response is a diagnosis + one move + one surprise, not a menu), profile behavior (the never-repeat rule holds), and trigger calibration (the skill fires on mentor-shaped questions and stays quiet otherwise).
+Cases for the discovery-first skill, in four groups: **A — classification** (problem mode routes correctly, and every classified response meets the output-shape expectations: a diagnosis + one move + one surprise, not a menu), **B — growth mode** (a bare invocation picks the right opener from the profile), **C — never-repeat** (the profile rule holds under problem mode), and **D — trigger calibration** (the skill fires on mentor-shaped questions and stays quiet otherwise).
 
 ## Group A — Classification (problem mode)
 
@@ -29,10 +29,17 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (✅, from the goal routing file's Plugins line) as the move or its tool |
 | A20 | `convert our SAPUI5 app from JavaScript to TypeScript` | migration | Stack-match rule: must surface `ui5-typescript-conversion` with the "not hands-on evaluated" label |
 | A21 | `my tests pass but I'm not convinced the feature really works` | testing | The move must be the `/verify` built-in directly (from the goal file's Built-ins line / registry), with the copy-ready command; a `verify` profile row is recorded |
+| A22 | `write API docs for our orders endpoints` | documentation | |
+| A23 | `build a discount-code feature from scratch` | greenfield | "From scratch" must not misroute to refactoring despite touching existing checkout code |
+| A24 | `check this codebase for injection vulnerabilities before launch` | security | Must not route to code-review; there is no diff, the subject is the codebase |
+| A25 | `design a versioning strategy for our public orders API` | api-design | |
+| A26 | `containerize this service and deploy it to Kubernetes` | devops | |
+| A27 | `cut a release with a changelog users can actually read` | release-management | |
+| A28 | `where should we start paying down the mess in this codebase?` | tech-debt | Prioritization phrasing must not misroute to refactoring |
 
 ### Group A output-shape expectations (every classified case)
 
-- Opens with a sentence naming what was checked (or is about to be checked) and why — the Phase 0 announcement, prospective or retrospective. Judged transcripts interleave brief progress narration between tool calls; that narration is acceptable opening material (it is how the announcement reads live), and the diagnosis naming observed evidence must follow it. A questionnaire is never acceptable
+- Opens with a sentence naming what was checked (or is about to be checked) and why — the load-state announcement from SKILL.md, prospective or retrospective. Judged transcripts interleave brief progress narration between tool calls; that narration is acceptable opening material (it is how the announcement reads live), and the diagnosis naming observed evidence must follow it. A questionnaire is never acceptable
 - Exactly **one** primary move, with a fenced prompt using at least one real path or command from the fixture repo *inside the fenced block itself* (a setup line for that same move — a `/plugin install` or `claude mcp add` — counts as part of the move, not as a second one). For technology-choice questions about the fixture repo's own future (which ORM, which library), naming the fixture's real stack and test runner IS the grounding — no file path required. The portable-prompt exception applies only when the problem targets a *different* repo than the fixture or names code the fixture does not contain (e.g. A20's SAPUI5 app in a non-UI5 fixture): then the prompt must not import fixture-repo paths or conventions
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known — or zero when the relevance floor applies (incident pressure with a narrow question, or no ignorance-map entry related to the goal/stack); never two, and never filler
 - Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more". The closing line must be the last user-visible text — trailing recaps or profile-save narration after it violate this

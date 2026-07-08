@@ -1,7 +1,7 @@
 # Capability Registry — techniques
 *Last verified: 2026-07-06*
 
-Every catalog approach as one flat record — the technique slice of the capability registry (kind-aware design: NEXT_VERSION.md D1/S6; built-in commands live in `builtin-commands.md`, marketplace plugins in `references/official-plugins.md`, which IS the registry's plugin slice). Records are generated from the routing files and approach files and kept in lockstep by the structural audit: `goals` mirrors routing membership exactly, `id` is the approach basename, and the deep-dive prose stays in `approaches/<id>.md` — this file adds the machine-readable goal membership and one-line trigger, nothing else. `best_when` is the highest-ranked routing row's trigger. No numeric fit scores, ever.
+Every catalog approach as one flat record — the technique slice of the kind-aware capability registry (built-in commands live in `builtin-commands.md`, marketplace plugins in `references/official-plugins.md`, which IS the registry's plugin slice). Records are generated from the routing files and approach files and kept in lockstep by the structural audit: `goals` mirrors routing membership exactly, `id` is the approach basename, and the deep-dive prose stays in `approaches/<id>.md` — this file adds the machine-readable goal membership and one-line trigger, nothing else. `best_when` is the highest-ranked routing row's trigger. No numeric fit scores, ever.
 
 ## autonomous-loops
 

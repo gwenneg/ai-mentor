@@ -23,6 +23,8 @@ on:
   workflow_dispatch:
     inputs:
       steps:
+        # Deliberately NOT the scheduled routine (4,5): manual dispatch defaults
+        # to the deep re-verification (3) that scheduled runs never perform.
         description: 'Steps to run (2=audit, 3=verify, 4=tool changes, 5=catalog sync)'
         default: '3,5'
       files:

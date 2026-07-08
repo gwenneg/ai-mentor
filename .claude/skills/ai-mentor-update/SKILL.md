@@ -43,16 +43,16 @@ Auto-mode overrides, in addition to skipping every question below:
 
 Run `date +%Y-%m-%d` via bash to establish today's date.
 
-Then ask the user which steps to run:
+Then ask the user which steps to run. The menu numbers are the Step headings below — the same numbers `--auto` uses, so "4" means the same thing interactively and in CI:
 
 > Which maintenance steps do you want to run?
 >
-> 1. **Structural audit** — check all files against templates, cross-references, staleness
-> 2. **Content verification** — web-search claims in files against current tool docs
-> 3. **Process new changelogs** — incorporate what's-new digests not yet listed in `references/processed-changelogs.md`
-> 4. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `references/official-plugins.md`
+> 2. **Structural audit** — check all files against templates, cross-references, staleness
+> 3. **Content verification** — web-search claims in files against current tool docs
+> 4. **Process new changelogs** — incorporate what's-new digests not yet listed in `references/processed-changelogs.md`
+> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `references/official-plugins.md`
 >
-> You can pick any combination (e.g. "all", "1 and 3", "just 4"). The routine pass is 3 and 4; the others are occasional deep audits.
+> You can pick any combination (e.g. "all", "2 and 4", "just 5"). The routine pass is 4 and 5; the others are occasional deep audits.
 
 Wait for the user's response, then run the selected steps in order. *(Auto mode: skip the question — the steps come from `--auto`.)*
 
@@ -96,6 +96,18 @@ For each `.md` file in `skills/mentor/approaches/`:
 **Line count check** — flag files under 40 lines.
 
 **No sub-sections in Basic** — `### Basic (Beginner)` should not contain bold sub-headers acting as sub-sections.
+
+### Registry files
+
+For the capability registry (`skills/mentor/registry/`, plus its plugin slice in `references/official-plugins.md`):
+
+- `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
+- `techniques.md`: exactly one record per approach file — `id` is the approach basename and `goals` mirrors that approach's routing membership exactly; this lockstep is what lets the registry be trusted
+- `builtin-commands.md`: unique `id`s; every record referenced by at least one `**Built-ins:**` line in `routing/<goal>.md`, and every Built-ins token resolving to a record
+- `integrations.md`: unique `id`s that don't collide with builtin-command ids
+- Every `goals` slug in any record resolves to an existing `routing/<goal>.md`
+
+The Go audit (`go -C tools/structural-audit run .`) enforces all of this deterministically — run it first; this checklist explains its failures.
 
 ### Cross-references
 
@@ -189,7 +201,7 @@ This is the routine maintenance path. New Claude Code capabilities are announced
 3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
    - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
-   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the registry in lockstep — the structural audit (and CI) fails otherwise: a new approach needs a matching record in `registry/techniques.md` and at least one routing row (its `goals` list mirrors routing membership); a new built-in command or integration gets a record in `registry/builtin-commands.md` / `registry/integrations.md`, referenced from the relevant `**Built-ins:**` line.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
 4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and routing/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
@@ -211,7 +223,7 @@ For breaking changes the digests may not mention (renamed flags, removed feature
 - [ ] Consider new approach file for [new feature]
 ```
 
-Present the suggested actions and ask the user which ones to apply *(auto mode: process every unprocessed digest, apply only changes meeting the "Recommended changes" bar, report the rest — and always append the ledger row; if a change was found but not applied, the row says "see report")*. For updates to existing files, do **not** update `*Last verified*` — a digest-driven edit verifies one claim, not the whole file's contents; only Step 3 (whole-file verification) or verified-at-birth authorship moves the date. For new files, scaffold from this skill's `templates/` directory and date them today.
+Present the suggested actions and ask the user which ones to apply *(auto mode: process every unprocessed digest, apply only changes meeting the "Recommended changes" bar, report the rest — and always append the ledger row; if a change was found but not applied, the row says "see report")*. For updates to existing files, do **not** update `*Last verified*` — a digest-driven edit verifies one claim, not the whole file's contents; only Step 3 (whole-file verification) or verified-at-birth authorship moves the date. For new approach files, scaffold from this skill's `templates/` directory and date them today; registry records have no template — copy the field shape of an existing record in the target registry file.
 
 ---
 
