@@ -114,7 +114,7 @@ kind: builtin-command
 goals: research, dependency-management, incident-response
 best_when: a decision needs a multi-source, adversarially verified answer rather than one page's opinion
 setup: some
-composes_with: deep-research, plan-mode
+composes_with: plan-mode, autonomous-loops
 exemplar: /deep-research Compare date-fns and Luxon as Moment.js replacements for timezone-heavy scheduling code
 session_signal: user ran /deep-research in this conversation
 pitfalls:
