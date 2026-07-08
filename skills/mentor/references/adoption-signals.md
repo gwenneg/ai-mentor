@@ -1,7 +1,7 @@
 # Adoption Signals
 *Last reviewed: 2026-07-03*
 
-Observable evidence that an engineer already knows and uses each approach. The mentor computes the ignorance map by subtraction: the approaches below, minus those with positive signals, minus those recorded in the mentor profile (see `profile-schema.md`), ranked by leverage for the work observed in the session and repo.
+Observable evidence that an engineer already knows and uses each approach. The mentor computes the ignorance map by subtraction across the whole registry — the approaches below are its technique slice — minus records with positive signals, minus those recorded in the mentor profile (see `profile-schema.md`), ranked by leverage for the work observed in the session and repo.
 
 Two signal tiers:
 
