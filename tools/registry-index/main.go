@@ -48,8 +48,8 @@ var (
 	reSessL   = regexp.MustCompile(`^- Session: (.+)$`)
 )
 
-// badgeSetup maps the routing tables' Level badge to the record vocabulary.
-var badgeSetup = map[string]string{"Beginner": "none", "Intermediate": "some", "Advanced": "involved"}
+// validSetup is the one setup vocabulary, shared by routing cells and records.
+var validSetup = map[string]bool{"none": true, "some": true, "involved": true}
 
 type row struct {
 	id, kind, bestWhen, setup, setupSig, sessionSig string
@@ -117,13 +117,13 @@ func (g *gen) techniques() map[string]*row {
 				bestRank[slug] = 1 << 30
 			}
 			r.goals = append(r.goals, goal)
-			setup, ok := badgeSetup[cs[3]]
-			if !ok {
-				g.errf(f, "row for '%s' has invalid level '%s'", slug, cs[3])
+			setup := cs[3]
+			if !validSetup[setup] {
+				g.errf(f, "row for '%s' has invalid setup '%s'", slug, setup)
 			} else if r.setup == "" {
 				r.setup = setup
 			} else if r.setup != setup {
-				g.errf(f, "setup badge for '%s' conflicts with another routing file ('%s' vs '%s')", slug, r.setup, setup)
+				g.errf(f, "setup for '%s' conflicts with another routing file ('%s' vs '%s')", slug, r.setup, setup)
 			}
 			if rank < bestRank[slug] {
 				bestRank[slug] = rank

@@ -9,7 +9,7 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Starting a new API or major version from scratch | An API is a promise to consumers; planning the contract first finds design mistakes while fixing them is free |
-| 2 | [Deep Research](../approaches/deep-research.md) | Beginner | Unsure about conventions like pagination, versioning, error format | Studying proven APIs gives rationale for your choices and avoids pitfalls others already documented |
-| 3 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Requirements scattered across specs, tickets, and existing APIs | Pulling the existing API surface alongside requirements keeps new endpoints consistent — same naming, errors, pagination |
-| 4 | [Built-in Review Skills](../approaches/built-in-review-skills.md) | Beginner | Extending an existing API and need to stay consistent | Misspelled fields and inconsistent errors break no test but frustrate every consumer; review catches surface issues type checkers miss |
+| 1 | [Plan Mode](../approaches/plan-mode.md) | none | Starting a new API or major version from scratch | An API is a promise to consumers; planning the contract first finds design mistakes while fixing them is free |
+| 2 | [Deep Research](../approaches/deep-research.md) | none | Unsure about conventions like pagination, versioning, error format | Studying proven APIs gives rationale for your choices and avoids pitfalls others already documented |
+| 3 | [MCP Context](../approaches/mcp-context.md) | some | Requirements scattered across specs, tickets, and existing APIs | Pulling the existing API surface alongside requirements keeps new endpoints consistent — same naming, errors, pagination |
+| 4 | [Built-in Review Skills](../approaches/built-in-review-skills.md) | none | Extending an existing API and need to stay consistent | Misspelled fields and inconsistent errors break no test but frustrate every consumer; review catches surface issues type checkers miss |

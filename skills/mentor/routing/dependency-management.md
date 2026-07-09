@@ -11,8 +11,8 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Deep Research](../approaches/deep-research.md) | Beginner | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |
-| 2 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Understanding what depends on a package before removing it | Dependency changes are graph operations — mapping the full graph first catches transitive breakage before it happens |
-| 3 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Your org has approved dependency lists or security policies | The fastest decision is one someone already made — internal sources prevent duplicating or contradicting prior evaluations |
-| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | Intermediate | Want to test a major upgrade without risking your branch | A disposable environment gives a realistic damage assessment instead of guessing from the changelog |
-| 5 | [Scheduled & Recurring Agents](../approaches/scheduled-agents.md) | Intermediate | Dependency triage is important but never urgent | Recurring maintenance survives only when it stops depending on human initiative — a schedule converts "someone should" into "it happened" |
+| 1 | [Deep Research](../approaches/deep-research.md) | none | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |
+| 2 | [Plan Mode](../approaches/plan-mode.md) | none | Understanding what depends on a package before removing it | Dependency changes are graph operations — mapping the full graph first catches transitive breakage before it happens |
+| 3 | [MCP Context](../approaches/mcp-context.md) | some | Your org has approved dependency lists or security policies | The fastest decision is one someone already made — internal sources prevent duplicating or contradicting prior evaluations |
+| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | some | Want to test a major upgrade without risking your branch | A disposable environment gives a realistic damage assessment instead of guessing from the changelog |
+| 5 | [Scheduled & Recurring Agents](../approaches/scheduled-agents.md) | some | Dependency triage is important but never urgent | Recurring maintenance survives only when it stops depending on human initiative — a schedule converts "someone should" into "it happened" |

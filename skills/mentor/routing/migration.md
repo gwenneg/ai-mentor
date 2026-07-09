@@ -11,7 +11,7 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Large migration touching dozens of files | Migrations are dependency graphs, not task lists — planning reveals the structure so you traverse it in the right order |
-| 2 | [Subagent Delegation](../approaches/subagent-delegation.md) | Advanced | Migration across independent modules or services | Migrations are embarrassingly parallel when modules don't share state — subagents do in minutes what takes sequential hours |
-| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Intermediate | Upgrade where "it compiles and tests pass" is the goal | Mechanical migrations have a clear convergence criterion — AI doesn't get bored or lose focus on iteration 47 |
-| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | Intermediate | Risky upgrade you want to test without polluting main | A throwaway environment changes how you approach risk — bolder strategies, faster discovery, nothing at stake |
+| 1 | [Plan Mode](../approaches/plan-mode.md) | none | Large migration touching dozens of files | Migrations are dependency graphs, not task lists — planning reveals the structure so you traverse it in the right order |
+| 2 | [Subagent Delegation](../approaches/subagent-delegation.md) | involved | Migration across independent modules or services | Migrations are embarrassingly parallel when modules don't share state — subagents do in minutes what takes sequential hours |
+| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | some | Upgrade where "it compiles and tests pass" is the goal | Mechanical migrations have a clear convergence criterion — AI doesn't get bored or lose focus on iteration 47 |
+| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | some | Risky upgrade you want to test without polluting main | A throwaway environment changes how you approach risk — bolder strategies, faster discovery, nothing at stake |

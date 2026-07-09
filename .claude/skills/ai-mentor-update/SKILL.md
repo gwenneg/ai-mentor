@@ -70,7 +70,7 @@ For each per-goal file in `skills/mentor/routing/`:
 
 - `*Last verified: YYYY-MM-DD*` on line 2
 - One `routing/<slug>.md` file per goal in problem-mode.md's classification table (and no extras)
-- Each file: a `**Hidden gem:**` line naming an approach that appears in its rows, and a ranked shortlist with sequential numbering, at least 3 rows, valid Setup values (Beginner/Intermediate/Advanced), and approach links that resolve
+- Each file: a `**Hidden gem:**` line naming an approach that appears in its rows, and a ranked shortlist with sequential numbering, at least 3 rows, valid Setup values (none/some/involved — what the approach requires, never skill-level words), and approach links that resolve
 - Row content: "Best when" is one short clause; "Why it fits" is one sentence of goal-specific judgment — flag rows that have drifted into generic filler
 - The shortlist is curated, not exhaustive: top picks plus the hidden gem. Every approach file must still be referenced by at least one routing file (the audit's orphan check)
 

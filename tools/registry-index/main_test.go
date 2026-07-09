@@ -19,15 +19,15 @@ func validTree() map[string]string {
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Alpha](../approaches/alpha.md) | Beginner | Alpha shines | y |
-| 2 | [Beta](../approaches/beta.md) | Intermediate | Beta fits | y |
+| 1 | [Alpha](../approaches/alpha.md) | none | Alpha shines | y |
+| 2 | [Beta](../approaches/beta.md) | some | Beta fits | y |
 `,
 		"skills/mentor/routing/other-goal.md": `# other-goal
 *Last verified: 2026-07-03*
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Beta](../approaches/beta.md) | Intermediate | Beta wins here | y |
+| 1 | [Beta](../approaches/beta.md) | some | Beta wins here | y |
 `,
 		"skills/mentor/approaches/alpha.md": approachMD("`x` exists", "uses alpha"),
 		"skills/mentor/approaches/beta.md":  approachMD("—", "uses beta"),
@@ -114,14 +114,14 @@ func TestSourceIssuesAreCaught(t *testing.T) {
 		mutate func(f map[string]string)
 		expect string
 	}{
-		{"conflicting setup badges", func(f map[string]string) {
+		{"conflicting setup values", func(f map[string]string) {
 			f["skills/mentor/routing/other-goal.md"] = strings.Replace(
-				f["skills/mentor/routing/other-goal.md"], "| Intermediate |", "| Advanced |", 1)
-		}, "setup badge for 'beta' conflicts"},
-		{"invalid level", func(f map[string]string) {
+				f["skills/mentor/routing/other-goal.md"], "| some |", "| involved |", 1)
+		}, "setup for 'beta' conflicts"},
+		{"invalid setup", func(f map[string]string) {
 			f["skills/mentor/routing/test-goal.md"] = strings.Replace(
-				f["skills/mentor/routing/test-goal.md"], "| Beginner |", "| Expert |", 1)
-		}, "invalid level 'Expert'"},
+				f["skills/mentor/routing/test-goal.md"], "| none |", "| Beginner |", 1)
+		}, "invalid setup 'Beginner'"},
 		{"approach without routing row", func(f map[string]string) {
 			f["skills/mentor/approaches/orphan.md"] = approachMD("—", "sig")
 		}, "no routing row"},

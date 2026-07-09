@@ -36,9 +36,9 @@ func validTree() map[string]string {
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Alpha](../approaches/alpha.md) | Beginner | x | y |
-| 2 | [Beta](../approaches/beta.md) | Intermediate | x | y |
-| 3 | [Gamma](../approaches/gamma.md) | Advanced | x | y |
+| 1 | [Alpha](../approaches/alpha.md) | none | x | y |
+| 2 | [Beta](../approaches/beta.md) | some | x | y |
+| 3 | [Gamma](../approaches/gamma.md) | involved | x | y |
 `,
 		"skills/mentor/approaches/alpha.md": approachMD(),
 		"skills/mentor/approaches/beta.md":  approachMD(),
@@ -120,9 +120,9 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		mutate func(f map[string]string)
 		expect string
 	}{
-		{"invalid level", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "| Advanced |", "| Expert |", 1)
-		}, "invalid level Expert"},
+		{"invalid setup", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "| involved |", "| Advanced |", 1)
+		}, "invalid setup Advanced"},
 		{"non-sequential rows", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "| 3 |", "| 5 |", 1)
 		}, "row numbering not sequential"},

@@ -11,8 +11,8 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |
-| 2 | [Deep Research](../approaches/deep-research.md) | Beginner | Writing docs for an unfamiliar domain or standard | Documentation is a communication design problem; proven patterns give a structural blueprint so effort goes to content |
-| 3 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Large doc set with multiple sections and audiences | Documentation is information architecture — an outline gives every fact one home and writers clear coverage without overlap |
-| 4 | [Custom Skills](../approaches/custom-skills.md) | Beginner | You regenerate the same type of documentation repeatedly | Same-structure docs are a solved problem once encoded — consistent, complete output from source code every time |
-| 5 | [Visual Artifacts](../approaches/visual-artifacts.md) | Beginner | Docs need diagrams, dashboards, or sharing beyond the repo | Diagrams carry relationships linear Markdown flattens, and a stable URL turns docs into a link people actually open |
+| 1 | [MCP Context](../approaches/mcp-context.md) | some | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |
+| 2 | [Deep Research](../approaches/deep-research.md) | none | Writing docs for an unfamiliar domain or standard | Documentation is a communication design problem; proven patterns give a structural blueprint so effort goes to content |
+| 3 | [Plan Mode](../approaches/plan-mode.md) | none | Large doc set with multiple sections and audiences | Documentation is information architecture — an outline gives every fact one home and writers clear coverage without overlap |
+| 4 | [Custom Skills](../approaches/custom-skills.md) | none | You regenerate the same type of documentation repeatedly | Same-structure docs are a solved problem once encoded — consistent, complete output from source code every time |
+| 5 | [Visual Artifacts](../approaches/visual-artifacts.md) | none | Docs need diagrams, dashboards, or sharing beyond the repo | Diagrams carry relationships linear Markdown flattens, and a stable URL turns docs into a link people actually open |

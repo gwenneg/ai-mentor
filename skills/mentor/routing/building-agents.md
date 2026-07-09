@@ -11,7 +11,7 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Unsure what the agent should even do | An agent is a policy wrapped around a model — explicit designs fail predictably, emergent ones fail creatively |
-| 2 | [Custom Agents](../approaches/custom-agents.md) | Beginner | Want a working prototype today | Editing markdown and re-running is the cheapest iteration loop — converge on instructions and tool surface in an afternoon |
-| 3 | [Official Plugins](../approaches/official-plugins.md) | Intermediate | Ready to build a standalone product | Agent infrastructure is undifferentiated heavy lifting; a production-tested engine puts your effort into the agent's judgment |
-| 4 | [Permissions & Safe Autonomy](../approaches/safe-autonomy.md) | Intermediate | Need to constrain what the agent can do | Capability is easy and trust hard to win back — agents earn adoption through provable boundaries, not demos |
+| 1 | [Plan Mode](../approaches/plan-mode.md) | none | Unsure what the agent should even do | An agent is a policy wrapped around a model — explicit designs fail predictably, emergent ones fail creatively |
+| 2 | [Custom Agents](../approaches/custom-agents.md) | none | Want a working prototype today | Editing markdown and re-running is the cheapest iteration loop — converge on instructions and tool surface in an afternoon |
+| 3 | [Official Plugins](../approaches/official-plugins.md) | some | Ready to build a standalone product | Agent infrastructure is undifferentiated heavy lifting; a production-tested engine puts your effort into the agent's judgment |
+| 4 | [Permissions & Safe Autonomy](../approaches/safe-autonomy.md) | some | Need to constrain what the agent can do | Capability is easy and trust hard to win back — agents earn adoption through provable boundaries, not demos |

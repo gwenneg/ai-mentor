@@ -9,6 +9,6 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | About to change a resource that other services depend on | Infra dependency graphs hide in string references; making them explicit prevents destroy-and-recreate surprises mid-apply |
-| 2 | [Deep Research](../approaches/deep-research.md) | Beginner | Unfamiliar with a cloud provider's limits or pricing model | Provisioning mistakes are expensive to fix; research catches limits and pricing traps before they become incidents or bills |
-| 3 | [Worktree Isolation](../approaches/worktree-isolation.md) | Intermediate | Want to test Terraform or Helm changes without touching your branch | Throwaway safety matters most for infrastructure — worst case is deleting a worktree, not filing an incident report |
+| 1 | [Plan Mode](../approaches/plan-mode.md) | none | About to change a resource that other services depend on | Infra dependency graphs hide in string references; making them explicit prevents destroy-and-recreate surprises mid-apply |
+| 2 | [Deep Research](../approaches/deep-research.md) | none | Unfamiliar with a cloud provider's limits or pricing model | Provisioning mistakes are expensive to fix; research catches limits and pricing traps before they become incidents or bills |
+| 3 | [Worktree Isolation](../approaches/worktree-isolation.md) | some | Want to test Terraform or Helm changes without touching your branch | Throwaway safety matters most for infrastructure — worst case is deleting a worktree, not filing an incident report |

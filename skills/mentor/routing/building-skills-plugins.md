@@ -9,6 +9,6 @@
 
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
-| 1 | [Custom Skills](../approaches/custom-skills.md) | Beginner | A workflow you repeat and want to package | Skills fail on unclear instructions, and clarity is discovered by iteration — the standalone stage keeps iteration cost near zero |
-| 2 | [Custom Plugins](../approaches/custom-plugins.md) | Intermediate | Skill works; time to share or distribute | Distribution is where team knowledge compounds — one engineer's workflow becomes everyone's default, shipped deliberately via versioning |
-| 3 | [Hooks as Workflow](../approaches/hooks-as-workflow.md) | Intermediate | The behavior should be automatic, not invoked | Skills require someone to invoke them; hooks fire regardless — the workflow works even for teammates who skip the README |
+| 1 | [Custom Skills](../approaches/custom-skills.md) | none | A workflow you repeat and want to package | Skills fail on unclear instructions, and clarity is discovered by iteration — the standalone stage keeps iteration cost near zero |
+| 2 | [Custom Plugins](../approaches/custom-plugins.md) | some | Skill works; time to share or distribute | Distribution is where team knowledge compounds — one engineer's workflow becomes everyone's default, shipped deliberately via versioning |
+| 3 | [Hooks as Workflow](../approaches/hooks-as-workflow.md) | some | The behavior should be automatic, not invoked | Skills require someone to invoke them; hooks fire regardless — the workflow works even for teammates who skip the README |
