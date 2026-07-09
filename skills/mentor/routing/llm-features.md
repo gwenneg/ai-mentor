@@ -7,6 +7,8 @@
 
 **Plugins:** `langfuse` ☑️ tracing and evals · `huggingface-skills` ☑️ models and datasets · `pinecone` ☑️ vector search — 6 more in the catalog.
 
+**Integrations:** `agent-sdk` — programmatic sessions and custom tools for AI features built into your own product. Facts and pitfalls per record: `registry/integrations.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Designing the feature before building | The hard part isn't calling the API — measurable quality and graceful failure are design decisions code inherits |

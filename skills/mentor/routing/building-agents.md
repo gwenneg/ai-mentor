@@ -7,6 +7,8 @@
 
 **Plugins:** `agent-sdk-dev` ✅ Agent SDK scaffolding · `pydantic-ai` ☑️ and `atomic-agents` ☑️ framework-specific patterns · `aws-agents` ☑️ Bedrock AgentCore — 2 more in the catalog.
 
+**Integrations:** `agent-sdk` — the supported path when the agent is a product, not a Claude Code workflow. Facts and pitfalls per record: `registry/integrations.md`.
+
 | # | Approach | Setup | Best when | Why it fits |
 |---|----------|-------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Unsure what the agent should even do | An agent is a policy wrapped around a model — explicit designs fail predictably, emergent ones fail creatively |
