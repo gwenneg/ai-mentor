@@ -99,7 +99,7 @@ For each `.md` file in `skills/mentor/approaches/`:
 
 ### Registry files
 
-For the capability registry (`skills/mentor/registry/`, plus its plugin slice in `references/official-plugins.md`):
+For the capability registry (`skills/mentor/registry/`) and the external plugin catalog (`references/official-plugins.md`):
 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
 - `index.md` is **generated** — never hand-edit it. After changing routing rows, an approach's `## Signals` section, or a registry record, run `go -C tools/registry-index run .` and commit the regenerated file (CI fails on a stale index). The old lockstep rules (one record per approach, `goals` mirroring routing) now hold by construction
