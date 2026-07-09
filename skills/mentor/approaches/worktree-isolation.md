@@ -57,3 +57,8 @@ A physically separate working directory on its own branch lets aggressive, specu
 - [Run parallel sessions with worktrees](https://code.claude.com/docs/en/worktrees) — Official docs for the `--worktree` flag, `.worktreeinclude`, `worktree.baseRef`, and worktree cleanup
 - [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs covering worktree isolation mode for subagents
 - [Claude Code IDE Integrations](https://code.claude.com/docs/en/ide-integrations) — VS Code integration docs covering the --worktree flag
+
+## Signals
+
+- Setup: `.claude/worktrees/` exists
+- Session: `claude --worktree` usage; mentions isolated parallel checkouts

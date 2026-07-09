@@ -102,7 +102,7 @@ For each `.md` file in `skills/mentor/approaches/`:
 For the capability registry (`skills/mentor/registry/`, plus its plugin slice in `references/official-plugins.md`):
 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
-- `techniques.md`: exactly one record per approach file — `id` is the approach basename and `goals` mirrors that approach's routing membership exactly; this lockstep is what lets the registry be trusted
+- `index.md` is **generated** — never hand-edit it. After changing routing rows, an approach's `## Signals` section, or a registry record, run `go -C tools/registry-index run .` and commit the regenerated file (CI fails on a stale index). The old lockstep rules (one record per approach, `goals` mirroring routing) now hold by construction
 - `builtin-commands.md`: unique `id`s; every record referenced by at least one `**Built-ins:**` line in `routing/<goal>.md`, and every Built-ins token resolving to a record
 - `integrations.md`: unique `id`s that don't collide with builtin-command ids
 - Every `goals` slug in any record resolves to an existing `routing/<goal>.md`
@@ -201,7 +201,7 @@ This is the routine maintenance path. New Claude Code capabilities are announced
 3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
    - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
-   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the registry in lockstep — the structural audit (and CI) fails otherwise: a new approach needs a matching record in `registry/techniques.md` and at least one routing row (its `goals` list mirrors routing membership); a new built-in command or integration gets a record in `registry/builtin-commands.md` / `registry/integrations.md`, referenced from the relevant `**Built-ins:**` line.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the registry consistent — CI fails otherwise: a new approach needs at least one routing row and a `## Signals` section; a new built-in command or integration gets a record in `registry/builtin-commands.md` / `registry/integrations.md`, referenced from the relevant `**Built-ins:**` line. Then regenerate the compiled index (`go -C tools/registry-index run .`) and commit it alongside the change.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
 4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and routing/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.

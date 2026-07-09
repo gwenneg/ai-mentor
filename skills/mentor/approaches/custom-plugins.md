@@ -55,3 +55,8 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 
 - [Create plugins](https://code.claude.com/docs/en/plugins) — Official guide for building plugins, structure, testing, and distribution
 - [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) — Creating and distributing marketplaces, including private and community options
+
+## Signals
+
+- Setup: `.claude-plugin/` in a repo they own; a marketplace file they maintain
+- Session: Talks about publishing or packaging a plugin

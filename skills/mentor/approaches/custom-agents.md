@@ -73,3 +73,8 @@ and a recommended fix. If you find nothing, say so — do not invent issues.
 
 - [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs for creating custom agent definitions in .claude/agents/
 - [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Official best-practices guide, including a section on creating custom subagents
+
+## Signals
+
+- Setup: `.claude/agents/*.md` or `~/.claude/agents/*.md` exists
+- Session: References their own named agents

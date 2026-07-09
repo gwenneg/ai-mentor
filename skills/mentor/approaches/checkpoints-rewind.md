@@ -57,3 +57,8 @@ Separating the state of the code from the state of the conversation — revertin
 - [Manage sessions](https://code.claude.com/docs/en/sessions) — Official docs for /branch, --fork-session, and fork grouping in the /resume picker
 - [Claude Code Interactive Mode](https://code.claude.com/docs/en/interactive-mode) — Official keyboard reference, including the double-Escape rewind shortcut
 - [Use Claude Code in VS Code](https://code.claude.com/docs/en/vs-code) — VS Code extension checkpoint UI and rewind controls
+
+## Signals
+
+- Setup: —
+- Session: `/rewind` usage; "undo that" / restore-checkpoint interactions

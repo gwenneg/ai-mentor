@@ -62,3 +62,8 @@ A reviewer following a defined methodology catches more than one who "just reads
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills including built-in /code-review and /security-review
 - [Commands](https://code.claude.com/docs/en/commands) — Reference for /code-review effort levels and --fix/--comment flags, plus /simplify, /security-review, /verify, and /run
 - [Find bugs with ultrareview](https://code.claude.com/docs/en/ultrareview) — Official docs for /code-review ultra: cloud fleet review, pricing, and the CI subcommand
+
+## Signals
+
+- Setup: Review commands wired into CI workflows
+- Session: `/code-review`, `/security-review`, `/simplify`, `/verify`, or `/run` in the transcript

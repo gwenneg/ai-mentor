@@ -55,3 +55,8 @@ Deep Research applies the same adversarial verification that good journalism and
 ## Sources
 
 - [Dynamic workflows](https://code.claude.com/docs/en/workflows) — Official docs for the bundled /deep-research workflow: availability, approval, and monitoring runs with /workflows
+
+## Signals
+
+- Setup: —
+- Session: `/deep-research` in the transcript

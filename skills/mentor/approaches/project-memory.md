@@ -69,3 +69,8 @@ Two weeks later a teammate opens the repo with Claude Code for the first time. T
 ## Sources
 
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory) — Official docs for CLAUDE.md files, .claude/rules/, imports, and auto memory
+
+## Signals
+
+- Setup: `CLAUDE.md` (root or `.claude/`), `.claude/rules/`, or `CLAUDE.local.md` exists; substantive auto-memory `MEMORY.md`
+- Session: Asks Claude to remember things; `/memory` usage

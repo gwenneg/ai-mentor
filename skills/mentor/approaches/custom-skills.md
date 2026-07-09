@@ -69,3 +69,8 @@ Steps:
 
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for creating custom skills in .claude/skills/ directories
 - [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) — Official guidance on writing effective SKILL.md instructions across Claude products
+
+## Signals
+
+- Setup: `.claude/skills/*/SKILL.md` or `~/.claude/skills/*/SKILL.md` exists (their own, not plugin-installed)
+- Session: Invokes their own slash commands

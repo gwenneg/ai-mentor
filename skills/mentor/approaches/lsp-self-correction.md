@@ -56,3 +56,8 @@ Inserting the compiler into the generation loop replaces "generate, copy, paste,
 
 - [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices) — official guide on giving Claude checks it can run; recommends code intelligence plugins for typed languages
 - [Discover and install prebuilt plugins](https://code.claude.com/docs/en/discover-plugins#code-intelligence) — official reference for code intelligence (LSP) plugins: plugin names, required binaries, automatic diagnostics after edits, and code navigation
+
+## Signals
+
+- Setup: An LSP plugin installed for the project language
+- Session: Mentions go-to-definition / diagnostics-driven fixes

@@ -55,3 +55,8 @@ The event arrives in the session that already has your files open and remembers 
 
 - [Push events into a running session with channels](https://code.claude.com/docs/en/channels) — Official docs: setup, supported plugins, security, enterprise controls
 - [Channels reference](https://code.claude.com/docs/en/channels-reference) — The channel contract for building your own: events, reply tools, sender gating, permission relay
+
+## Signals
+
+- Setup: A channel plugin installed (telegram, discord, imessage, fakechat)
+- Session: `--channels` flag mentions; talks about pushing webhooks/chat into a session

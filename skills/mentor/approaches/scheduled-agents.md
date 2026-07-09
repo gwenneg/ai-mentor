@@ -54,3 +54,8 @@ Work that runs automatically happens every time; work that requires initiative h
 ## Sources
 
 - [Automate work with routines](https://code.claude.com/docs/en/routines) — Official docs for scheduled, API, and GitHub triggers, /schedule, connectors, and limits
+
+## Signals
+
+- Setup: —
+- Session: `/schedule` usage; mentions routines or recurring runs

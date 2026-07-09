@@ -96,3 +96,8 @@ The first week, the team notices Claude is flagging style issues they do not car
 - [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions) — CI/CD integration with GitHub Actions
 - [Claude Code GitLab CI/CD](https://code.claude.com/docs/en/gitlab-ci-cd) — Beta GitLab pipeline integration maintained by GitLab
 - [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference) — CLI reference covering -p flag and non-interactive options
+
+## Signals
+
+- Setup: `claude -p` in `.github/workflows/`, `.gitlab-ci.yml`, or scripts
+- Session: Discusses non-interactive/CI invocations

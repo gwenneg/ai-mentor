@@ -56,3 +56,8 @@ Most coding mistakes happen not because the AI cannot write code, but because it
 - [Claude Code MCP](https://code.claude.com/docs/en/mcp) — Official docs for connecting Claude Code to external tools via MCP
 - [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro) — General MCP protocol overview and architecture
 - [MCP Reference Servers](https://github.com/modelcontextprotocol/servers) — Official repository of MCP server implementations
+
+## Signals
+
+- Setup: `.mcp.json` exists, or MCP servers configured in settings
+- Session: Uses MCP-backed tools; mentions connecting external systems

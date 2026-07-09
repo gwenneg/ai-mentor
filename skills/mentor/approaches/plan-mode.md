@@ -55,3 +55,8 @@ Separating analysis from execution catches flawed assumptions at the outline sta
 
 - [Permission modes](https://code.claude.com/docs/en/permission-modes) — Official docs on plan mode: how to enter it, what it can and cannot do, and the plan approval flow
 - [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices) — Official best-practices guide with the explore, plan, then code workflow
+
+## Signals
+
+- Setup: —
+- Session: Enters plan mode (Shift+Tab); asks for a plan before edits

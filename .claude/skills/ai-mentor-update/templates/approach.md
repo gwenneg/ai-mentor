@@ -88,6 +88,11 @@ this file: omit the section entirely in that case.]
 (Anthropic docs, tool docs, maintainer sites) over blog posts
 or community content. These are the references the content was
 verified against.]
+
+## Signals
+
+- Setup: [observable disk/config evidence the engineer already uses this — a glob or grep against the project or ~/.claude; use — if none exists]
+- Session: [conversation evidence — a command in the transcript, a described habit]
 ```
 
 ## Rules
@@ -98,6 +103,7 @@ verified against.]
 - **Common Pitfalls come from experience** — describe mistakes developers actually make, not obvious warnings
 - **`## Sources` lists at least one official external link** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
 - **No extra sections** beyond the template — keep the structure consistent across all approach files
+- **`## Signals` is required and machine-consumed** — the registry-index generator compiles it into `registry/index.md`; both lines must be present (`—` for a tier with no signal). Regenerate the index after editing it
 - **No sub-sections within "Basic (Beginner)"** — if the approach has distinct modes (e.g., "using" vs. "setting up"), pick the most common one for Basic and put variations in Advanced Patterns
 - **`*Last verified: YYYY-MM-DD*`** on line 2 — moves ONLY when the file's claims are verified against current official docs, or at creation from verified sources; never on mechanical edits
 - **Composing patterns reference other approaches by name** — this helps developers discover related techniques
