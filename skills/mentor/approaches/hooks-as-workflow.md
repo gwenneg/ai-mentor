@@ -71,3 +71,8 @@ Example — auto-format after every file edit:
 
 - [Claude Code Hooks](https://code.claude.com/docs/en/hooks) — Hooks reference covering all hook events, matchers, and exit codes
 - [Claude Code Hooks Guide](https://code.claude.com/docs/en/hooks-guide) — Practical guide for automating workflows with hooks
+
+## Signals
+
+- Setup: `hooks` configured in `.claude/settings.json`, `.claude/settings.local.json`, or `~/.claude/settings.json`
+- Session: Asks about automating actions on edits/commits

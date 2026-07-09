@@ -56,3 +56,8 @@ No single model configuration is best at everything; matching the model and effo
 - [Claude Code Model Configuration](https://code.claude.com/docs/en/model-config) — Official docs covering /model, available models, and effort levels
 - [Claude Code Fast Mode](https://code.claude.com/docs/en/fast-mode) — Official docs for fast mode on Opus
 - [Escalate hard decisions with the advisor tool](https://code.claude.com/docs/en/advisor) — Official docs for /advisor model pairing and billing
+
+## Signals
+
+- Setup: —
+- Session: `/model`, `/effort`, `/fast`, or `/usage` in the transcript

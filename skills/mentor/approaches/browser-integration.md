@@ -55,3 +55,8 @@ Code and its visual output are two different things, and bugs hide in the gap be
 
 - [Use Claude Code with Chrome](https://code.claude.com/docs/en/chrome) — Official docs: extension setup, `--chrome` and `/chrome`, capabilities, plan-mode permission behavior, troubleshooting
 - [Let Claude use your computer from the CLI](https://code.claude.com/docs/en/computer-use) — Official docs for the built-in `computer-use` MCP server: enablement, platform and plan gates, safety model
+
+## Signals
+
+- Setup: —
+- Session: `claude --chrome` or `/chrome` usage; asks Claude to drive a browser

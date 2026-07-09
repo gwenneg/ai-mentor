@@ -58,3 +58,8 @@ Cloud sessions decouple the work from the workstation: you keep the judgment-hea
 - [Use Claude Code on the web](https://code.claude.com/docs/en/claude-code-on-the-web) — Official docs for cloud sessions, environments, --cloud, /teleport, and auto-fix PRs
 - [Remote Control](https://code.claude.com/docs/en/remote-control) — Official docs for continuing local sessions from a phone or browser, plus mobile push notifications
 - [Claude Code in Slack](https://code.claude.com/docs/en/slack) — Official docs for delegating coding tasks from Slack channels
+
+## Signals
+
+- Setup: —
+- Session: `claude --cloud` (or the deprecated `--remote`), `/teleport`, claude.ai/code or mobile-app mentions

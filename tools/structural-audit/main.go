@@ -1,9 +1,12 @@
 // Deterministic structural audit for the ai-mentor catalog.
 //
 // Checks goal routing, approach files, cross-references, the changelog
-// ledger, adoption signals, and SKILL.md consistency. Exits 1 if any issue
-// is found, 2 on a fatal setup problem. No network, no LLM — safe as a PR
-// gate. Stdlib only.
+// ledger, and SKILL.md consistency. Exits 1 if any issue is found, 2 on a
+// fatal setup problem. No network, no LLM — safe as a PR gate. Stdlib only.
+//
+// The compiled capability index (registry/index.md) is NOT audited here:
+// tools/registry-index generates it from the same sources and its -check
+// mode is the freshness gate in CI.
 //
 // Usage: go -C tools/structural-audit run . [repo-root]
 package main
@@ -26,25 +29,23 @@ const (
 )
 
 var (
-	reRow      = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]`)
-	reGem      = regexp.MustCompile(`^\*\*Hidden gem:\*\* ([^—\n]+)`)
-	rePlugLine = regexp.MustCompile(`^\*\*Plugins:\*\* `)
-	rePlugTok  = regexp.MustCompile("`([a-z0-9.-]+)`")
-	reRowName  = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef   = regexp.MustCompile(`(references|registry|routing|approaches)/[a-z0-9-]+\.md`)
-	reRef      = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
-	reSource   = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
-	reLedger   = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
-	reWeek     = regexp.MustCompile(`^\d{4}-w\d{2}$`)
-	reDateTail = regexp.MustCompile(`^` + datePat + `\*`)
-	reSignal   = regexp.MustCompile(`^\| ([a-z0-9-]+) \|`)
-	reBuiltin  = regexp.MustCompile("`/([a-z0-9-]+)`")
-	reBuiltinL = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
-	reRegID    = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
-	reRowSlug  = regexp.MustCompile(`\]\(\.\./approaches/([a-z0-9-]+)\.md\)`)
-	reRegGoals = regexp.MustCompile(`^goals: (.+)$`)
+	reRow         = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]`)
+	reGem         = regexp.MustCompile(`^\*\*Hidden gem:\*\* ([^—\n]+)`)
+	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
+	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
+	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
+	reDocRef      = regexp.MustCompile(`(references|registry|routing|approaches)/[a-z0-9-]+\.md`)
+	reRef         = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
+	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
+	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
+	reWeek        = regexp.MustCompile(`^\d{4}-w\d{2}$`)
+	reDateTail    = regexp.MustCompile(`^` + datePat + `\*`)
+	reBuiltin     = regexp.MustCompile("`/([a-z0-9-]+)`")
+	reBuiltinL    = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
+	reRegID       = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
+	reRegGoals    = regexp.MustCompile(`^goals: (.+)$`)
 	reClassifyRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
-	reCount    = regexp.MustCompile(`(\d+) goal categories`)
+	reCount       = regexp.MustCompile(`(\d+) goal categories`)
 )
 
 var (
@@ -60,7 +61,7 @@ var (
 		"## What It Is", "## Why It Works", "## When to Use It", "## When NOT to Use It",
 		"## How It Works", "### Basic (Beginner)",
 		"### Composing with Other Approaches (Intermediate)", "### Advanced Patterns",
-		"## Common Pitfalls", "## Sources",
+		"## Common Pitfalls", "## Sources", "## Signals",
 	}
 )
 
@@ -69,7 +70,6 @@ type auditor struct {
 	skill                    string // skills/mentor directory
 	issues                   []string
 	goals, approaches, weeks int
-	membership               map[string]map[string]bool // approach slug -> routing goals
 }
 
 func (a *auditor) issue(path, format string, args ...any) {
@@ -202,12 +202,6 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog, regi
 					a.issue(f, "row numbering not sequential at row %d", len(rows)+1)
 				}
 				rows = append(rows, m[2])
-				if s := reRowSlug.FindStringSubmatch(l); s != nil {
-					if a.membership[s[1]] == nil {
-						a.membership[s[1]] = map[string]bool{}
-					}
-					a.membership[s[1]][strings.TrimSuffix(filepath.Base(f), ".md")] = true
-				}
 				if cs := cells(l); len(cs) > 3 && !slices.Contains(levels, cs[3]) {
 					a.issue(f, "invalid level %s", cs[3])
 				}
@@ -328,32 +322,6 @@ func (a *auditor) checkLedger(path string) {
 	}
 }
 
-func (a *auditor) checkSignals(path string, approachNames []string) {
-	ls := lines(path)
-	if ls == nil {
-		a.issue(path, "missing adoption-signals table")
-		return
-	}
-	a.dateLine(path, "Last reviewed", ls)
-
-	var names []string
-	for _, l := range ls {
-		if m := reSignal.FindStringSubmatch(l); m != nil {
-			names = append(names, m[1])
-		}
-	}
-	missing, stale := diff(approachNames, names)
-	for _, x := range missing {
-		a.issue(path, "approach '%s' has no adoption-signals row", x)
-	}
-	for _, x := range stale {
-		a.issue(path, "row '%s' has no matching approach file", x)
-	}
-	for _, d := range dups(names) {
-		a.issue(path, "duplicate signals row for '%s'", d)
-	}
-}
-
 func (a *auditor) checkProblemMode(path string, goals []string) {
 	ls := lines(path)
 	var table []string
@@ -400,7 +368,6 @@ func (a *auditor) run() error {
 		catalog[n] = true
 	}
 
-	a.membership = map[string]map[string]bool{}
 	registry := a.checkRegistry(filepath.Join(a.skill, "registry", "builtin-commands.md"))
 	usedBuiltins := map[string]bool{}
 	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog, registry, usedBuiltins)
@@ -413,12 +380,10 @@ func (a *auditor) run() error {
 	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "builtin-commands.md"), goals)
 	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "integrations.md"), goals)
 	a.checkIntegrations(filepath.Join(a.skill, "registry", "integrations.md"), registry)
-	a.checkTechniques(filepath.Join(a.skill, "registry", "techniques.md"), names)
 	for _, f := range files {
 		a.checkApproach(f)
 	}
 	a.checkLedger(filepath.Join(a.skill, "references", "processed-changelogs.md"))
-	a.checkSignals(filepath.Join(a.skill, "references", "adoption-signals.md"), names)
 	a.checkProblemMode(filepath.Join(a.skill, "problem-mode.md"), goals)
 	a.checkDocRefs(
 		filepath.Join(a.skill, "SKILL.md"),
@@ -428,22 +393,12 @@ func (a *auditor) run() error {
 	return nil
 }
 
-// dedup and dups are order-preserving on purpose: their order feeds issue
-// order, which is part of the frozen output. Do not replace with sorted forms.
+// dedup is order-preserving on purpose: its order feeds issue order, which
+// is part of the frozen output. Do not replace with a sorted form.
 func dedup(xs []string) []string {
 	var out []string
 	for _, x := range xs {
 		if !slices.Contains(out, x) {
-			out = append(out, x)
-		}
-	}
-	return out
-}
-
-func dups(xs []string) []string {
-	var out []string
-	for i, x := range xs {
-		if slices.Contains(xs[:i], x) && !slices.Contains(out, x) {
 			out = append(out, x)
 		}
 	}
@@ -527,68 +482,6 @@ func (a *auditor) checkIntegrations(path string, builtins map[string]bool) {
 	}
 	if len(seen) == 0 {
 		a.issue(path, "integrations registry parsed to zero records — format drift?")
-	}
-}
-
-// checkTechniques audits registry/techniques.md: exactly one record per
-// approach file, and each record's goals line mirrors the approach's actual
-// routing membership — the lockstep that lets the registry be trusted as
-// the machine view of routing.
-func (a *auditor) checkTechniques(path string, approachNames []string) {
-	ls := lines(path)
-	if ls == nil {
-		a.issue(path, "missing techniques registry")
-		return
-	}
-	a.dateLine(path, "Last verified", ls)
-	recGoals := map[string]string{}
-	cur := ""
-	for _, l := range ls {
-		if m := reRegID.FindStringSubmatch(l); m != nil {
-			if _, dup := recGoals[m[1]]; dup {
-				a.issue(path, "duplicate registry id '%s'", m[1])
-			}
-			cur = m[1]
-			recGoals[cur] = ""
-			continue
-		}
-		if m := reRegGoals.FindStringSubmatch(l); m != nil && cur != "" {
-			recGoals[cur] = m[1]
-			cur = ""
-		}
-	}
-	var ids []string
-	for id := range recGoals {
-		ids = append(ids, id)
-	}
-	missing, stale := diff(approachNames, ids)
-	for _, x := range missing {
-		a.issue(path, "approach '%s' has no techniques-registry record", x)
-	}
-	for _, x := range stale {
-		a.issue(path, "record '%s' has no matching approach file", x)
-	}
-	for id, goalsLine := range recGoals {
-		want := a.membership[id]
-		if want == nil {
-			continue // stale record already reported
-		}
-		got := map[string]bool{}
-		for _, g := range strings.Split(goalsLine, ",") {
-			if g = strings.TrimSpace(g); g != "" {
-				got[g] = true
-			}
-		}
-		for g := range want {
-			if !got[g] {
-				a.issue(path, "record '%s' missing goal '%s' (present in routing/%s.md)", id, g, g)
-			}
-		}
-		for g := range got {
-			if !want[g] {
-				a.issue(path, "record '%s' lists goal '%s' but routing/%s.md has no row for it", id, g, g)
-			}
-		}
 	}
 }
 

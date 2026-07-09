@@ -56,3 +56,8 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 
 - [Keep Claude Working Toward a Goal](https://code.claude.com/docs/en/goal) — Official docs for /goal: setting, checking, and clearing goals, and how the evaluator works
 - [Choose a Permission Mode](https://code.claude.com/docs/en/permission-modes) — Official docs on auto mode and the other permission modes that let loop turns run unattended
+
+## Signals
+
+- Setup: —
+- Session: `/loop` or `/goal` in the transcript; goal-conditioned prompts

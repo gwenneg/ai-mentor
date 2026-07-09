@@ -69,3 +69,8 @@ Committed to the repo, this applies to everyone: loops run test/lint/commit cycl
 
 - [Configure permissions](https://code.claude.com/docs/en/permissions) — Official reference for rules, modes, precedence, and hook interaction
 - [Sandboxing](https://code.claude.com/docs/en/sandboxing) — OS-level filesystem and network isolation for Bash commands
+
+## Signals
+
+- Setup: `permissions` rules or `sandbox` configuration in settings
+- Session: Discusses permission modes; runs with elevated autonomy deliberately

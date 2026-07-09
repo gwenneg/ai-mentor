@@ -55,3 +55,8 @@ Installing beats building on three axes at once: zero development time, someone 
 
 - [Discover and install plugins](https://code.claude.com/docs/en/discover-plugins) — Official docs for browsing marketplaces and installing plugins
 - [Create plugins](https://code.claude.com/docs/en/plugins) — Official plugin documentation including the official and community marketplaces
+
+## Signals
+
+- Setup: Plugins installed from `claude-plugins-official` (visible via `/plugin list`)
+- Session: `/plugin` usage; references marketplace plugins

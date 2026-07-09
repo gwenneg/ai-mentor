@@ -64,3 +64,8 @@ Claude can spawn one subagent for correctness review and another for security re
 - [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents) — Official docs for creating and using custom subagents
 - [Agent Teams](https://code.claude.com/docs/en/agent-teams) — Official docs for coordinating peer Claude instances with shared tasks and inter-agent messaging
 - [Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system) — Anthropic engineering blog on orchestrator-worker multi-agent architecture
+
+## Signals
+
+- Setup: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` in settings env (teams)
+- Session: Spawns subagents; asks for parallel investigation

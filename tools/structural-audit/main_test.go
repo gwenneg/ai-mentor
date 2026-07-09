@@ -10,13 +10,14 @@ import (
 func approachMD() string {
 	var b strings.Builder
 	b.WriteString("# Approach\n*Last verified: 2026-07-03*\n\n")
-	for _, s := range approachSections[:len(approachSections)-1] {
+	for _, s := range approachSections[:len(approachSections)-2] {
 		b.WriteString(s + "\n\nfiller\n\n")
 	}
 	for range 30 {
 		b.WriteString("filler\n")
 	}
-	b.WriteString("## Sources\n\n- [Doc](https://example.com/doc)\n")
+	b.WriteString("## Sources\n\n- [Doc](https://example.com/doc)\n\n")
+	b.WriteString("## Signals\n\n- Setup: —\n- Session: some signal\n")
 	return b.String()
 }
 
@@ -46,34 +47,6 @@ func validTree() map[string]string {
 | Week | Processed | Outcome |
 |------|-----------|---------|
 | [2026-w26](https://example.com) | 2026-07-01 | processed |
-`,
-		"skills/mentor/references/adoption-signals.md": `# Signals
-*Last reviewed: 2026-07-03*
-
-| alpha | some signal |
-| beta | some signal |
-| gamma | some signal |
-`,
-		"skills/mentor/registry/techniques.md": `# Techniques
-*Last verified: 2026-07-03*
-
-## alpha
-
-id: alpha
-kind: technique
-goals: test-goal
-
-## beta
-
-id: beta
-kind: technique
-goals: test-goal
-
-## gamma
-
-id: gamma
-kind: technique
-goals: test-goal
 `,
 		"skills/mentor/registry/integrations.md": `# Integrations
 *Last verified: 2026-07-03*
@@ -155,8 +128,6 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			i := strings.Index(f[routing], "| 3 |")
 			f[routing] = f[routing][:i]
 			delete(f, "skills/mentor/approaches/gamma.md")
-			f["skills/mentor/references/adoption-signals.md"] = strings.Replace(
-				f["skills/mentor/references/adoption-signals.md"], "| gamma | some signal |\n", "", 1)
 		}, "only 2 rows"},
 		{"missing plugins line", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "**Plugins:** `alpha-tool` ☑️ something useful.\n\n", "", 1)
@@ -180,12 +151,9 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		}, "does not match any ranked row"},
 		{"broken reference", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "approaches/beta.md", "approaches/missing.md", 1)
-			f["skills/mentor/references/adoption-signals.md"] = strings.Replace(
-				f["skills/mentor/references/adoption-signals.md"], "beta", "missing", 1)
 		}, "broken reference approaches/missing.md"},
 		{"orphan approach", func(f map[string]string) {
 			f["skills/mentor/approaches/orphan.md"] = approachMD()
-			f["skills/mentor/references/adoption-signals.md"] += "| orphan | some signal |\n"
 		}, "orphan: not referenced"},
 		{"bad routing date line", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "verified recently", 1)
@@ -242,16 +210,10 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
 				f["skills/mentor/references/processed-changelogs.md"], "| processed |", "|  |", 1)
 		}, "empty outcome"},
-		{"approach missing signals row", func(f map[string]string) {
-			f["skills/mentor/references/adoption-signals.md"] = strings.Replace(
-				f["skills/mentor/references/adoption-signals.md"], "| beta | some signal |\n", "", 1)
-		}, "'beta' has no adoption-signals row"},
-		{"stale signals row", func(f map[string]string) {
-			f["skills/mentor/references/adoption-signals.md"] += "| deleted | some signal |\n"
-		}, "'deleted' has no matching approach file"},
-		{"duplicate signals row", func(f map[string]string) {
-			f["skills/mentor/references/adoption-signals.md"] += "| alpha | some signal |\n"
-		}, "duplicate signals row"},
+		{"approach missing signals section", func(f map[string]string) {
+			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/alpha.md"], "## Signals", "## Adoption evidence", 1)
+		}, "missing section '## Signals'"},
 		{"goal missing from classification table", func(f map[string]string) {
 			f["skills/mentor/problem-mode.md"] = strings.Replace(
 				f["skills/mentor/problem-mode.md"], "`test-goal`", "`other-goal`", 1)
@@ -280,24 +242,10 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/registry/builtin-commands.md"] = strings.Replace(
 				f["skills/mentor/registry/builtin-commands.md"], "goals: test-goal", "goals: no-such-goal", 1)
 		}, "registry goals name 'no-such-goal'"},
-		{"technique record missing", func(f map[string]string) {
-			f["skills/mentor/registry/techniques.md"] = strings.Replace(
-				f["skills/mentor/registry/techniques.md"], "## gamma\n\nid: gamma\nkind: technique\ngoals: test-goal\n", "", 1)
-		}, "approach 'gamma' has no techniques-registry record"},
-		{"stale technique record", func(f map[string]string) {
-			f["skills/mentor/registry/techniques.md"] += "\n## omega\n\nid: omega\nkind: technique\ngoals: test-goal\n"
-		}, "record 'omega' has no matching approach file"},
-		{"technique goals drift (extra)", func(f map[string]string) {
-			f["skills/mentor/registry/techniques.md"] = strings.Replace(
-				f["skills/mentor/registry/techniques.md"], "id: beta\nkind: technique\ngoals: test-goal", "id: beta\nkind: technique\ngoals: test-goal, other-goal", 1)
-		}, "record 'beta' lists goal 'other-goal' but routing/other-goal.md has no row"},
 		{"integration id collides with builtin", func(f map[string]string) {
 			f["skills/mentor/registry/integrations.md"] = strings.Replace(
 				f["skills/mentor/registry/integrations.md"], "id: some-integration", "id: testcmd", 1)
 		}, "duplicate registry id 'testcmd'"},
-		{"missing techniques registry", func(f map[string]string) {
-			delete(f, "skills/mentor/registry/techniques.md")
-		}, "missing techniques registry"},
 		{"missing integrations registry", func(f map[string]string) {
 			delete(f, "skills/mentor/registry/integrations.md")
 		}, "missing integrations registry"},
@@ -308,9 +256,6 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"missing ledger", func(f map[string]string) {
 			delete(f, "skills/mentor/references/processed-changelogs.md")
 		}, "missing processed-changelog ledger"},
-		{"missing signals", func(f map[string]string) {
-			delete(f, "skills/mentor/references/adoption-signals.md")
-		}, "missing adoption-signals table"},
 	}
 
 	for _, tc := range cases {

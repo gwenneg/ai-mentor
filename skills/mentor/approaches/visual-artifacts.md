@@ -56,3 +56,8 @@ Some information is spatial, not linear: layout carries meaning terminal text ca
 
 - [Claude Code Artifacts](https://code.claude.com/docs/en/artifacts) — Official docs for creating and sharing artifacts from Claude Code
 - [What are Artifacts?](https://support.claude.com/en/articles/9487310-what-are-artifacts-and-how-do-i-use-them) — Artifact hosting, privacy, and sharing model
+
+## Signals
+
+- Setup: —
+- Session: Publishes artifacts; asks for rendered/shareable pages

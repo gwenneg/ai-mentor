@@ -57,3 +57,8 @@ The model pays attention to everything in context, including the noise — curat
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory) — What survives compaction and how CLAUDE.md re-injection works
 - [Model configuration](https://code.claude.com/docs/en/model-config) — Official docs for the [1m] extended context window and per-plan availability
 - [How Claude Code uses prompt caching](https://code.claude.com/docs/en/prompt-caching) — What invalidates the cache and what /compact and /rewind cost
+
+## Signals
+
+- Setup: —
+- Session: `/context`, `/compact`, `/btw`, `/clear`, `/resume`, or `/branch` in the transcript

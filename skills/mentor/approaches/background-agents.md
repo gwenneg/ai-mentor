@@ -56,3 +56,8 @@ Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"
 ## Sources
 
 - [Manage multiple agents with agent view](https://code.claude.com/docs/en/agent-view) — Official docs for claude agents, /background, dispatching, attaching, and worktree isolation
+
+## Signals
+
+- Setup: —
+- Session: `claude agents`, `claude --bg`, or `/background` usage; talks about dispatching tasks

@@ -95,3 +95,8 @@ The runtime spawns agents in batches, each migrating one file in its own worktre
 
 - [Dynamic Workflows](https://code.claude.com/docs/en/workflows) — Official docs on orchestrating subagents at scale with workflow scripts
 - [Building a C Compiler with Claude](https://www.anthropic.com/engineering/building-c-compiler) — Anthropic engineering blog demonstrating parallel fan-out patterns
+
+## Signals
+
+- Setup: `.claude/workflows/` exists
+- Session: Workflow/ultracode usage; asks for parallel multi-agent runs
