@@ -34,11 +34,11 @@ func validTree() map[string]string {
 
 **Built-ins:** ` + "`/testcmd`" + ` — does the thing.
 
-| # | Approach | Setup | Best when | Why it fits |
-|---|----------|-------|-----------|-------------|
-| 1 | [Alpha](../approaches/alpha.md) | Beginner | x | y |
-| 2 | [Beta](../approaches/beta.md) | Intermediate | x | y |
-| 3 | [Gamma](../approaches/gamma.md) | Advanced | x | y |
+| # | Approach | Best when | Why it fits |
+|---|----------|-----------|-------------|
+| 1 | [Alpha](../approaches/alpha.md) | x | y |
+| 2 | [Beta](../approaches/beta.md) | x | y |
+| 3 | [Gamma](../approaches/gamma.md) | x | y |
 `,
 		"skills/mentor/approaches/alpha.md": approachMD(),
 		"skills/mentor/approaches/beta.md":  approachMD(),
@@ -120,9 +120,6 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		mutate func(f map[string]string)
 		expect string
 	}{
-		{"invalid level", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "| Advanced |", "| Expert |", 1)
-		}, "invalid level Expert"},
 		{"non-sequential rows", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "| 3 |", "| 5 |", 1)
 		}, "row numbering not sequential"},

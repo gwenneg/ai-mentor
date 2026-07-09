@@ -7,8 +7,8 @@
 
 **Plugins:** `plugin-dev` ✅ guided plugin building · `skill-creator` ☑️ skill authoring and evals.
 
-| # | Approach | Setup | Best when | Why it fits |
-|---|----------|-------|-----------|-------------|
-| 1 | [Custom Skills](../approaches/custom-skills.md) | Beginner | A workflow you repeat and want to package | Skills fail on unclear instructions, and clarity is discovered by iteration — the standalone stage keeps iteration cost near zero |
-| 2 | [Custom Plugins](../approaches/custom-plugins.md) | Intermediate | Skill works; time to share or distribute | Distribution is where team knowledge compounds — one engineer's workflow becomes everyone's default, shipped deliberately via versioning |
-| 3 | [Hooks as Workflow](../approaches/hooks-as-workflow.md) | Intermediate | The behavior should be automatic, not invoked | Skills require someone to invoke them; hooks fire regardless — the workflow works even for teammates who skip the README |
+| # | Approach | Best when | Why it fits |
+|---|----------|-----------|-------------|
+| 1 | [Custom Skills](../approaches/custom-skills.md) | A workflow you repeat and want to package | Skills fail on unclear instructions, and clarity is discovered by iteration — the standalone stage keeps iteration cost near zero |
+| 2 | [Custom Plugins](../approaches/custom-plugins.md) | Skill works; time to share or distribute | Distribution is where team knowledge compounds — one engineer's workflow becomes everyone's default, shipped deliberately via versioning |
+| 3 | [Hooks as Workflow](../approaches/hooks-as-workflow.md) | The behavior should be automatic, not invoked | Skills require someone to invoke them; hooks fire regardless — the workflow works even for teammates who skip the README |

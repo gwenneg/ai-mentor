@@ -7,9 +7,9 @@
 
 **Plugins:** none mapped for this goal yet.
 
-| # | Approach | Setup | Best when | Why it fits |
-|---|----------|-------|-----------|-------------|
-| 1 | [Browser Integration](../approaches/browser-integration.md) | Advanced | Verifying tab order, focus traps, or screen reader behavior | Tests the actual user experience — tab order, focus management, live regions — where the hardest a11y bugs hide |
-| 2 | [Deep Research](../approaches/deep-research.md) | Beginner | Building a new component, unsure which ARIA pattern applies | ARIA standards are precise but sprawling; one wrong attribute can make a component opaque to assistive technology |
-| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Intermediate | Scanner reported dozens of violations to fix | Scanner violations are objective and verifiable — ideal exit conditions for fix-scan-repeat loops with no judgment calls |
-| 4 | [Hooks](../approaches/hooks-as-workflow.md) | Intermediate | Want every component edit automatically checked for a11y | A11y fixes have unintended side effects; instant scanner feedback catches regressions before they compound |
+| # | Approach | Best when | Why it fits |
+|---|----------|-----------|-------------|
+| 1 | [Browser Integration](../approaches/browser-integration.md) | Verifying tab order, focus traps, or screen reader behavior | Tests the actual user experience — tab order, focus management, live regions — where the hardest a11y bugs hide |
+| 2 | [Deep Research](../approaches/deep-research.md) | Building a new component, unsure which ARIA pattern applies | ARIA standards are precise but sprawling; one wrong attribute can make a component opaque to assistive technology |
+| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Scanner reported dozens of violations to fix | Scanner violations are objective and verifiable — ideal exit conditions for fix-scan-repeat loops with no judgment calls |
+| 4 | [Hooks](../approaches/hooks-as-workflow.md) | Want every component edit automatically checked for a11y | A11y fixes have unintended side effects; instant scanner feedback catches regressions before they compound |
