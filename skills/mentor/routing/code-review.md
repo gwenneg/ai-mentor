@@ -7,6 +7,8 @@
 
 **Plugins:** `pr-review-toolkit` ✅ 6-agent deep review · `github` ☑️ PR management · `sonarqube` ☑️ and `qodo-skills` ☑️ quality/security scanning.
 
+**Integrations:** `claude-code-action` — Claude reviews on every PR via the maintained GitHub Action, findings posted as inline comments. Facts and pitfalls per record: `registry/integrations.md`.
+
 **Built-ins:** `/code-review` — structured correctness pass on the diff; `/security-review` — security lens on pending changes; `/verify` — watch the change actually work before merging. Facts and pitfalls per command: `registry/builtin-commands.md`.
 
 | # | Approach | Setup | Best when | Why it fits |

@@ -42,6 +42,8 @@ var (
 	reDateTail    = regexp.MustCompile(`^` + datePat + `\*`)
 	reBuiltin     = regexp.MustCompile("`/([a-z0-9-]+)`")
 	reBuiltinL    = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
+	reIntegL      = regexp.MustCompile(`^\*\*Integrations:\*\* `)
+	reIntegTok    = regexp.MustCompile("`([a-z0-9-]+)`")
 	reRegID       = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
 	reRegGoals    = regexp.MustCompile(`^goals: (.+)$`)
 	reClassifyRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
@@ -164,7 +166,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 // checkRouting audits every per-goal file under skills/mentor/routing/:
 // date line, hidden gem, Plugins line with catalog-known tokens, at least
 // minGoalRows sequentially numbered rows, cross-references, and orphans.
-func (a *auditor) checkRouting(dir string, approachNames []string, catalog, registry map[string]bool, usedBuiltins map[string]bool) []string {
+func (a *auditor) checkRouting(dir string, approachNames []string, catalog, registry, integrations map[string]bool, usedBuiltins, usedIntegrations map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing routing directory (per-goal files)")
@@ -195,6 +197,17 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog, regi
 						a.issue(f, "Built-ins line names '/%s', not found in registry/builtin-commands.md", m[1])
 					}
 					usedBuiltins[m[1]] = true
+				}
+			}
+			if reIntegL.MatchString(l) {
+				// reIntegTok's charset (no dots, no slashes) only matches record
+				// ids — backticked file names and the trailing registry pointer
+				// never capture.
+				for _, m := range reIntegTok.FindAllStringSubmatch(l, -1) {
+					if !integrations[m[1]] {
+						a.issue(f, "Integrations line names '%s', not found in registry/integrations.md", m[1])
+					}
+					usedIntegrations[m[1]] = true
 				}
 			}
 			if m := reRow.FindStringSubmatch(l); m != nil {
@@ -369,17 +382,22 @@ func (a *auditor) run() error {
 	}
 
 	registry := a.checkRegistry(filepath.Join(a.skill, "registry", "builtin-commands.md"))
-	usedBuiltins := map[string]bool{}
-	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog, registry, usedBuiltins)
+	integrations := a.checkIntegrations(filepath.Join(a.skill, "registry", "integrations.md"), registry)
+	usedBuiltins, usedIntegrations := map[string]bool{}, map[string]bool{}
+	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog, registry, integrations, usedBuiltins, usedIntegrations)
 	a.goals = len(goals)
 	for id := range registry {
 		if !usedBuiltins[id] {
 			a.issue(filepath.Join(a.skill, "registry", "builtin-commands.md"), "registry id '%s' not referenced by any Built-ins line", id)
 		}
 	}
+	for id := range integrations {
+		if !usedIntegrations[id] {
+			a.issue(filepath.Join(a.skill, "registry", "integrations.md"), "registry id '%s' not referenced by any Integrations line", id)
+		}
+	}
 	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "builtin-commands.md"), goals)
 	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "integrations.md"), goals)
-	a.checkIntegrations(filepath.Join(a.skill, "registry", "integrations.md"), registry)
 	for _, f := range files {
 		a.checkApproach(f)
 	}
@@ -463,15 +481,16 @@ func (a *auditor) checkRegistryGoals(path string, goals []string) {
 }
 
 // checkIntegrations audits registry/integrations.md: date line, unique ids
-// that don't collide with builtin-command ids.
-func (a *auditor) checkIntegrations(path string, builtins map[string]bool) {
+// that don't collide with builtin-command ids. Returns the id set so
+// checkRouting can verify Integrations lines against it.
+func (a *auditor) checkIntegrations(path string, builtins map[string]bool) map[string]bool {
+	seen := map[string]bool{}
 	ls := lines(path)
 	if ls == nil {
 		a.issue(path, "missing integrations registry")
-		return
+		return seen
 	}
 	a.dateLine(path, "Last verified", ls)
-	seen := map[string]bool{}
 	for _, l := range ls {
 		if m := reRegID.FindStringSubmatch(l); m != nil {
 			if seen[m[1]] || builtins[m[1]] {
@@ -483,6 +502,7 @@ func (a *auditor) checkIntegrations(path string, builtins map[string]bool) {
 	if len(seen) == 0 {
 		a.issue(path, "integrations registry parsed to zero records — format drift?")
 	}
+	return seen
 }
 
 // findRoot walks upward from dir to the first directory containing

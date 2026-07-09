@@ -7,6 +7,8 @@
 
 **Plugins:** `hookify` ✅ hooks from conversation patterns · `gitlab` ☑️ MRs and pipelines · vendor CI: `buildkite`, `mergify`, `teamcity-cli` (all ☑️).
 
+**Integrations:** `claude-code-action` — the maintained GitHub Action; packages checkout, auth, and prompt execution for PR review/automation without hand-rolled YAML · `gitlab-ci-integration` — GitLab's beta `.gitlab-ci.yml` job for teams not on GitHub. Facts and pitfalls per record: `registry/integrations.md`.
+
 **Built-ins:** `/loop` — recur on a time interval in this session; `/schedule` — recurring cloud runs that survive a closed laptop. Facts and pitfalls per command: `registry/builtin-commands.md`.
 
 | # | Approach | Setup | Best when | Why it fits |

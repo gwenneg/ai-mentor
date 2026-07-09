@@ -30,6 +30,8 @@ func validTree() map[string]string {
 
 **Plugins:** ` + "`alpha-tool`" + ` ☑️ something useful.
 
+**Integrations:** ` + "`some-integration`" + ` — wires the thing in.
+
 **Built-ins:** ` + "`/testcmd`" + ` — does the thing.
 
 | # | Approach | Setup | Best when | Why it fits |
@@ -232,6 +234,12 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"phantom builtin token", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "`/testcmd`", "`/ghostcmd`", 1)
 		}, "Built-ins line names '/ghostcmd', not found"},
+		{"phantom integration token", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "**Integrations:** `some-integration`", "**Integrations:** `ghost-integration`", 1)
+		}, "Integrations line names 'ghost-integration', not found"},
+		{"orphan integration id", func(f map[string]string) {
+			f["skills/mentor/registry/integrations.md"] += "\n## unrouted\n\nid: unrouted\nkind: integration\ngoals: test-goal\n"
+		}, "registry id 'unrouted' not referenced by any Integrations line"},
 		{"orphan registry id", func(f map[string]string) {
 			f["skills/mentor/registry/builtin-commands.md"] += "\n## other\n\nid: othercmd\nkind: builtin-command\ngoals: test-goal\n"
 		}, "registry id 'othercmd' not referenced"},
