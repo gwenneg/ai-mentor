@@ -1,10 +1,10 @@
 // Generates skills/mentor/registry/index.md — the compiled capability index —
 // from the authored sources of truth:
 //
-//   - routing/*.md          goal membership, rank, setup badge, best-when triggers
+//   - routing/*.md          goal membership, rank, best-when triggers
 //   - approaches/*.md       the "## Signals" section (setup + session signals)
 //   - registry/builtin-commands.md and registry/integrations.md
-//     (id, kind, goals, best_when, setup, session_signal per record)
+//     (id, kind, goals, best_when, session_signal per record)
 //
 // index.md is a build artifact: never hand-edit it. After editing any source
 // above, regenerate with `go -C tools/registry-index run .`. In CI, `-check`
@@ -12,12 +12,11 @@
 //
 // Merge rule: a capability that exists both as a technique and as a registry
 // record under the same id (e.g. deep-research) is ONE row — kinds joined,
-// goals unioned, and the record's best_when/setup/session_signal win over the
-// routing-derived values (records are authored per-capability; badges are
-// derived through routing).
+// goals unioned, and the record's best_when/session_signal win over the
+// routing-derived values (records are authored per-capability).
 //
 // Deterministic by construction: rows sorted by id, no timestamps. Exits 1 on
-// any inconsistency in the sources (conflicting setup badges, missing Signals
+// any inconsistency in the sources (a missing routing row or Signals
 // section), 2 on a fatal setup problem. No network, no LLM. Stdlib only.
 //
 // Usage: go -C tools/registry-index run . [-check] [repo-root]
@@ -42,18 +41,14 @@ var (
 	reRegKind = regexp.MustCompile(`^kind: ([a-z-]+)$`)
 	reRegGoal = regexp.MustCompile(`^goals: (.+)$`)
 	reRegBest = regexp.MustCompile(`^best_when: (.+)$`)
-	reRegSet  = regexp.MustCompile(`^setup: ([a-z]+)$`)
 	reRegSig  = regexp.MustCompile(`^session_signal: (.+)$`)
 	reSetupL  = regexp.MustCompile(`^- Setup: (.+)$`)
 	reSessL   = regexp.MustCompile(`^- Session: (.+)$`)
 )
 
-// badgeSetup maps the routing tables' Level badge to the record vocabulary.
-var badgeSetup = map[string]string{"Beginner": "none", "Intermediate": "some", "Advanced": "involved"}
-
 type row struct {
-	id, kind, bestWhen, setup, setupSig, sessionSig string
-	goals                                           []string
+	id, kind, bestWhen, setupSig, sessionSig string
+	goals                                    []string
 }
 
 type gen struct {
@@ -86,10 +81,10 @@ func cells(l string) []string {
 	return cs
 }
 
-// techniques derives one row per approach file: goals and setup from the
-// routing tables, best_when from the approach's best-ranked routing row
-// (lowest rank; ties broken by goal-file order, which is alphabetical),
-// signals from the approach file's "## Signals" section.
+// techniques derives one row per approach file: goals from the routing
+// tables, best_when from the approach's best-ranked routing row (lowest
+// rank; ties broken by goal-file order, which is alphabetical), signals
+// from the approach file's "## Signals" section.
 func (g *gen) techniques() map[string]*row {
 	rows := map[string]*row{}
 	bestRank := map[string]int{}
@@ -105,8 +100,8 @@ func (g *gen) techniques() map[string]*row {
 			}
 			rank, _ := strconv.Atoi(m[1])
 			slug := m[3]
-			cs := cells(l) // | # | Approach | Setup | Best when | Why it fits |
-			if len(cs) < 5 {
+			cs := cells(l) // | # | Approach | Best when | Why it fits |
+			if len(cs) < 4 {
 				g.errf(f, "row for '%s' has too few columns", slug)
 				continue
 			}
@@ -117,17 +112,9 @@ func (g *gen) techniques() map[string]*row {
 				bestRank[slug] = 1 << 30
 			}
 			r.goals = append(r.goals, goal)
-			setup, ok := badgeSetup[cs[3]]
-			if !ok {
-				g.errf(f, "row for '%s' has invalid level '%s'", slug, cs[3])
-			} else if r.setup == "" {
-				r.setup = setup
-			} else if r.setup != setup {
-				g.errf(f, "setup badge for '%s' conflicts with another routing file ('%s' vs '%s')", slug, r.setup, setup)
-			}
 			if rank < bestRank[slug] {
 				bestRank[slug] = rank
-				r.bestWhen = strings.ToLower(cs[4][:1]) + cs[4][1:]
+				r.bestWhen = strings.ToLower(cs[3][:1]) + cs[3][1:]
 			}
 		}
 	}
@@ -190,15 +177,13 @@ func (g *gen) records(path string) []*row {
 			}
 		case reRegBest.MatchString(l):
 			cur.bestWhen = reRegBest.FindStringSubmatch(l)[1]
-		case reRegSet.MatchString(l):
-			cur.setup = reRegSet.FindStringSubmatch(l)[1]
 		case reRegSig.MatchString(l):
 			cur.sessionSig = reRegSig.FindStringSubmatch(l)[1]
 		}
 	}
 	for _, r := range out {
-		if r.kind == "" || len(r.goals) == 0 || r.bestWhen == "" || r.setup == "" || r.sessionSig == "" {
-			g.errf(path, "record '%s' is missing one of kind/goals/best_when/setup/session_signal", r.id)
+		if r.kind == "" || len(r.goals) == 0 || r.bestWhen == "" || r.sessionSig == "" {
+			g.errf(path, "record '%s' is missing one of kind/goals/best_when/session_signal", r.id)
 		}
 		if r.setupSig == "" {
 			r.setupSig = "—"
@@ -221,7 +206,7 @@ func (g *gen) build() string {
 			if t := rows[rec.id]; t != nil {
 				// One capability, two kinds: merge. Record fields win; goals union.
 				t.kind = t.kind + " + " + rec.kind
-				t.bestWhen, t.setup, t.sessionSig = rec.bestWhen, rec.setup, rec.sessionSig
+				t.bestWhen, t.sessionSig = rec.bestWhen, rec.sessionSig
 				t.goals = append(t.goals, rec.goals...)
 			} else {
 				rows[rec.id] = rec
@@ -239,14 +224,14 @@ func (g *gen) build() string {
 	b.WriteString("# Capability Index\n")
 	b.WriteString("*Generated — do not edit. Sources: routing tables, approach Signals sections, registry records. Regenerate: `go -C tools/registry-index run .`*\n\n")
 	b.WriteString("One row per first-party capability (marketplace plugins live in `references/official-plugins.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.\n\n")
-	b.WriteString("| Id | Kind | Goals | Best when | Setup | Setup signal | Session signal |\n")
-	b.WriteString("|----|------|-------|-----------|-------|--------------|----------------|\n")
+	b.WriteString("| Id | Kind | Goals | Best when | Setup signal | Session signal |\n")
+	b.WriteString("|----|------|-------|-----------|--------------|----------------|\n")
 	for _, id := range ids {
 		r := rows[id]
 		goals := dedup(r.goals)
 		slices.Sort(goals)
-		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s | %s |\n",
-			r.id, r.kind, strings.Join(goals, ", "), r.bestWhen, r.setup, r.setupSig, r.sessionSig)
+		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s |\n",
+			r.id, r.kind, strings.Join(goals, ", "), r.bestWhen, r.setupSig, r.sessionSig)
 	}
 	return b.String()
 }

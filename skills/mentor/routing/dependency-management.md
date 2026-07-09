@@ -9,10 +9,10 @@
 
 **Built-ins:** `/deep-research` — due diligence on a candidate dependency; `/schedule` — nightly dependency-PR triage. Facts and pitfalls per command: `registry/builtin-commands.md`.
 
-| # | Approach | Setup | Best when | Why it fits |
-|---|----------|-------|-----------|-------------|
-| 1 | [Deep Research](../approaches/deep-research.md) | Beginner | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |
-| 2 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Understanding what depends on a package before removing it | Dependency changes are graph operations — mapping the full graph first catches transitive breakage before it happens |
-| 3 | [MCP Context](../approaches/mcp-context.md) | Intermediate | Your org has approved dependency lists or security policies | The fastest decision is one someone already made — internal sources prevent duplicating or contradicting prior evaluations |
-| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | Intermediate | Want to test a major upgrade without risking your branch | A disposable environment gives a realistic damage assessment instead of guessing from the changelog |
-| 5 | [Scheduled & Recurring Agents](../approaches/scheduled-agents.md) | Intermediate | Dependency triage is important but never urgent | Recurring maintenance survives only when it stops depending on human initiative — a schedule converts "someone should" into "it happened" |
+| # | Approach | Best when | Why it fits |
+|---|----------|-----------|-------------|
+| 1 | [Deep Research](../approaches/deep-research.md) | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |
+| 2 | [Plan Mode](../approaches/plan-mode.md) | Understanding what depends on a package before removing it | Dependency changes are graph operations — mapping the full graph first catches transitive breakage before it happens |
+| 3 | [MCP Context](../approaches/mcp-context.md) | Your org has approved dependency lists or security policies | The fastest decision is one someone already made — internal sources prevent duplicating or contradicting prior evaluations |
+| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | Want to test a major upgrade without risking your branch | A disposable environment gives a realistic damage assessment instead of guessing from the changelog |
+| 5 | [Scheduled & Recurring Agents](../approaches/scheduled-agents.md) | Dependency triage is important but never urgent | Recurring maintenance survives only when it stops depending on human initiative — a schedule converts "someone should" into "it happened" |

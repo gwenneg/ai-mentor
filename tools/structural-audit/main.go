@@ -53,8 +53,6 @@ var (
 var (
 	skillDir = filepath.Join("skills", "mentor")
 
-	levels = []string{"Beginner", "Intermediate", "Advanced"}
-
 	// "## Real-World Example" is deliberately absent: it is optional — kept
 	// only where the example embeds exact syntax (see templates/approach.md).
 	// When present it must sit between Common Pitfalls and Sources
@@ -215,9 +213,6 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog, regi
 					a.issue(f, "row numbering not sequential at row %d", len(rows)+1)
 				}
 				rows = append(rows, m[2])
-				if cs := cells(l); len(cs) > 3 && !slices.Contains(levels, cs[3]) {
-					a.issue(f, "invalid level %s", cs[3])
-				}
 			}
 		}
 		if len(rows) < minGoalRows {

@@ -9,9 +9,9 @@
 
 **Built-ins:** `/goal` — converge on zero errors after a mechanical migration. Facts and pitfalls per command: `registry/builtin-commands.md`.
 
-| # | Approach | Setup | Best when | Why it fits |
-|---|----------|-------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Large migration touching dozens of files | Migrations are dependency graphs, not task lists — planning reveals the structure so you traverse it in the right order |
-| 2 | [Subagent Delegation](../approaches/subagent-delegation.md) | Advanced | Migration across independent modules or services | Migrations are embarrassingly parallel when modules don't share state — subagents do in minutes what takes sequential hours |
-| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Intermediate | Upgrade where "it compiles and tests pass" is the goal | Mechanical migrations have a clear convergence criterion — AI doesn't get bored or lose focus on iteration 47 |
-| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | Intermediate | Risky upgrade you want to test without polluting main | A throwaway environment changes how you approach risk — bolder strategies, faster discovery, nothing at stake |
+| # | Approach | Best when | Why it fits |
+|---|----------|-----------|-------------|
+| 1 | [Plan Mode](../approaches/plan-mode.md) | Large migration touching dozens of files | Migrations are dependency graphs, not task lists — planning reveals the structure so you traverse it in the right order |
+| 2 | [Subagent Delegation](../approaches/subagent-delegation.md) | Migration across independent modules or services | Migrations are embarrassingly parallel when modules don't share state — subagents do in minutes what takes sequential hours |
+| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Upgrade where "it compiles and tests pass" is the goal | Mechanical migrations have a clear convergence criterion — AI doesn't get bored or lose focus on iteration 47 |
+| 4 | [Worktree Isolation](../approaches/worktree-isolation.md) | Risky upgrade you want to test without polluting main | A throwaway environment changes how you approach risk — bolder strategies, faster discovery, nothing at stake |

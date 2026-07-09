@@ -9,8 +9,8 @@
 
 **Integrations:** `agent-sdk` — programmatic sessions and custom tools for AI features built into your own product. Facts and pitfalls per record: `registry/integrations.md`.
 
-| # | Approach | Setup | Best when | Why it fits |
-|---|----------|-------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | Beginner | Designing the feature before building | The hard part isn't calling the API — measurable quality and graceful failure are design decisions code inherits |
-| 2 | [Deep Research](../approaches/deep-research.md) | Beginner | Choosing models, patterns, or architecture | LLM platform facts have a shelf life of weeks — current documentation beats stale training-data recall |
-| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Intermediate | Prompt exists, quality is inconsistent | Prompts regress invisibly because quality is a distribution; evals plus a loop pin it to a number and push it up |
+| # | Approach | Best when | Why it fits |
+|---|----------|-----------|-------------|
+| 1 | [Plan Mode](../approaches/plan-mode.md) | Designing the feature before building | The hard part isn't calling the API — measurable quality and graceful failure are design decisions code inherits |
+| 2 | [Deep Research](../approaches/deep-research.md) | Choosing models, patterns, or architecture | LLM platform facts have a shelf life of weeks — current documentation beats stale training-data recall |
+| 3 | [Autonomous Loops](../approaches/autonomous-loops.md) | Prompt exists, quality is inconsistent | Prompts regress invisibly because quality is a distribution; evals plus a loop pin it to a number and push it up |
