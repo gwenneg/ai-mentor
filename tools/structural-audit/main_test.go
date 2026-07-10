@@ -29,7 +29,7 @@ func recordMD(kind string) string {
 
 func validTree() map[string]string {
 	return map[string]string{
-		"skills/mentor/problems/test-goal.md": `# test-goal
+		"skills/mentor/playbooks/test-goal.md": `# test-goal
 *Last verified: 2026-07-03*
 
 **Hidden gem:** Alpha — because.
@@ -99,7 +99,7 @@ func TestValidTreePasses(t *testing.T) {
 // Every corruption must produce at least one issue mentioning the expected
 // text — i.e. every check must be able to fail the gate, not just print.
 func TestCorruptionsAreCaught(t *testing.T) {
-	routing := "skills/mentor/problems/test-goal.md"
+	routing := "skills/mentor/playbooks/test-goal.md"
 	cases := []struct {
 		name   string
 		mutate func(f map[string]string)
@@ -127,7 +127,7 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		}, "broken reference solutions/missing.md"},
 		{"orphan technique", func(f map[string]string) {
 			f["skills/mentor/solutions/orphan.md"] = approachMD()
-		}, "orphan: not ranked by any problems file"},
+		}, "orphan: not ranked by any playbooks file"},
 		{"bad routing date line", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "verified recently", 1)
 		}, "line 2 must be"},
@@ -203,9 +203,9 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/problem-mode.md"] = strings.Replace(
 				f["skills/mentor/problem-mode.md"], "1 goal categories", "24 goal categories", 1)
 		}, "prose says '24 goal categories' but there are 1"},
-		{"missing problems directory", func(f map[string]string) {
+		{"missing playbooks directory", func(f map[string]string) {
 			delete(f, routing)
-		}, "missing problems directory"},
+		}, "missing playbooks directory"},
 		{"built-ins line reintroduced", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "| # |",
 				"**Built-ins:** `/testcmd` — does the thing.\n\n| # |", 1)
@@ -216,10 +216,10 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		}, "capability line found"},
 		{"orphan integration record", func(f map[string]string) {
 			f["skills/mentor/solutions/unrouted.md"] = recordMD("integration")
-		}, "orphan: not ranked by any problems file"},
+		}, "orphan: not ranked by any playbooks file"},
 		{"orphan plugin record", func(f map[string]string) {
 			f["skills/mentor/solutions/lonely-plugin.md"] = recordMD("plugin")
-		}, "orphan: not ranked by any problems file"},
+		}, "orphan: not ranked by any playbooks file"},
 		{"promoted plugin still in the directory", func(f map[string]string) {
 			f["skills/mentor/marketplace.md"] += "| `shiny-plugin` | dup row | `test-goal` | ☑️ desk-checked |\n"
 		}, "promoted plugin still has a marketplace.md row"},

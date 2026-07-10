@@ -21,7 +21,7 @@ func recordMD(kind, sessionSig string) string {
 
 func validTree() map[string]string {
 	return map[string]string{
-		"skills/mentor/problems/test-goal.md": `# test-goal
+		"skills/mentor/playbooks/test-goal.md": `# test-goal
 *Last verified: 2026-07-03*
 
 | # | Solution | Best when | Why it fits |
@@ -30,7 +30,7 @@ func validTree() map[string]string {
 | 2 | [Beta](../solutions/beta.md) | Beta fits | y |
 | 3 | [neat-plugin](../solutions/neat-plugin.md) | Plugin shines | y |
 `,
-		"skills/mentor/problems/other-goal.md": `# other-goal
+		"skills/mentor/playbooks/other-goal.md": `# other-goal
 *Last verified: 2026-07-03*
 
 | # | Solution | Best when | Why it fits |
@@ -115,8 +115,8 @@ func TestSourceIssuesAreCaught(t *testing.T) {
 				"kind: integration\n", "kind: integration\nbest_when: something\n", 1)
 		}, "carries inline goals:/best_when:"},
 		{"plugin record not ranked", func(f map[string]string) {
-			f["skills/mentor/problems/test-goal.md"] = strings.Replace(
-				f["skills/mentor/problems/test-goal.md"],
+			f["skills/mentor/playbooks/test-goal.md"] = strings.Replace(
+				f["skills/mentor/playbooks/test-goal.md"],
 				"| 3 | [neat-plugin](../solutions/neat-plugin.md) | Plugin shines | y |\n", "", 1)
 		}, "plugin has no ranked row"},
 		{"record missing session_signal", func(f map[string]string) {

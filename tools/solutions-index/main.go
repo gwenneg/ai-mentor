@@ -1,7 +1,7 @@
 // Generates skills/mentor/solutions/index.md — the compiled solutions index —
 // from the authored sources of truth:
 //
-//   - problems/*.md    goal membership, rank, and best-when triggers for
+//   - playbooks/*.md    goal membership, rank, and best-when triggers for
 //     every ranked solution (the ranked rows)
 //   - solutions/*.md   every solution, one file each. A file with a `kind:`
 //     line is a flat record (plugin, integration, or doc — the filename is
@@ -81,7 +81,7 @@ func cells(l string) []string {
 
 // solutions parses every solutions/*.md file into a row. A `kind:` line makes
 // the file a flat record (filename = id); otherwise it is a technique
-// deep-dive. Goals and best_when always come from the problems tables.
+// deep-dive. Goals and best_when always come from the playbooks tables.
 func (g *gen) solutions() map[string]*row {
 	rows := map[string]*row{}
 	isRecord := map[string]bool{}
@@ -121,7 +121,7 @@ func (g *gen) solutions() map[string]*row {
 		}
 		if isRecord[id] {
 			// Every record is ranked like a technique: goals and best_when come
-			// from the problems rows — inline copies would be a second home for
+			// from the playbooks rows — inline copies would be a second home for
 			// the fact. The kind: line is a semantic label, not a routing tier.
 			if len(r.goals) > 0 || r.bestWhen != "" {
 				g.errf(f, "record carries inline goals:/best_when: — these derive from its ranked rows; remove them")
@@ -140,11 +140,11 @@ func (g *gen) solutions() map[string]*row {
 		}
 	}
 
-	// goals and best_when come from the problems tables — for every ranked solution
+	// goals and best_when come from the playbooks tables — for every ranked solution
 	bestRank := map[string]int{}
-	problems, _ := filepath.Glob(filepath.Join(g.skill, "problems", "*.md"))
-	slices.Sort(problems)
-	for _, f := range problems {
+	playbooks, _ := filepath.Glob(filepath.Join(g.skill, "playbooks", "*.md"))
+	slices.Sort(playbooks)
+	for _, f := range playbooks {
 		goal := strings.TrimSuffix(filepath.Base(f), ".md")
 		for _, l := range lines(f) {
 			m := reRow.FindStringSubmatch(l)
@@ -175,7 +175,7 @@ func (g *gen) solutions() map[string]*row {
 	}
 	for id, r := range rows {
 		if len(r.goals) == 0 {
-			g.errf(filepath.Join(g.skill, "solutions", id+".md"), "%s has no ranked row in any problems file — cannot index it", r.kind)
+			g.errf(filepath.Join(g.skill, "solutions", id+".md"), "%s has no ranked row in any playbooks file — cannot index it", r.kind)
 		}
 	}
 	return rows
@@ -192,7 +192,7 @@ func (g *gen) build() string {
 
 	var b strings.Builder
 	b.WriteString("# Solutions Index\n")
-	b.WriteString("*Generated — do not edit. Sources: the problems tables and each solutions/ file. Regenerate: `go -C tools/solutions-index run .`*\n\n")
+	b.WriteString("*Generated — do not edit. Sources: the playbooks tables and each solutions/ file. Regenerate: `go -C tools/solutions-index run .`*\n\n")
 	b.WriteString("One row per first-party solution (unpromoted marketplace plugins live in `marketplace.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.\n\n")
 	b.WriteString("| Id | Kind | Goals | Best when | Setup signal | Session signal |\n")
 	b.WriteString("|----|------|-------|-----------|--------------|----------------|\n")

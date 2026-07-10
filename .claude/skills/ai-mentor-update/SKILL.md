@@ -62,17 +62,17 @@ Wait for the user's response, then run the selected steps in order. *(Auto mode:
 
 *Skip this step if the user did not select it.*
 
-Read `templates/approach.md` from this skill's directory for the technique-file structure; the problems-table structure is specified inline below.
+Read `templates/approach.md` from this skill's directory for the technique-file structure; the playbooks-table structure is specified inline below.
 
-### Problem files
+### Playbook files
 
-For each per-goal file in `skills/mentor/problems/`:
+For each per-goal file in `skills/mentor/playbooks/`:
 
 - `*Last verified: YYYY-MM-DD*` on line 2
-- One `problems/<slug>.md` file per goal in problem-mode.md's classification table (and no extras)
+- One `playbooks/<slug>.md` file per goal in problem-mode.md's classification table (and no extras)
 - Each file: a `**Hidden gem:**` line naming an approach that appears in its rows, and a ranked shortlist with sequential numbering, at least 3 rows, and approach links that resolve
 - Row content: "Best when" is one short clause; "Why it fits" is one sentence of goal-specific judgment — flag rows that have drifted into generic filler
-- The shortlist is curated, not exhaustive: top picks plus the hidden gem. Every technique file must still be ranked by at least one problems file (the audit's orphan check)
+- The shortlist is curated, not exhaustive: top picks plus the hidden gem. Every technique file must still be ranked by at least one playbooks file (the audit's orphan check)
 
 ### Technique files
 
@@ -103,8 +103,8 @@ For each technique file in `skills/mentor/solutions/` (the deep-dives — any so
 For the flat record files in `skills/mentor/solutions/` (a solution file *with* a `kind:` line — built-in command, integration, doc, or promoted plugin; the filename is its id) and the marketplace directory (`marketplace.md`):
 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
-- `solutions/index.md` is **generated** — never hand-edit it. After changing problems rows, a technique's `## Signals` section, or a record file, run `go -C tools/solutions-index run .` and commit the regenerated file (CI fails on a stale index)
-- Every record (any kind) is a ranked row in at least one problems table and carries NO inline `goals:`/`best_when:` — both derive from its rows. Capability lines (`**Plugins:**`/`**Built-ins:**`/`**Integrations:**`) are forbidden: the ranking is the only routing surface
+- `solutions/index.md` is **generated** — never hand-edit it. After changing playbooks rows, a technique's `## Signals` section, or a record file, run `go -C tools/solutions-index run .` and commit the regenerated file (CI fails on a stale index)
+- Every record (any kind) is a ranked row in at least one playbooks table and carries NO inline `goals:`/`best_when:` — both derive from its rows. Capability lines (`**Plugins:**`/`**Built-ins:**`/`**Integrations:**`) are forbidden: the ranking is the only routing surface
 - Built-in slash commands have no records at all — each lives inside its covering technique deep-dive (`/code-review` et al. in `built-in-review-skills`, `/goal`+`/loop` in `autonomous-loops`, `/schedule` in `scheduled-agents`, `/init` in `project-memory`)
 - Every `kind: plugin` record has no `marketplace.md` row (promotion removes the directory row)
 
@@ -150,7 +150,7 @@ Ask the user:
 > Verify all files or a specific one?
 >
 > - **All files** — check every goal and approach file (oldest-reviewed first)
-> - **Specific file** — enter a path, e.g. `solutions/plan-mode.md`, or `problems/<goal>.md` for one goal's rankings
+> - **Specific file** — enter a path, e.g. `solutions/plan-mode.md`, or `playbooks/<goal>.md` for one goal's rankings
 
 Wait for the user's response. *(Auto mode: skip the question — process the `--files` N oldest-verified files.)*
 
@@ -163,7 +163,7 @@ For each file in scope, use web search to verify claims against current tool doc
 - **Missing features**: Are there significant new Claude Code features related to this approach that the file doesn't mention?
 - **"How It Works" accuracy**: Are the step-by-step instructions still correct?
 
-### For the goal routing files (`problems/<goal>.md`), also check:
+### For the goal routing files (`playbooks/<goal>.md`), also check:
 
 - **Rankings**: Is the most broadly useful approach ranked first per goal?
 - **Hidden gems**: Does each still name the most non-obvious high-value approach, present in its section's rows?
@@ -202,10 +202,10 @@ This is the routine maintenance path. New Claude Code capabilities are announced
 3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
    - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
-   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the catalog consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command folds into its covering technique deep-dive (or a new technique if none covers it); a new integration gets its own `solutions/<id>.md` record file plus a ranked row in at least one problems table. Then regenerate the compiled index (`go -C tools/solutions-index run .`) and commit it alongside the change.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the catalog consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command folds into its covering technique deep-dive (or a new technique if none covers it); a new integration gets its own `solutions/<id>.md` record file plus a ranked row in at least one playbooks table. Then regenerate the compiled index (`go -C tools/solutions-index run .`) and commit it alongside the change.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
-4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated solutions/x.md and problems/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
+4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated solutions/x.md and playbooks/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
 
 For breaking changes the digests may not mention (renamed flags, removed features), also skim the release-level changelog at `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md` for the same period — these matter to "Try it now" prompts even when they are not "notable".
 
@@ -269,7 +269,7 @@ For each new plugin, take its `description` (and `author`, to label Anthropic-bu
 
 Ask the user which additions and removals to apply *(auto mode: apply all directory additions/removals — the API is authoritative; promoted-record removals and re-verification flags are always report-only)*. For confirmed changes, edit `marketplace.md` and update its `*Last synced*` date to today. Promoted `solutions/<id>.md` files are maintained by Step 3 (content verification against official docs), same as every other solution file.
 
-Directory plugins are never listed in `problems/<goal>.md` (the audit forbids `**Plugins:**` lines), so directory changes need no goal-file reconciliation. If a removed plugin was PROMOTED, its ranked rows in `problems/<goal>.md` are part of the human decision flagged above — never auto-deleted.
+Directory plugins are never listed in `playbooks/<goal>.md` (the audit forbids `**Plugins:**` lines), so directory changes need no goal-file reconciliation. If a removed plugin was PROMOTED, its ranked rows in `playbooks/<goal>.md` are part of the human decision flagged above — never auto-deleted.
 
 The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
 

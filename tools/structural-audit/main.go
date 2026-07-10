@@ -1,6 +1,6 @@
 // Deterministic structural audit for the ai-mentor catalog.
 //
-// Checks the problems tables, solution files (technique deep-dives and flat
+// Checks the playbooks tables, solution files (technique deep-dives and flat
 // records), cross-references, the changelog ledger, and SKILL.md consistency.
 // Exits 1 if any issue is found, 2 on a fatal setup problem. No network, no
 // LLM — safe as a PR gate. Stdlib only.
@@ -35,7 +35,7 @@ var (
 	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef      = regexp.MustCompile(`(problems|solutions)/[a-z0-9-]+\.md|\b(plugins|profile-schema|processed-changelogs)\.md`)
+	reDocRef      = regexp.MustCompile(`(playbooks|solutions)/[a-z0-9-]+\.md|\b(plugins|profile-schema|processed-changelogs)\.md`)
 	reRef         = regexp.MustCompile(`solutions/[a-z0-9-]+\.md`)
 	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
@@ -159,7 +159,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 	}
 }
 
-// checkRouting audits every per-goal file under skills/mentor/problems/:
+// checkRouting audits every per-goal file under skills/mentor/playbooks/:
 // date line, hidden gem, at least minGoalRows sequentially numbered rows,
 // cross-references, and orphans. rankedNames is every solution — technique
 // or record — each of which must appear in at least one ranked row: the
@@ -168,7 +168,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
-		a.issue(dir, "missing problems directory (per-goal files)")
+		a.issue(dir, "missing playbooks directory (per-goal files)")
 		return nil
 	}
 	var goals []string
@@ -219,7 +219,7 @@ func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[s
 	}
 	for _, name := range rankedNames {
 		if !strings.Contains(text, "solutions/"+name+".md") {
-			a.issue(filepath.Join(a.skill, "solutions", name+".md"), "orphan: not ranked by any problems file")
+			a.issue(filepath.Join(a.skill, "solutions", name+".md"), "orphan: not ranked by any playbooks file")
 		}
 	}
 	return goals
@@ -392,7 +392,7 @@ func (a *auditor) run() error {
 		rankedNames = append(rankedNames, id)
 	}
 
-	goals := a.checkRouting(filepath.Join(a.skill, "problems"), rankedNames, solutions)
+	goals := a.checkRouting(filepath.Join(a.skill, "playbooks"), rankedNames, solutions)
 	a.goals = len(goals)
 	for _, f := range recFiles {
 		a.checkRecord(f, goals)
@@ -485,7 +485,7 @@ func main() {
 	for _, is := range a.issues {
 		fmt.Printf("  - %s\n", is)
 	}
-	fmt.Printf("Audited %d problems, %d solutions, %d processed changelogs.\n", a.goals, a.solutions, a.weeks)
+	fmt.Printf("Audited %d playbooks, %d solutions, %d processed changelogs.\n", a.goals, a.solutions, a.weeks)
 	if len(a.issues) > 0 {
 		fmt.Printf("\n%d issue(s) found (listed above).\n", len(a.issues))
 		os.Exit(1)
