@@ -7,7 +7,7 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [MCP Context](../solutions/mcp-context.md) | Error spike correlating with a recent deploy | Incidents are data problems — MCP makes Claude a unified query layer across your observability stack, collapsing data-gathering |
-| 2 | [Deep Research](../solutions/deep-research.md) | Outage symptoms match something you've seen in a dependency | Many incidents originate outside your codebase; checking known issues first saves hours debugging code that wasn't the problem |
-| 3 | [Plan Mode](../solutions/plan-mode.md) | Service down and you don't know where to start | In incidents a wrong action costs more than a delayed one — structured triage prevents fixing the wrong component |
-| 4 | [Channels](../solutions/channels.md) | Alerts should land in the session with context already loaded | Triage speed is dominated by context assembly; channels deliver the event where that assembly already happened |
+| 1 | [MCP Context](../approaches/mcp-context.md) | Error spike correlating with a recent deploy | Incidents are data problems — MCP makes Claude a unified query layer across your observability stack, collapsing data-gathering |
+| 2 | [Deep Research](../approaches/deep-research.md) | Outage symptoms match something you've seen in a dependency | Many incidents originate outside your codebase; checking known issues first saves hours debugging code that wasn't the problem |
+| 3 | [Plan Mode](../approaches/plan-mode.md) | Service down and you don't know where to start | In incidents a wrong action costs more than a delayed one — structured triage prevents fixing the wrong component |
+| 4 | [Channels](../approaches/channels.md) | Alerts should land in the session with context already loaded | Triage speed is dominated by context assembly; channels deliver the event where that assembly already happened |

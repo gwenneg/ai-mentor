@@ -1,16 +1,16 @@
-// Generates skills/mentor/solutions/index.md — the compiled solutions index —
+// Generates skills/mentor/approaches/index.md — the compiled solutions index —
 // from the authored sources of truth:
 //
 //   - playbooks/*.md    goal membership, rank, and best-when triggers for
-//     every ranked solution (the ranked rows)
-//   - solutions/*.md   every solution, one file each. A file with a `kind:`
+//     every ranked approach (the ranked rows)
+//   - approaches/*.md   every solution, one file each. A file with a `kind:`
 //     line is a flat record (plugin, integration, or doc — the filename is
 //     its id; the kind is a semantic label, not a routing tier); any other
 //     file is a technique deep-dive with a "## Signals" section. Everything
 //     is ranked: goals and best_when always derive from the rows.
 //
 // index.md is a build artifact: never hand-edit it. After editing any source
-// above, regenerate with `go -C tools/solutions-index run .`. In CI, `-check`
+// above, regenerate with `go -C tools/approaches-index run .`. In CI, `-check`
 // regenerates in memory and exits 1 if the on-disk file is stale.
 //
 // Deterministic by construction: rows sorted by id, no timestamps. Exits 1 on
@@ -18,7 +18,7 @@
 // missing Signals section, a ranked row pointing at a record), 2 on a fatal
 // setup problem. No network, no LLM. Stdlib only.
 //
-// Usage: go -C tools/solutions-index run . [-check] [repo-root]
+// Usage: go -C tools/approaches-index run . [-check] [repo-root]
 package main
 
 import (
@@ -35,7 +35,7 @@ import (
 var skillDir = filepath.Join("skills", "mentor")
 
 var (
-	reRow     = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]\(\.\./solutions/([a-z0-9-]+)\.md\)`)
+	reRow     = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]\(\.\./approaches/([a-z0-9-]+)\.md\)`)
 	reRegKind = regexp.MustCompile(`^kind: ([a-z-]+)$`)
 	reRegGoal = regexp.MustCompile(`^goals: (.+)$`)
 	reRegBest = regexp.MustCompile(`^best_when: (.+)$`)
@@ -79,14 +79,14 @@ func cells(l string) []string {
 	return cs
 }
 
-// solutions parses every solutions/*.md file into a row. A `kind:` line makes
+// solutions parses every approaches/*.md file into a row. A `kind:` line makes
 // the file a flat record (filename = id); otherwise it is a technique
 // deep-dive. Goals and best_when always come from the playbooks tables.
-func (g *gen) solutions() map[string]*row {
+func (g *gen) approaches() map[string]*row {
 	rows := map[string]*row{}
 	isRecord := map[string]bool{}
 
-	files, _ := filepath.Glob(filepath.Join(g.skill, "solutions", "*.md"))
+	files, _ := filepath.Glob(filepath.Join(g.skill, "approaches", "*.md"))
 	for _, f := range files {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
 		if id == "index" {
@@ -140,7 +140,7 @@ func (g *gen) solutions() map[string]*row {
 		}
 	}
 
-	// goals and best_when come from the playbooks tables — for every ranked solution
+	// goals and best_when come from the playbooks tables — for every ranked approach
 	bestRank := map[string]int{}
 	playbooks, _ := filepath.Glob(filepath.Join(g.skill, "playbooks", "*.md"))
 	slices.Sort(playbooks)
@@ -155,7 +155,7 @@ func (g *gen) solutions() map[string]*row {
 			slug := m[3]
 			r := rows[slug]
 			if r == nil {
-				g.errf(f, "ranked row references solutions/%s.md, which does not exist", slug)
+				g.errf(f, "ranked row references approaches/%s.md, which does not exist", slug)
 				continue
 			}
 			cs := cells(l) // | # | Solution | Best when | Why it fits |
@@ -175,14 +175,14 @@ func (g *gen) solutions() map[string]*row {
 	}
 	for id, r := range rows {
 		if len(r.goals) == 0 {
-			g.errf(filepath.Join(g.skill, "solutions", id+".md"), "%s has no ranked row in any playbooks file — cannot index it", r.kind)
+			g.errf(filepath.Join(g.skill, "approaches", id+".md"), "%s has no ranked row in any playbooks file — cannot index it", r.kind)
 		}
 	}
 	return rows
 }
 
 func (g *gen) build() string {
-	rows := g.solutions()
+	rows := g.approaches()
 
 	ids := make([]string, 0, len(rows))
 	for id := range rows {
@@ -191,9 +191,9 @@ func (g *gen) build() string {
 	slices.Sort(ids)
 
 	var b strings.Builder
-	b.WriteString("# Solutions Index\n")
-	b.WriteString("*Generated — do not edit. Sources: the playbooks tables and each solutions/ file. Regenerate: `go -C tools/solutions-index run .`*\n\n")
-	b.WriteString("One row per first-party solution (unpromoted marketplace plugins live in `marketplace.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.\n\n")
+	b.WriteString("# Approaches Index\n")
+	b.WriteString("*Generated — do not edit. Sources: the playbooks tables and each approaches/ file. Regenerate: `go -C tools/approaches-index run .`*\n\n")
+	b.WriteString("One row per first-party approach (unpromoted marketplace plugins live in `marketplace.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.\n\n")
 	b.WriteString("| Id | Kind | Goals | Best when | Setup signal | Session signal |\n")
 	b.WriteString("|----|------|-------|-----------|--------------|----------------|\n")
 	for _, id := range ids {
@@ -261,18 +261,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	target := filepath.Join(g.skill, "solutions", "index.md")
+	target := filepath.Join(g.skill, "approaches", "index.md")
 	if *check {
 		disk, err := os.ReadFile(target)
 		if err != nil || string(disk) != out {
-			fmt.Println("solutions/index.md is stale — regenerate with `go -C tools/solutions-index run .`")
+			fmt.Println("approaches/index.md is stale — regenerate with `go -C tools/approaches-index run .`")
 			os.Exit(1)
 		}
-		fmt.Println("Solutions index: fresh")
+		fmt.Println("Approaches index: fresh")
 		return
 	}
 	if err := os.WriteFile(target, []byte(out), 0o644); err != nil {
 		fatal(err)
 	}
-	fmt.Printf("Wrote %s (%d solutions)\n", target, strings.Count(out, "\n|")-2)
+	fmt.Printf("Wrote %s (%d approaches)\n", target, strings.Count(out, "\n|")-2)
 }

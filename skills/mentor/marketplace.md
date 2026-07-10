@@ -3,7 +3,7 @@
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
-**Promotion rule:** a plugin graduates out of this directory into its own `solutions/<id>.md` record when it is hands-on validated (author-agnostic — our own evaluation is the evidence that matters) and earns a ranked row in at least one `playbooks/<goal>.md` table, where it competes with every other approach on equal terms. Promoted plugins are ordinary solutions — teachable by default, indexed, profile-tracked, never listed here. This directory holds the rest: the long tail plus everything not (yet) meeting that bar, reachable only by stack-match grep or reactive mention. Together, this file's rows and the `kind: plugin` records in `solutions/` cover the full marketplace manifest — the drift check verifies the union.
+**Promotion rule:** a plugin graduates out of this directory into its own `approaches/<id>.md` record when it is hands-on validated (author-agnostic — our own evaluation is the evidence that matters) and earns a ranked row in at least one `playbooks/<goal>.md` table, where it competes with every other approach on equal terms. Promoted plugins are ordinary solutions — teachable by default, indexed, profile-tracked, never listed here. This directory holds the rest: the long tail plus everything not (yet) meeting that bar, reachable only by stack-match grep or reactive mention. Together, this file's rows and the `kind: plugin` records in `approaches/` cover the full marketplace manifest — the drift check verifies the union.
 
 Each row: backticked name = the plugin's `id` (a legal profile capability id — the profile doesn't care where a capability is cataloged), goal column = the `playbooks/<goal>.md` it maps to, verdict = trust tier. Directory plugins are NOT teachable-by-default: they enter a user's ignorance map only on stack or goal relevance (a user who never touches SAP is never taught `ui5-modernization` as their daily surprise).
 
@@ -73,9 +73,9 @@ Hands-on evaluation of most integrations requires accounts or infrastructure (Sl
 | `firebase` (Google) | Firestore, auth, cloud functions, and hosting via Firebase MCP | `devops` | ☑️ desk-checked — needs a Firebase project |
 | `terraform` (HashiCorp) | Terraform MCP for IaC registry integration and module management | `devops` | ☑️ desk-checked — first-party HashiCorp, fresh (2026-03) |
 | `laravel-boost` (Laravel) | Laravel development toolkit MCP server | `greenfield` | ☑️ desk-checked — first-party Laravel; needs a Laravel app |
-| `telegram` | Telegram messaging bridge with access control (channels) | `devops` | ☑️ desk-checked — fresh (2026-04); covered by `solutions/channels.md`; needs a bot token |
-| `discord` | Discord messaging bridge with access control (channels) | `devops` | ☑️ desk-checked — fresh (2026-04); covered by `solutions/channels.md`; needs a bot |
-| `imessage` | iMessage bridge (reads `chat.db`, sends via AppleScript; channels) | `devops` | ☑️ desk-checked — macOS only, Full Disk Access required; covered by `solutions/channels.md` |
+| `telegram` | Telegram messaging bridge with access control (channels) | `devops` | ☑️ desk-checked — fresh (2026-04); covered by `approaches/channels.md`; needs a bot token |
+| `discord` | Discord messaging bridge with access control (channels) | `devops` | ☑️ desk-checked — fresh (2026-04); covered by `approaches/channels.md`; needs a bot |
+| `imessage` | iMessage bridge (reads `chat.db`, sends via AppleScript; channels) | `devops` | ☑️ desk-checked — macOS only, Full Disk Access required; covered by `approaches/channels.md` |
 | `fakechat` | Localhost chat UI for testing channel flows — no tokens, no access control | `testing` | ☑️ desk-checked — the intended channels demo; requires Bun |
 
 ## Externally-hosted plugins

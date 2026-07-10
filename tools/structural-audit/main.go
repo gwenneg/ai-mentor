@@ -1,12 +1,12 @@
 // Deterministic structural audit for the ai-mentor catalog.
 //
-// Checks the playbooks tables, solution files (technique deep-dives and flat
+// Checks the playbooks tables, approach files (technique deep-dives and flat
 // records), cross-references, the changelog ledger, and SKILL.md consistency.
 // Exits 1 if any issue is found, 2 on a fatal setup problem. No network, no
 // LLM — safe as a PR gate. Stdlib only.
 //
-// The compiled index (solutions/index.md) is NOT audited here:
-// tools/solutions-index generates it from the same sources and its -check
+// The compiled index (approaches/index.md) is NOT audited here:
+// tools/approaches-index generates it from the same sources and its -check
 // mode is the freshness gate in CI.
 //
 // Usage: go -C tools/structural-audit run . [repo-root]
@@ -35,8 +35,8 @@ var (
 	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef      = regexp.MustCompile(`(playbooks|solutions)/[a-z0-9-]+\.md|\b(plugins|profile-schema|processed-changelogs)\.md`)
-	reRef         = regexp.MustCompile(`solutions/[a-z0-9-]+\.md`)
+	reDocRef      = regexp.MustCompile(`(playbooks|approaches)/[a-z0-9-]+\.md|\b(plugins|profile-schema|processed-changelogs)\.md`)
+	reRef         = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
 	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek        = regexp.MustCompile(`^\d{4}-w\d{2}$`)
@@ -64,10 +64,10 @@ var (
 )
 
 type auditor struct {
-	root                    string // repo root; issue paths print relative to it
-	skill                   string // skills/mentor directory
-	issues                  []string
-	goals, solutions, weeks int
+	root                     string // repo root; issue paths print relative to it
+	skill                    string // skills/mentor directory
+	issues                   []string
+	goals, approaches, weeks int
 }
 
 func (a *auditor) issue(path, format string, args ...any) {
@@ -161,11 +161,11 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 
 // checkRouting audits every per-goal file under skills/mentor/playbooks/:
 // date line, hidden gem, at least minGoalRows sequentially numbered rows,
-// cross-references, and orphans. rankedNames is every solution — technique
+// cross-references, and orphans. rankedNames is every approach — technique
 // or record — each of which must appear in at least one ranked row: the
 // ranking is the only routing surface (Plugins/Built-ins/Integrations lines
 // are forbidden relics).
-func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[string]bool) []string {
+func (a *auditor) checkRouting(dir string, rankedNames []string, approaches map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing playbooks directory (per-goal files)")
@@ -183,7 +183,7 @@ func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[s
 				gem = m[1]
 			}
 			if rePlugLine.MatchString(l) || reBuiltinL.MatchString(l) || reIntegL.MatchString(l) {
-				a.issue(f, "capability line found — every solution is a ranked row; Plugins/Built-ins/Integrations lines are forbidden")
+				a.issue(f, "capability line found — every approach is a ranked row; Plugins/Built-ins/Integrations lines are forbidden")
 			}
 			if m := reRow.FindStringSubmatch(l); m != nil {
 				if n, _ := strconv.Atoi(m[1]); n != len(rows)+1 {
@@ -218,8 +218,8 @@ func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[s
 		}
 	}
 	for _, name := range rankedNames {
-		if !strings.Contains(text, "solutions/"+name+".md") {
-			a.issue(filepath.Join(a.skill, "solutions", name+".md"), "orphan: not ranked by any playbooks file")
+		if !strings.Contains(text, "approaches/"+name+".md") {
+			a.issue(filepath.Join(a.skill, "approaches", name+".md"), "orphan: not ranked by any playbooks file")
 		}
 	}
 	return goals
@@ -328,7 +328,7 @@ func (a *auditor) checkProblemMode(path string, goals []string) {
 	}
 }
 
-// fileKind returns the value of a solution file's kind: line, or "" for a
+// fileKind returns the value of an approach file's kind: line, or "" for a
 // technique deep-dive (which has no kind: line).
 func fileKind(path string) string {
 	for _, l := range lines(path) {
@@ -340,21 +340,21 @@ func fileKind(path string) string {
 }
 
 func (a *auditor) run() error {
-	solDir := filepath.Join(a.skill, "solutions")
+	solDir := filepath.Join(a.skill, "approaches")
 	files, _ := filepath.Glob(filepath.Join(solDir, "*.md"))
 	if len(files) == 0 {
-		return fmt.Errorf("solutions directory empty/missing")
+		return fmt.Errorf("approaches directory empty/missing")
 	}
 	var techNames []string
 	var techFiles, recFiles []string
 	recordKind := map[string]string{} // id -> kind
-	solutions := map[string]bool{}
+	approaches := map[string]bool{}
 	for _, f := range files {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
 		if id == "index" {
-			continue // the compiled index; freshness is tools/solutions-index -check
+			continue // the compiled index; freshness is tools/approaches-index -check
 		}
-		solutions[id] = true
+		approaches[id] = true
 		if k := fileKind(f); k != "" {
 			recordKind[id] = k
 			recFiles = append(recFiles, f)
@@ -363,7 +363,7 @@ func (a *auditor) run() error {
 			techFiles = append(techFiles, f)
 		}
 	}
-	a.solutions = len(solutions)
+	a.approaches = len(approaches)
 
 	catalog := map[string]bool{}
 	catPath := filepath.Join(a.skill, "marketplace.md")
@@ -392,7 +392,7 @@ func (a *auditor) run() error {
 		rankedNames = append(rankedNames, id)
 	}
 
-	goals := a.checkRouting(filepath.Join(a.skill, "playbooks"), rankedNames, solutions)
+	goals := a.checkRouting(filepath.Join(a.skill, "playbooks"), rankedNames, approaches)
 	a.goals = len(goals)
 	for _, f := range recFiles {
 		a.checkRecord(f, goals)
@@ -437,7 +437,7 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 	return
 }
 
-// checkRecord audits one flat record file under solutions/: date line only.
+// checkRecord audits one flat record file under approaches/: date line only.
 // Content completeness (session_signal, no inline goals/best_when) is the
 // generator's job.
 func (a *auditor) checkRecord(path string, _ []string) {
@@ -485,7 +485,7 @@ func main() {
 	for _, is := range a.issues {
 		fmt.Printf("  - %s\n", is)
 	}
-	fmt.Printf("Audited %d playbooks, %d solutions, %d processed changelogs.\n", a.goals, a.solutions, a.weeks)
+	fmt.Printf("Audited %d playbooks, %d approaches, %d processed changelogs.\n", a.goals, a.approaches, a.weeks)
 	if len(a.issues) > 0 {
 		fmt.Printf("\n%d issue(s) found (listed above).\n", len(a.issues))
 		os.Exit(1)

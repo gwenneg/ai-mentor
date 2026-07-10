@@ -7,7 +7,7 @@ The mentor's memory of one engineer: what they know, what they've been shown, wh
 
 A single user-level file: `~/.ai-mentor/profile.md`, created on the mentor's first invocation.
 
-It is deliberately **person-level, not per-repo**: knowledge belongs to the engineer, and someone working across ten repositories must never be re-taught in repo #7 what they adopted in repo #2. Per-repo state needs no storage at all — setup signals are re-read from the current repo's disk every invocation (see the signal columns in `solutions/index.md`), and combining person-level knowledge with this-repo disk state is what enables the transfer move: "you use hooks in your other projects but not here — want the same test hook wired up?" Rare repo-scoped nuances ("declined loops for repo X — slow CI") go in the Note column with the repo named.
+It is deliberately **person-level, not per-repo**: knowledge belongs to the engineer, and someone working across ten repositories must never be re-taught in repo #7 what they adopted in repo #2. Per-repo state needs no storage at all — setup signals are re-read from the current repo's disk every invocation (see the signal columns in `approaches/index.md`), and combining person-level knowledge with this-repo disk state is what enables the transfer move: "you use hooks in your other projects but not here — want the same test hook wired up?" Rare repo-scoped nuances ("declined loops for repo X — slow CI") go in the Note column with the repo named.
 
 The file is machine-local (never committed, never leaves the machine) and plain markdown the engineer can open, edit, or delete at any time — the skill should mention the path when it first creates it. A hand-edit by the user is authoritative and overrides anything the mentor inferred.
 
@@ -49,12 +49,12 @@ Last new-capability check: <what's-new week slug, e.g. 2026-w26 — always a wee
 | fan-out-workflows | declined | 2026-07-03 | "Too token-heavy for us" |
 ```
 
-`Capability` is a solution id: a `solutions/<id>.md` basename (the enumerable set is one row each in `solutions/index.md`), or a marketplace plugin name from `marketplace.md`. All kinds share the table and the statuses; ids are additive across versions and existing rows are never orphaned by schema changes — a user's hand-edited row always stays valid. A capability with no row is **unknown** — a discovery candidate (directory plugins only when stack/goal-relevant).
+`Capability` is a solution id: a `approaches/<id>.md` basename (the enumerable set is one row each in `approaches/index.md`), or a marketplace plugin name from `marketplace.md`. All kinds share the table and the statuses; ids are additive across versions and existing rows are never orphaned by schema changes — a user's hand-edited row always stays valid. A capability with no row is **unknown** — a discovery candidate (directory plugins only when stack/goal-relevant).
 
 ## Statuses and transitions
 
 - **unknown → shown**: the mentor taught or demonstrated it this session.
-- **shown → adopted**: a positive *personal* signal is later observed (see the signal columns in `solutions/index.md`) or the user confirms they use it.
+- **shown → adopted**: a positive *personal* signal is later observed (see the signal columns in `approaches/index.md`) or the user confirms they use it.
 - **unknown → adopted**: a *personal* signal shows they already knew it — record silently, never "teach" it. Personal means theirs: a session signal or user-level setup under `~/.claude/`. Project-level config (the repo's `.claude/`, `.mcp.json`, CI) never sets `adopted` on its own — a developer who checks out an unfamiliar repo does not know its stack; that's *present here, knowledge unconfirmed*: prime teaching material, not knowledge.
 - **any → declined**: the user waved it off. Record the reason verbatim if given. Never re-offer a declined capability unless the user asks, or the reason no longer applies (e.g. declined for a missing plan feature they now have) — and then at most once, naming why it's being raised again.
 

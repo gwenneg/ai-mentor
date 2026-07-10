@@ -7,7 +7,7 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Deep Research](../solutions/deep-research.md) | Comparing libraries, frameworks, or SaaS tools | Automates the 30-browser-tab workflow into a cited, cross-referenced report you can present to your team |
-| 2 | [Plan Mode](../solutions/plan-mode.md) | Need a structured evaluation framework first | Research without a framework is browsing — criteria first, evidence second, decision last is how staff engineers decide |
-| 3 | [Browser Integration](../solutions/browser-integration.md) | Evaluating tools with interactive demos or UIs | Tools are chosen on experience as much as capability — browser testing evaluates the experience, not the feature list |
-| 4 | [Model & Effort Selection](../solutions/model-effort-selection.md) | Different phases need different reasoning depth | Reasoning depth is a budget — allocating it per phase gets better conclusions and a cheaper session at once |
+| 1 | [Deep Research](../approaches/deep-research.md) | Comparing libraries, frameworks, or SaaS tools | Automates the 30-browser-tab workflow into a cited, cross-referenced report you can present to your team |
+| 2 | [Plan Mode](../approaches/plan-mode.md) | Need a structured evaluation framework first | Research without a framework is browsing — criteria first, evidence second, decision last is how staff engineers decide |
+| 3 | [Browser Integration](../approaches/browser-integration.md) | Evaluating tools with interactive demos or UIs | Tools are chosen on experience as much as capability — browser testing evaluates the experience, not the feature list |
+| 4 | [Model & Effort Selection](../approaches/model-effort-selection.md) | Different phases need different reasoning depth | Reasoning depth is a budget — allocating it per phase gets better conclusions and a cheaper session at once |

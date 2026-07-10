@@ -7,7 +7,7 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Plan Mode](../solutions/plan-mode.md) | Not sure where the bottleneck actually is | Performance budgets are finite and intuition unreliable — analysis sends effort where the data says it should go |
-| 2 | [Autonomous Loops](../solutions/autonomous-loops.md) | Clear target like "under 200ms" or "below 500KB" | Tuning is inherently iterative, and a measurable target prevents both premature stopping and over-optimization |
-| 3 | [Deep Research](../solutions/deep-research.md) | Need framework-specific optimization techniques | Frameworks evolve faster than developers track — research applies current best practices, not two-year-old blog advice |
-| 4 | [Hooks](../solutions/hooks-as-workflow.md) | Want to see performance impact of every edit | Optimization without measurement is guesswork; auto-benchmarks make every change a data point Claude adjusts to |
+| 1 | [Plan Mode](../approaches/plan-mode.md) | Not sure where the bottleneck actually is | Performance budgets are finite and intuition unreliable — analysis sends effort where the data says it should go |
+| 2 | [Autonomous Loops](../approaches/autonomous-loops.md) | Clear target like "under 200ms" or "below 500KB" | Tuning is inherently iterative, and a measurable target prevents both premature stopping and over-optimization |
+| 3 | [Deep Research](../approaches/deep-research.md) | Need framework-specific optimization techniques | Frameworks evolve faster than developers track — research applies current best practices, not two-year-old blog advice |
+| 4 | [Hooks](../approaches/hooks-as-workflow.md) | Want to see performance impact of every edit | Optimization without measurement is guesswork; auto-benchmarks make every change a data point Claude adjusts to |

@@ -7,7 +7,7 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Custom Skills](../solutions/custom-skills.md) | Need categorized release notes from commit history | Release prep is procedural — same steps, same order — so a skill removes forgotten or misordered steps |
-| 2 | [Headless Mode](../solutions/headless-mode.md) | Validating release readiness in CI before cutting a tag | Humans forget pre-release checks under deadline pressure; headless validation catches blockers when you're rushing to ship |
-| 3 | [Plan Mode](../solutions/plan-mode.md) | Complex release with multiple services, migrations, and rollback steps | Complex releases fail on ordering and improvised rollbacks — planning the full sequence turns coordination into a checklist |
-| 4 | [commit-commands](../solutions/commit-commands.md) | A team wants shared commit conventions as slash commands | Conventions encoded as commands are followed by default; conventions in a wiki are followed by the diligent |
+| 1 | [Custom Skills](../approaches/custom-skills.md) | Need categorized release notes from commit history | Release prep is procedural — same steps, same order — so a skill removes forgotten or misordered steps |
+| 2 | [Headless Mode](../approaches/headless-mode.md) | Validating release readiness in CI before cutting a tag | Humans forget pre-release checks under deadline pressure; headless validation catches blockers when you're rushing to ship |
+| 3 | [Plan Mode](../approaches/plan-mode.md) | Complex release with multiple services, migrations, and rollback steps | Complex releases fail on ordering and improvised rollbacks — planning the full sequence turns coordination into a checklist |
+| 4 | [commit-commands](../approaches/commit-commands.md) | A team wants shared commit conventions as slash commands | Conventions encoded as commands are followed by default; conventions in a wiki are followed by the diligent |

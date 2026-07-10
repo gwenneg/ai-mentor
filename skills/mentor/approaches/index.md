@@ -1,7 +1,7 @@
-# Solutions Index
-*Generated — do not edit. Sources: the playbooks tables and each solutions/ file. Regenerate: `go -C tools/solutions-index run .`*
+# Approaches Index
+*Generated — do not edit. Sources: the playbooks tables and each approaches/ file. Regenerate: `go -C tools/approaches-index run .`*
 
-One row per first-party solution (unpromoted marketplace plugins live in `marketplace.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.
+One row per first-party approach (unpromoted marketplace plugins live in `marketplace.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.
 
 | Id | Kind | Goals | Best when | Setup signal | Session signal |
 |----|------|-------|-----------|--------------|----------------|

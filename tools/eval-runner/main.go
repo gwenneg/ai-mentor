@@ -165,13 +165,13 @@ func statementsByID(as []evalCase) map[string]string {
 }
 
 // approachNames enumerates every teachable unit for the B06 all-adopted
-// profile: one solutions/<id>.md file per capability (index.md excluded) —
+// profile: one approaches/<id>.md file per capability (index.md excluded) —
 // B06's "honest empty answer" only holds when the WHOLE ignorance map is
 // saturated.
 func approachNames(repo string) ([]string, error) {
-	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "solutions", "*.md"))
+	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*.md"))
 	if err != nil || len(files) == 0 {
-		return nil, fmt.Errorf("no solution files under %s/skills/mentor/solutions", repo)
+		return nil, fmt.Errorf("no approach files under %s/skills/mentor/solutions", repo)
 	}
 	var names []string
 	for _, f := range files {
@@ -200,13 +200,13 @@ func buildGroundTruth(repo, fixture string) groundTruth {
 	if b, err := os.ReadFile(filepath.Join(skill, "marketplace.md")); err == nil {
 		gt.plugins = pluginNames(string(b))
 	}
-	files, _ := filepath.Glob(filepath.Join(skill, "solutions", "*.md"))
+	files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*.md"))
 	for _, f := range files {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
 		if id == "index" {
 			continue
 		}
-		switch solutionKind(f) {
+		switch approachKind(f) {
 		case "integration", "doc":
 			gt.integrations = append(gt.integrations, id)
 		case "plugin":
@@ -236,9 +236,9 @@ func fixtureFiles(dir string) []string {
 	return out
 }
 
-// solutionKind returns the value of a solution file's `kind:` line, or ""
+// approachKind returns the value of an approach file's `kind:` line, or ""
 // for a technique deep-dive (which has no kind: line).
-func solutionKind(path string) string {
+func approachKind(path string) string {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return ""

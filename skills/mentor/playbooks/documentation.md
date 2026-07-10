@@ -7,10 +7,10 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [MCP Context](../solutions/mcp-context.md) | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |
-| 2 | [Deep Research](../solutions/deep-research.md) | Writing docs for an unfamiliar domain or standard | Documentation is a communication design problem; proven patterns give a structural blueprint so effort goes to content |
-| 3 | [Plan Mode](../solutions/plan-mode.md) | Large doc set with multiple sections and audiences | Documentation is information architecture — an outline gives every fact one home and writers clear coverage without overlap |
-| 4 | [Custom Skills](../solutions/custom-skills.md) | You regenerate the same type of documentation repeatedly | Same-structure docs are a solved problem once encoded — consistent, complete output from source code every time |
-| 5 | [Visual Artifacts](../solutions/visual-artifacts.md) | Docs need diagrams, dashboards, or sharing beyond the repo | Diagrams carry relationships linear Markdown flattens, and a stable URL turns docs into a link people actually open |
-| 6 | [claude-md-management](../solutions/claude-md-management.md) | A CLAUDE.md exists but nobody knows if it is still good | A scored audit against the real codebase turns 'our CLAUDE.md is probably stale' into a fix list |
-| 7 | [project-artifact](../solutions/project-artifact.md) | Project status should live on a shareable page | A living status page with honest unverified-state markings replaces the weekly re-explanation meeting |
+| 1 | [MCP Context](../approaches/mcp-context.md) | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |
+| 2 | [Deep Research](../approaches/deep-research.md) | Writing docs for an unfamiliar domain or standard | Documentation is a communication design problem; proven patterns give a structural blueprint so effort goes to content |
+| 3 | [Plan Mode](../approaches/plan-mode.md) | Large doc set with multiple sections and audiences | Documentation is information architecture — an outline gives every fact one home and writers clear coverage without overlap |
+| 4 | [Custom Skills](../approaches/custom-skills.md) | You regenerate the same type of documentation repeatedly | Same-structure docs are a solved problem once encoded — consistent, complete output from source code every time |
+| 5 | [Visual Artifacts](../approaches/visual-artifacts.md) | Docs need diagrams, dashboards, or sharing beyond the repo | Diagrams carry relationships linear Markdown flattens, and a stable URL turns docs into a link people actually open |
+| 6 | [claude-md-management](../approaches/claude-md-management.md) | A CLAUDE.md exists but nobody knows if it is still good | A scored audit against the real codebase turns 'our CLAUDE.md is probably stale' into a fix list |
+| 7 | [project-artifact](../approaches/project-artifact.md) | Project status should live on a shareable page | A living status page with honest unverified-state markings replaces the weekly re-explanation meeting |

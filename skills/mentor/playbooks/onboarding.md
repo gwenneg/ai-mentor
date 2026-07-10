@@ -7,8 +7,8 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [MCP Context](../solutions/mcp-context.md) | Team knowledge scattered across Confluence, Slack, Notion, and READMEs | The onboarding bottleneck is finding information, not understanding it — MCP brings every source into one queryable context |
-| 2 | [Plan Mode](../solutions/plan-mode.md) | Need a systematic understanding of the codebase and architecture | Replicates how experts onboard — learn the architecture's shape first, fill in module details as tickets demand |
-| 3 | [Deep Research](../solutions/deep-research.md) | Codebase uses frameworks or patterns you've never worked with | Patterns encode decisions into structure; learning the stack's vocabulary lets you read the codebase fluently from day one |
-| 4 | [Custom Skills](../solutions/custom-skills.md) | Local dev setup takes a half-day of manual steps | A skill is executable documentation — when a step breaks you fix the skill and every future onboarder benefits |
-| 5 | [claude-code-setup](../solutions/claude-code-setup.md) | A repo is new to Claude Code and wants tailored automation | Recommendations justified from the repo's actual contents land; generic best-practice lists get ignored |
+| 1 | [MCP Context](../approaches/mcp-context.md) | Team knowledge scattered across Confluence, Slack, Notion, and READMEs | The onboarding bottleneck is finding information, not understanding it — MCP brings every source into one queryable context |
+| 2 | [Plan Mode](../approaches/plan-mode.md) | Need a systematic understanding of the codebase and architecture | Replicates how experts onboard — learn the architecture's shape first, fill in module details as tickets demand |
+| 3 | [Deep Research](../approaches/deep-research.md) | Codebase uses frameworks or patterns you've never worked with | Patterns encode decisions into structure; learning the stack's vocabulary lets you read the codebase fluently from day one |
+| 4 | [Custom Skills](../approaches/custom-skills.md) | Local dev setup takes a half-day of manual steps | A skill is executable documentation — when a step breaks you fix the skill and every future onboarder benefits |
+| 5 | [claude-code-setup](../approaches/claude-code-setup.md) | A repo is new to Claude Code and wants tailored automation | Recommendations justified from the repo's actual contents land; generic best-practice lists get ignored |

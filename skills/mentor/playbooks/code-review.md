@@ -7,10 +7,10 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Built-In Review Skills](../solutions/built-in-review-skills.md) | Quick review of a focused diff or your own pre-PR code | Most review value is systematic checking — codified reviewer instincts applied consistently to every line |
-| 2 | [Subagent Delegation](../solutions/subagent-delegation.md) | Large PR touching security, perf, and correctness | Attention is finite — specialized agents keep focus per concern while parallelism keeps wall-clock time low |
-| 3 | [Fan-Out Workflows](../solutions/fan-out-workflows.md) | Critical change needing adversarial verification | Automated review's biggest problem is false positives; adversarial verification mimics human pushback for higher-signal results |
-| 4 | [MCP Context](../solutions/mcp-context.md) | PR implements a design doc or addresses an issue | The most expensive bugs are specification bugs — grounding review in requirements catches code solving the wrong problem |
-| 5 | [Cloud Sessions](../solutions/cloud-sessions.md) | Deep review off your machine, or PRs that fix themselves | Most post-review churn is mechanical; a watching cloud agent handles it so human reviewers focus on design |
-| 6 | [pr-review-toolkit](../solutions/pr-review-toolkit.md) | A substantial PR deserves specialized review angles beyond one general pass | Six specialized reviewers each read one concern deeply — found a planted off-by-one at the exact line in evaluation |
-| 7 | [claude-code-action](../solutions/claude-code-action.md) | Claude should review every PR automatically, findings as inline comments | Review that runs on every PR catches what reviewers skip on busy days; the Action makes it one workflow file |
+| 1 | [Built-In Review Skills](../approaches/built-in-review-skills.md) | Quick review of a focused diff or your own pre-PR code | Most review value is systematic checking — codified reviewer instincts applied consistently to every line |
+| 2 | [Subagent Delegation](../approaches/subagent-delegation.md) | Large PR touching security, perf, and correctness | Attention is finite — specialized agents keep focus per concern while parallelism keeps wall-clock time low |
+| 3 | [Fan-Out Workflows](../approaches/fan-out-workflows.md) | Critical change needing adversarial verification | Automated review's biggest problem is false positives; adversarial verification mimics human pushback for higher-signal results |
+| 4 | [MCP Context](../approaches/mcp-context.md) | PR implements a design doc or addresses an issue | The most expensive bugs are specification bugs — grounding review in requirements catches code solving the wrong problem |
+| 5 | [Cloud Sessions](../approaches/cloud-sessions.md) | Deep review off your machine, or PRs that fix themselves | Most post-review churn is mechanical; a watching cloud agent handles it so human reviewers focus on design |
+| 6 | [pr-review-toolkit](../approaches/pr-review-toolkit.md) | A substantial PR deserves specialized review angles beyond one general pass | Six specialized reviewers each read one concern deeply — found a planted off-by-one at the exact line in evaluation |
+| 7 | [claude-code-action](../approaches/claude-code-action.md) | Claude should review every PR automatically, findings as inline comments | Review that runs on every PR catches what reviewers skip on busy days; the Action makes it one workflow file |
