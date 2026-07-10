@@ -35,8 +35,8 @@ var (
 	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef      = regexp.MustCompile(`playbooks/[a-z0-9-]+\.md|approaches/(techniques|records)/[a-z0-9-]+\.md|approaches/index\.md|\b(marketplace|profile-schema|processed-changelogs)\.md`)
-	reRef         = regexp.MustCompile(`approaches/(techniques|records)/[a-z0-9-]+\.md`)
+	reDocRef      = regexp.MustCompile(`playbooks/[a-z0-9-]+\.md|approaches/(techniques|tools)/[a-z0-9-]+\.md|approaches/index\.md|\b(marketplace|profile-schema|processed-changelogs)\.md`)
+	reRef         = regexp.MustCompile(`approaches/(techniques|tools)/[a-z0-9-]+\.md`)
 	reLastVer     = regexp.MustCompile(`^last_verified: (` + datePat + `)$`)
 	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
@@ -342,7 +342,7 @@ func fileKind(path string) string {
 
 func (a *auditor) run() error {
 	techDir := filepath.Join(a.skill, "approaches", "techniques")
-	recDir := filepath.Join(a.skill, "approaches", "records")
+	recDir := filepath.Join(a.skill, "approaches", "tools")
 	techFiles, _ := filepath.Glob(filepath.Join(techDir, "*.md"))
 	if len(techFiles) == 0 {
 		return fmt.Errorf("approaches/techniques directory empty/missing")
@@ -432,7 +432,7 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 	return
 }
 
-// checkRecord audits one flat record under approaches/records/: it must be a
+// checkRecord audits one flat record under approaches/tools/: it must be a
 // pure ----delimited YAML frontmatter file with a valid last_verified date.
 // Content completeness (kind, session_signal, no inline goals/best_when) is
 // the generator's job.

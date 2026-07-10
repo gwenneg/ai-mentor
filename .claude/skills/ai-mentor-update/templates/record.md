@@ -1,6 +1,6 @@
 # Record Template
 
-Use this template when adding a **flat record** to `approaches/records/` — a pure YAML-frontmatter file documenting an external artifact (promoted plugin, integration, or doc) whose depth lives at its source. For technique deep-dives (prose files under `approaches/techniques/`), use `templates/technique.md` instead.
+Use this template when adding a **flat record** to `approaches/tools/` — a pure YAML-frontmatter file documenting an external artifact (promoted plugin, integration, or doc) whose depth lives at its source. For technique deep-dives (prose files under `approaches/techniques/`), use `templates/technique.md` instead.
 
 A record is a verified fact sheet, deliberately short: every value is a claim we can stand behind (verified against official docs, or our own hands-on evaluation). Do not pad it toward the deep-dive shape — if we ever own enough pedagogy about a capability to teach it ourselves, that is the signal to grow it into a technique deep-dive (the deep-research precedent), not to bloat the record.
 

@@ -50,7 +50,7 @@ Then ask the user which steps to run. The menu numbers are the Step headings bel
 > 2. **Structural audit** — check all files against templates, cross-references, staleness
 > 3. **Content verification** — web-search claims in files against current tool docs
 > 4. **Process new changelogs** — incorporate what's-new digests not yet listed in `processed-changelogs.md`
-> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `marketplace.md` or the promoted `approaches/records/`
+> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `marketplace.md` or the promoted `approaches/tools/`
 >
 > You can pick any combination (e.g. "all", "2 and 4", "just 5"). The routine pass is 4 and 5; the others are occasional deep audits.
 
@@ -62,7 +62,7 @@ Wait for the user's response, then run the selected steps in order. *(Auto mode:
 
 *Skip this step if the user did not select it.*
 
-Read `templates/technique.md` (technique deep-dives — prose files under `approaches/techniques/`) and `templates/record.md` (flat records — pure YAML-frontmatter files under `approaches/records/`) from this skill's directory for the two approach-file structures; the playbooks-table structure is specified inline below.
+Read `templates/technique.md` (technique deep-dives — prose files under `approaches/techniques/`) and `templates/record.md` (flat records — pure YAML-frontmatter files under `approaches/tools/`) from this skill's directory for the two approach-file structures; the playbooks-table structure is specified inline below.
 
 ### Playbook files
 
@@ -100,7 +100,7 @@ For each technique deep-dive in `skills/mentor/approaches/techniques/`:
 
 ### Record files and the index
 
-For the flat record files in `skills/mentor/approaches/records/` (pure YAML frontmatter — `kind:` plugin, integration, or doc; the filename is its id) and the marketplace directory (`marketplace.md`):
+For the flat record files in `skills/mentor/approaches/tools/` (pure YAML frontmatter — `kind:` plugin, integration, or doc; the filename is its id) and the marketplace directory (`marketplace.md`):
 
 - Records: valid `---`-delimited YAML with a `last_verified: YYYY-MM-DD` field; free-text values double-quoted. Techniques and playbooks keep the `*Last verified:*` line-2 marker (`*Last synced*` for the plugin catalog)
 - `approaches/index.md` is **generated** — never hand-edit it. After changing playbooks rows, a technique's `## Signals` section, or a record file, run `go -C tools/approaches-index run .` and commit the regenerated file (CI fails on a stale index)
@@ -112,7 +112,7 @@ The Go audit (`go -C tools/structural-audit run .`) enforces all of this determi
 
 ### Cross-references
 
-- Every ranked-row link (`../approaches/techniques/<name>.md` or `../approaches/records/<name>.md`) in goal files must point to an existing file.
+- Every ranked-row link (`../approaches/techniques/<name>.md` or `../approaches/tools/<name>.md`) in goal files must point to an existing file.
 - Every approach file must be referenced by at least one goal file.
 - Report orphan and missing approach files.
 
@@ -202,7 +202,7 @@ This is the routine maintenance path. New Claude Code capabilities are announced
 3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
    - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
-   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the catalog consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command folds into its covering technique deep-dive (or a new technique if none covers it); a new integration gets its own `approaches/records/<id>.md` record file plus a ranked row in at least one playbooks table. Then regenerate the compiled index (`go -C tools/approaches-index run .`) and commit it alongside the change.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the catalog consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command folds into its covering technique deep-dive (or a new technique if none covers it); a new integration gets its own `approaches/tools/<id>.md` record file plus a ranked row in at least one playbooks table. Then regenerate the compiled index (`go -C tools/approaches-index run .`) and commit it alongside the change.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
 4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and playbooks/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
@@ -244,7 +244,7 @@ Compare against the manifest:
 
 - **New plugins** — in the manifest but documented in neither place → add a `marketplace.md` row (new plugins always enter through the directory; promotion to `approaches/` is a separate, human editorial decision per the promotion rule in `marketplace.md`'s header)
 - **Removed plugins** — documented (directory row or promoted record) but no longer in the manifest. A directory row is removed outright. A **promoted record** leaving the marketplace is NEVER auto-deleted: flag it for a human decision (demote, delete, or keep with a delisted note) — profile rows may point at it
-- **Changed metadata on promoted plugins** — if the manifest description of a promoted plugin materially changed, flag its `approaches/records/<id>.md` for re-verification (its facts are hands-on claims; Step 3 re-verifies them like any other solution file)
+- **Changed metadata on promoted plugins** — if the manifest description of a promoted plugin materially changed, flag its `approaches/tools/<id>.md` for re-verification (its facts are hands-on claims; Step 3 re-verifies them like any other solution file)
 
 For each new plugin, take its `description` (and `author`, to label Anthropic-built vs external) from the same manifest JSON — no per-plugin fetch needed. If a batch of new plugins is very large (e.g. a marketplace expansion), still list every name in the report, but it is acceptable to add table rows in slices across runs, oldest-known first, noting the remaining backlog count in the report.
 
@@ -261,13 +261,13 @@ For each new plugin, take its `description` (and `author`, to label Anthropic-bu
 
 ### Removed plugins (documented but no longer in the manifest)
 - `<name>` — remove from the relevant marketplace.md table
-- `<name>` (PROMOTED — human decision needed) — approaches/records/<name>.md still exists; demote, delete, or keep with a delisted note
+- `<name>` (PROMOTED — human decision needed) — approaches/tools/<name>.md still exists; demote, delete, or keep with a delisted note
 
 ### No changes
 (if lists match)
 ```
 
-Ask the user which additions and removals to apply *(auto mode: apply all directory additions/removals — the API is authoritative; promoted-record removals and re-verification flags are always report-only)*. For confirmed changes, edit `marketplace.md` and update its `*Last synced*` date to today. Promoted `approaches/records/<id>.md` files are maintained by Step 3 (content verification against official docs), same as every other solution file.
+Ask the user which additions and removals to apply *(auto mode: apply all directory additions/removals — the API is authoritative; promoted-record removals and re-verification flags are always report-only)*. For confirmed changes, edit `marketplace.md` and update its `*Last synced*` date to today. Promoted `approaches/tools/<id>.md` files are maintained by Step 3 (content verification against official docs), same as every other solution file.
 
 Directory plugins are never listed in `playbooks/<goal>.md` (the audit forbids `**Plugins:**` lines), so directory changes need no goal-file reconciliation. If a removed plugin was PROMOTED, its ranked rows in `playbooks/<goal>.md` are part of the human decision flagged above — never auto-deleted.
 

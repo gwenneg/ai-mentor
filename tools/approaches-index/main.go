@@ -4,7 +4,7 @@
 //   - playbooks/*.md               goal membership, rank, and best-when
 //     triggers for every ranked approach (the ranked rows)
 //   - approaches/techniques/*.md   prose deep-dives with a "## Signals" section
-//   - approaches/records/*.md      pure YAML-frontmatter fact sheets (plugin,
+//   - approaches/tools/*.md      pure YAML-frontmatter fact sheets (plugin,
 //     integration, or doc — the filename is the id; kind is a semantic label,
 //     not a routing tier)
 //
@@ -36,7 +36,7 @@ import (
 var skillDir = filepath.Join("skills", "mentor")
 
 var (
-	reRow     = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]\(\.\./approaches/(?:techniques|records)/([a-z0-9-]+)\.md\)`)
+	reRow     = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]\(\.\./approaches/(?:techniques|tools)/([a-z0-9-]+)\.md\)`)
 	reRegKind = regexp.MustCompile(`^kind: ([a-z-]+)$`)
 	reRegGoal = regexp.MustCompile(`^goals: (.+)$`)
 	reRegBest = regexp.MustCompile(`^best_when: (.+)$`)
@@ -94,7 +94,7 @@ func unquote(v string) string {
 
 // approaches parses the two approach subfolders into rows: prose technique
 // deep-dives under approaches/techniques/ and pure YAML-frontmatter records
-// under approaches/records/ (filename = id; the subfolder decides the format,
+// under approaches/tools/ (filename = id; the subfolder decides the format,
 // kind: stays a semantic label). Goals and best_when always come from the
 // playbooks tables.
 func (g *gen) approaches() map[string]*row {
@@ -110,7 +110,7 @@ func (g *gen) approaches() map[string]*row {
 		for _, l := range lines(f) {
 			switch {
 			case reRegKind.MatchString(l):
-				g.errf(f, "technique file carries a kind: line — records live in approaches/records/")
+				g.errf(f, "technique file carries a kind: line — records live in approaches/tools/")
 			case strings.HasPrefix(l, "## "):
 				inSignals = l == "## Signals"
 			case inSignals:
@@ -127,11 +127,11 @@ func (g *gen) approaches() map[string]*row {
 		}
 	}
 
-	recFiles, _ := filepath.Glob(filepath.Join(g.skill, "approaches", "records", "*.md"))
+	recFiles, _ := filepath.Glob(filepath.Join(g.skill, "approaches", "tools", "*.md"))
 	for _, f := range recFiles {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
 		if rows[id] != nil {
-			g.errf(f, "id '%s' exists in both approaches/techniques/ and approaches/records/ — one capability, one file", id)
+			g.errf(f, "id '%s' exists in both approaches/techniques/ and approaches/tools/ — one capability, one file", id)
 			continue
 		}
 		r := &row{id: id, setupSig: "—"}

@@ -39,14 +39,14 @@ func validTree() map[string]string {
 | 1 | [Alpha](../approaches/techniques/alpha.md) | x | y |
 | 2 | [Beta](../approaches/techniques/beta.md) | x | y |
 | 3 | [Gamma](../approaches/techniques/gamma.md) | x | y |
-| 4 | [shiny-plugin](../approaches/records/shiny-plugin.md) | x | y |
-| 5 | [some-integration](../approaches/records/some-integration.md) | x | y |
+| 4 | [shiny-plugin](../approaches/tools/shiny-plugin.md) | x | y |
+| 5 | [some-integration](../approaches/tools/some-integration.md) | x | y |
 `,
-		"skills/mentor/approaches/techniques/alpha.md":         approachMD(),
-		"skills/mentor/approaches/techniques/beta.md":          approachMD(),
-		"skills/mentor/approaches/techniques/gamma.md":         approachMD(),
-		"skills/mentor/approaches/records/some-integration.md": recordMD("integration"),
-		"skills/mentor/approaches/records/shiny-plugin.md":     recordMD("plugin"),
+		"skills/mentor/approaches/techniques/alpha.md":       approachMD(),
+		"skills/mentor/approaches/techniques/beta.md":        approachMD(),
+		"skills/mentor/approaches/techniques/gamma.md":       approachMD(),
+		"skills/mentor/approaches/tools/some-integration.md": recordMD("integration"),
+		"skills/mentor/approaches/tools/shiny-plugin.md":     recordMD("plugin"),
 		"skills/mentor/processed-changelogs.md": `# Ledger
 *Updated: 2026-07-03*
 
@@ -132,8 +132,8 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "verified recently", 1)
 		}, "line 2 must be"},
 		{"bad record date line", func(f map[string]string) {
-			f["skills/mentor/approaches/records/some-integration.md"] = strings.Replace(
-				f["skills/mentor/approaches/records/some-integration.md"], "last_verified: 2026-07-03", "last_verified: recently", 1)
+			f["skills/mentor/approaches/tools/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/tools/some-integration.md"], "last_verified: 2026-07-03", "last_verified: recently", 1)
 		}, "missing 'last_verified"},
 		{"missing approach section", func(f map[string]string) {
 			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
@@ -215,17 +215,17 @@ func TestCorruptionsAreCaught(t *testing.T) {
 				"**Plugins:** `alpha-tool` ☑️ something useful.\n\n| # |", 1)
 		}, "capability line found"},
 		{"orphan integration record", func(f map[string]string) {
-			f["skills/mentor/approaches/records/unrouted.md"] = recordMD("integration")
+			f["skills/mentor/approaches/tools/unrouted.md"] = recordMD("integration")
 		}, "orphan: not ranked by any playbooks file"},
 		{"orphan plugin record", func(f map[string]string) {
-			f["skills/mentor/approaches/records/lonely-plugin.md"] = recordMD("plugin")
+			f["skills/mentor/approaches/tools/lonely-plugin.md"] = recordMD("plugin")
 		}, "orphan: not ranked by any playbooks file"},
 		{"promoted plugin still in the directory", func(f map[string]string) {
 			f["skills/mentor/marketplace.md"] += "| `shiny-plugin` | dup row | `test-goal` | ☑️ desk-checked |\n"
 		}, "promoted plugin still has a marketplace.md row"},
 		{"unknown record kind", func(f map[string]string) {
-			f["skills/mentor/approaches/records/some-integration.md"] = strings.Replace(
-				f["skills/mentor/approaches/records/some-integration.md"], "kind: integration", "kind: gadget", 1)
+			f["skills/mentor/approaches/tools/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/tools/some-integration.md"], "kind: integration", "kind: gadget", 1)
 		}, "unknown kind 'gadget'"},
 		{"missing ledger", func(f map[string]string) {
 			delete(f, "skills/mentor/processed-changelogs.md")
