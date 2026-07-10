@@ -1,13 +1,14 @@
 // Generates skills/mentor/approaches/index.md — the compiled solutions index —
 // from the authored sources of truth:
 //
-//   - playbooks/*.md    goal membership, rank, and best-when triggers for
-//     every ranked approach (the ranked rows)
-//   - approaches/*.md   every solution, one file each. A file with a `kind:`
-//     line is a flat record (plugin, integration, or doc — the filename is
-//     its id; the kind is a semantic label, not a routing tier); any other
-//     file is a technique deep-dive with a "## Signals" section. Everything
-//     is ranked: goals and best_when always derive from the rows.
+//   - playbooks/*.md               goal membership, rank, and best-when
+//     triggers for every ranked approach (the ranked rows)
+//   - approaches/techniques/*.md   prose deep-dives with a "## Signals" section
+//   - approaches/records/*.md      pure YAML-frontmatter fact sheets (plugin,
+//     integration, or doc — the filename is the id; kind is a semantic label,
+//     not a routing tier)
+//
+// Everything is ranked: goals and best_when always derive from the rows.
 //
 // index.md is a build artifact: never hand-edit it. After editing any source
 // above, regenerate with `go -C tools/approaches-index run .`. In CI, `-check`
@@ -35,7 +36,7 @@ import (
 var skillDir = filepath.Join("skills", "mentor")
 
 var (
-	reRow     = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]\(\.\./approaches/([a-z0-9-]+)\.md\)`)
+	reRow     = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]\(\.\./approaches/(?:techniques|records)/([a-z0-9-]+)\.md\)`)
 	reRegKind = regexp.MustCompile(`^kind: ([a-z-]+)$`)
 	reRegGoal = regexp.MustCompile(`^goals: (.+)$`)
 	reRegBest = regexp.MustCompile(`^best_when: (.+)$`)
@@ -79,35 +80,37 @@ func cells(l string) []string {
 	return cs
 }
 
-// solutions parses every approaches/*.md file into a row. A `kind:` line makes
-// the file a flat record (filename = id); otherwise it is a technique
-// deep-dive. Goals and best_when always come from the playbooks tables.
+// unquote strips a surrounding double-quote pair from a YAML scalar and
+// unescapes \" and \\ — records quote free-text values because they contain
+// ": ", which YAML plain scalars forbid.
+func unquote(v string) string {
+	if len(v) >= 2 && strings.HasPrefix(v, `"`) && strings.HasSuffix(v, `"`) {
+		v = v[1 : len(v)-1]
+		v = strings.ReplaceAll(v, `\"`, `"`)
+		v = strings.ReplaceAll(v, `\\`, `\`)
+	}
+	return v
+}
+
+// approaches parses the two approach subfolders into rows: prose technique
+// deep-dives under approaches/techniques/ and pure YAML-frontmatter records
+// under approaches/records/ (filename = id; the subfolder decides the format,
+// kind: stays a semantic label). Goals and best_when always come from the
+// playbooks tables.
 func (g *gen) approaches() map[string]*row {
 	rows := map[string]*row{}
 	isRecord := map[string]bool{}
 
-	files, _ := filepath.Glob(filepath.Join(g.skill, "approaches", "*.md"))
-	for _, f := range files {
+	techFiles, _ := filepath.Glob(filepath.Join(g.skill, "approaches", "techniques", "*.md"))
+	for _, f := range techFiles {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
-		if id == "index" {
-			continue // the build artifact itself
-		}
-		r := &row{id: id}
+		r := &row{id: id, kind: "technique"}
 		rows[id] = r
 		inSignals := false
 		for _, l := range lines(f) {
 			switch {
 			case reRegKind.MatchString(l):
-				r.kind = reRegKind.FindStringSubmatch(l)[1]
-				isRecord[id] = true
-			case reRegGoal.MatchString(l):
-				for _, gl := range strings.Split(reRegGoal.FindStringSubmatch(l)[1], ",") {
-					r.goals = append(r.goals, strings.TrimSpace(gl))
-				}
-			case reRegBest.MatchString(l):
-				r.bestWhen = reRegBest.FindStringSubmatch(l)[1]
-			case reRegSig.MatchString(l):
-				r.sessionSig = reRegSig.FindStringSubmatch(l)[1]
+				g.errf(f, "technique file carries a kind: line — records live in approaches/records/")
 			case strings.HasPrefix(l, "## "):
 				inSignals = l == "## Signals"
 			case inSignals:
@@ -119,24 +122,39 @@ func (g *gen) approaches() map[string]*row {
 				}
 			}
 		}
-		if isRecord[id] {
-			// Every record is ranked like a technique: goals and best_when come
-			// from the playbooks rows — inline copies would be a second home for
-			// the fact. The kind: line is a semantic label, not a routing tier.
-			if len(r.goals) > 0 || r.bestWhen != "" {
+		if r.setupSig == "" || r.sessionSig == "" {
+			g.errf(f, "missing or incomplete '## Signals' section (need '- Setup:' and '- Session:' lines)")
+		}
+	}
+
+	recFiles, _ := filepath.Glob(filepath.Join(g.skill, "approaches", "records", "*.md"))
+	for _, f := range recFiles {
+		id := strings.TrimSuffix(filepath.Base(f), ".md")
+		if rows[id] != nil {
+			g.errf(f, "id '%s' exists in both approaches/techniques/ and approaches/records/ — one capability, one file", id)
+			continue
+		}
+		r := &row{id: id, setupSig: "—"}
+		rows[id] = r
+		isRecord[id] = true
+		for _, l := range lines(f) {
+			switch {
+			case reRegKind.MatchString(l):
+				r.kind = reRegKind.FindStringSubmatch(l)[1]
+			case reRegGoal.MatchString(l), reRegBest.MatchString(l):
+				// Every record is ranked like a technique: goals and best_when
+				// derive from the playbooks rows — inline copies would be a
+				// second home for the fact.
 				g.errf(f, "record carries inline goals:/best_when: — these derive from its ranked rows; remove them")
+			case reRegSig.MatchString(l):
+				r.sessionSig = unquote(reRegSig.FindStringSubmatch(l)[1])
 			}
-			if r.sessionSig == "" {
-				g.errf(f, "record is missing session_signal")
-			}
-			if r.setupSig == "" {
-				r.setupSig = "—"
-			}
-		} else {
-			r.kind = "technique"
-			if r.setupSig == "" || r.sessionSig == "" {
-				g.errf(f, "missing or incomplete '## Signals' section (need '- Setup:' and '- Session:' lines)")
-			}
+		}
+		if r.kind == "" {
+			g.errf(f, "record is missing kind:")
+		}
+		if r.sessionSig == "" {
+			g.errf(f, "record is missing session_signal")
 		}
 	}
 
@@ -155,7 +173,7 @@ func (g *gen) approaches() map[string]*row {
 			slug := m[3]
 			r := rows[slug]
 			if r == nil {
-				g.errf(f, "ranked row references approaches/%s.md, which does not exist", slug)
+				g.errf(f, "ranked row references a missing approach file for '%s'", slug)
 				continue
 			}
 			cs := cells(l) // | # | Solution | Best when | Why it fits |
@@ -175,7 +193,7 @@ func (g *gen) approaches() map[string]*row {
 	}
 	for id, r := range rows {
 		if len(r.goals) == 0 {
-			g.errf(filepath.Join(g.skill, "approaches", id+".md"), "%s has no ranked row in any playbooks file — cannot index it", r.kind)
+			g.errf(filepath.Join(g.skill, "approaches"), "'"+id+"' (%s) has no ranked row in any playbooks file — cannot index it", r.kind)
 		}
 	}
 	return rows

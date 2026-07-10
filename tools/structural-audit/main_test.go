@@ -24,7 +24,7 @@ func approachMD() string {
 // recordMD has no goals/best_when — every record derives both from its
 // ranked rows (the generator enforces that; the audit only needs kind).
 func recordMD(kind string) string {
-	return "# record\n*Last verified: 2026-07-03*\n\nkind: " + kind + "\nsession_signal: seen\n"
+	return "---\nkind: " + kind + "\nlast_verified: 2026-07-03\nsession_signal: \"seen\"\n---\n"
 }
 
 func validTree() map[string]string {
@@ -36,17 +36,17 @@ func validTree() map[string]string {
 
 | # | Solution | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Alpha](../approaches/alpha.md) | x | y |
-| 2 | [Beta](../approaches/beta.md) | x | y |
-| 3 | [Gamma](../approaches/gamma.md) | x | y |
-| 4 | [shiny-plugin](../approaches/shiny-plugin.md) | x | y |
-| 5 | [some-integration](../approaches/some-integration.md) | x | y |
+| 1 | [Alpha](../approaches/techniques/alpha.md) | x | y |
+| 2 | [Beta](../approaches/techniques/beta.md) | x | y |
+| 3 | [Gamma](../approaches/techniques/gamma.md) | x | y |
+| 4 | [shiny-plugin](../approaches/records/shiny-plugin.md) | x | y |
+| 5 | [some-integration](../approaches/records/some-integration.md) | x | y |
 `,
-		"skills/mentor/approaches/alpha.md":            approachMD(),
-		"skills/mentor/approaches/beta.md":             approachMD(),
-		"skills/mentor/approaches/gamma.md":            approachMD(),
-		"skills/mentor/approaches/some-integration.md": recordMD("integration"),
-		"skills/mentor/approaches/shiny-plugin.md":     recordMD("plugin"),
+		"skills/mentor/approaches/techniques/alpha.md":         approachMD(),
+		"skills/mentor/approaches/techniques/beta.md":          approachMD(),
+		"skills/mentor/approaches/techniques/gamma.md":         approachMD(),
+		"skills/mentor/approaches/records/some-integration.md": recordMD("integration"),
+		"skills/mentor/approaches/records/shiny-plugin.md":     recordMD("plugin"),
 		"skills/mentor/processed-changelogs.md": `# Ledger
 *Updated: 2026-07-03*
 
@@ -111,7 +111,7 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"fewer than 3 rows", func(f map[string]string) {
 			i := strings.Index(f[routing], "| 3 |")
 			f[routing] = f[routing][:i]
-			delete(f, "skills/mentor/approaches/gamma.md")
+			delete(f, "skills/mentor/approaches/techniques/gamma.md")
 		}, "only 2 rows"},
 		{"missing marketplace directory", func(f map[string]string) {
 			delete(f, "skills/mentor/marketplace.md")
@@ -123,43 +123,43 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f[routing] = strings.Replace(f[routing], "**Hidden gem:** Alpha", "**Hidden gem:** Omega", 1)
 		}, "does not match any ranked row"},
 		{"broken reference", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "approaches/beta.md", "approaches/missing.md", 1)
-		}, "broken reference approaches/missing.md"},
+			f[routing] = strings.Replace(f[routing], "approaches/techniques/beta.md", "approaches/techniques/missing.md", 1)
+		}, "broken reference approaches/techniques/missing.md"},
 		{"orphan technique", func(f map[string]string) {
-			f["skills/mentor/approaches/orphan.md"] = approachMD()
+			f["skills/mentor/approaches/techniques/orphan.md"] = approachMD()
 		}, "orphan: not ranked by any playbooks file"},
 		{"bad routing date line", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "verified recently", 1)
 		}, "line 2 must be"},
 		{"bad record date line", func(f map[string]string) {
-			f["skills/mentor/approaches/some-integration.md"] = strings.Replace(
-				f["skills/mentor/approaches/some-integration.md"], "*Last verified: 2026-07-03*", "recently", 1)
-		}, "line 2 must be"},
+			f["skills/mentor/approaches/records/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/records/some-integration.md"], "last_verified: 2026-07-03", "last_verified: recently", 1)
+		}, "missing 'last_verified"},
 		{"missing approach section", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Common Pitfalls", "## Pitfalls", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Common Pitfalls", "## Pitfalls", 1)
 		}, "missing section '## Common Pitfalls'"},
 		{"sections out of order", func(f map[string]string) {
-			a := f["skills/mentor/approaches/alpha.md"]
+			a := f["skills/mentor/approaches/techniques/alpha.md"]
 			a = strings.Replace(a, "## Why It Works\n\nfiller\n\n", "", 1)
-			f["skills/mentor/approaches/alpha.md"] = a + "## Why It Works\n\nfiller\n"
+			f["skills/mentor/approaches/techniques/alpha.md"] = a + "## Why It Works\n\nfiller\n"
 		}, "out of order"},
 		{"approach too short", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.ReplaceAll(
-				f["skills/mentor/approaches/alpha.md"], "filler\n", "")
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.ReplaceAll(
+				f["skills/mentor/approaches/techniques/alpha.md"], "filler\n", "")
 		}, "(expected at least 40)"},
 		{"optional example section out of order", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Common Pitfalls",
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Common Pitfalls",
 				"## Real-World Example\n\nfiller\n\n## Common Pitfalls", 1)
 		}, "section '## Real-World Example' out of order"},
 		{"no sources", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "- [Doc](https://example.com/doc)\n", "", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "- [Doc](https://example.com/doc)\n", "", 1)
 		}, "0 Sources entries"},
 		{"approach missing signals section", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Signals", "## Adoption evidence", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Signals", "## Adoption evidence", 1)
 		}, "missing section '## Signals'"},
 		{"bad week slug", func(f map[string]string) {
 			f["skills/mentor/processed-changelogs.md"] = strings.Replace(
@@ -215,17 +215,17 @@ func TestCorruptionsAreCaught(t *testing.T) {
 				"**Plugins:** `alpha-tool` ☑️ something useful.\n\n| # |", 1)
 		}, "capability line found"},
 		{"orphan integration record", func(f map[string]string) {
-			f["skills/mentor/approaches/unrouted.md"] = recordMD("integration")
+			f["skills/mentor/approaches/records/unrouted.md"] = recordMD("integration")
 		}, "orphan: not ranked by any playbooks file"},
 		{"orphan plugin record", func(f map[string]string) {
-			f["skills/mentor/approaches/lonely-plugin.md"] = recordMD("plugin")
+			f["skills/mentor/approaches/records/lonely-plugin.md"] = recordMD("plugin")
 		}, "orphan: not ranked by any playbooks file"},
 		{"promoted plugin still in the directory", func(f map[string]string) {
 			f["skills/mentor/marketplace.md"] += "| `shiny-plugin` | dup row | `test-goal` | ☑️ desk-checked |\n"
 		}, "promoted plugin still has a marketplace.md row"},
 		{"unknown record kind", func(f map[string]string) {
-			f["skills/mentor/approaches/some-integration.md"] = strings.Replace(
-				f["skills/mentor/approaches/some-integration.md"], "kind: integration", "kind: gadget", 1)
+			f["skills/mentor/approaches/records/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/records/some-integration.md"], "kind: integration", "kind: gadget", 1)
 		}, "unknown kind 'gadget'"},
 		{"missing ledger", func(f map[string]string) {
 			delete(f, "skills/mentor/processed-changelogs.md")

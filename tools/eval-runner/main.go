@@ -169,7 +169,7 @@ func statementsByID(as []evalCase) map[string]string {
 // B06's "honest empty answer" only holds when the WHOLE ignorance map is
 // saturated.
 func approachNames(repo string) ([]string, error) {
-	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*.md"))
+	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*", "*.md"))
 	if err != nil || len(files) == 0 {
 		return nil, fmt.Errorf("no approach files under %s/skills/mentor/solutions", repo)
 	}
@@ -200,7 +200,7 @@ func buildGroundTruth(repo, fixture string) groundTruth {
 	if b, err := os.ReadFile(filepath.Join(skill, "marketplace.md")); err == nil {
 		gt.plugins = pluginNames(string(b))
 	}
-	files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*.md"))
+	files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*", "*.md"))
 	for _, f := range files {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
 		if id == "index" {

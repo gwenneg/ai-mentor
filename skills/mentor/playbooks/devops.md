@@ -7,7 +7,7 @@
 
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Plan Mode](../approaches/plan-mode.md) | About to change a resource that other services depend on | Infra dependency graphs hide in string references; making them explicit prevents destroy-and-recreate surprises mid-apply |
-| 2 | [Deep Research](../approaches/deep-research.md) | Unfamiliar with a cloud provider's limits or pricing model | Provisioning mistakes are expensive to fix; research catches limits and pricing traps before they become incidents or bills |
-| 3 | [Worktree Isolation](../approaches/worktree-isolation.md) | Want to test Terraform or Helm changes without touching your branch | Throwaway safety matters most for infrastructure — worst case is deleting a worktree, not filing an incident report |
-| 4 | [session-report](../approaches/session-report.md) | Token usage and cache efficiency need real numbers | Optimization without measurement is guesswork — a usage report turns cost intuitions into data |
+| 1 | [Plan Mode](../approaches/techniques/plan-mode.md) | About to change a resource that other services depend on | Infra dependency graphs hide in string references; making them explicit prevents destroy-and-recreate surprises mid-apply |
+| 2 | [Deep Research](../approaches/techniques/deep-research.md) | Unfamiliar with a cloud provider's limits or pricing model | Provisioning mistakes are expensive to fix; research catches limits and pricing traps before they become incidents or bills |
+| 3 | [Worktree Isolation](../approaches/techniques/worktree-isolation.md) | Want to test Terraform or Helm changes without touching your branch | Throwaway safety matters most for infrastructure — worst case is deleting a worktree, not filing an incident report |
+| 4 | [session-report](../approaches/records/session-report.md) | Token usage and cache efficiency need real numbers | Optimization without measurement is guesswork — a usage report turns cost intuitions into data |

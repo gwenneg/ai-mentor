@@ -1,5 +1,5 @@
 // Check the documented plugins (marketplace.md directory rows plus promoted
-// kind: plugin records in approaches/) against the live official marketplace.
+// kind: plugin records in approaches/records/) against the live official marketplace.
 //
 // Pure manifest diffing — no LLM. Reads the marketplace.json manifest, the
 // authoritative plugin list: it includes externally-hosted plugins that have
@@ -167,7 +167,7 @@ func fatal(err error) {
 // documented plugins too: the drift check covers directory ∪ promoted.
 func promotedPlugins(repo string) []string {
 	var ids []string
-	files, _ := filepath.Glob(filepath.Join(repo, skillDir, "approaches", "*.md"))
+	files, _ := filepath.Glob(filepath.Join(repo, skillDir, "approaches", "records", "*.md"))
 	for _, f := range files {
 		b, err := os.ReadFile(f)
 		if err != nil {

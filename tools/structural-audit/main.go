@@ -35,8 +35,9 @@ var (
 	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef      = regexp.MustCompile(`(playbooks|approaches)/[a-z0-9-]+\.md|\b(plugins|profile-schema|processed-changelogs)\.md`)
-	reRef         = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
+	reDocRef      = regexp.MustCompile(`playbooks/[a-z0-9-]+\.md|approaches/(techniques|records)/[a-z0-9-]+\.md|approaches/index\.md|\b(marketplace|profile-schema|processed-changelogs)\.md`)
+	reRef         = regexp.MustCompile(`approaches/(techniques|records)/[a-z0-9-]+\.md`)
+	reLastVer     = regexp.MustCompile(`^last_verified: (` + datePat + `)$`)
 	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek        = regexp.MustCompile(`^\d{4}-w\d{2}$`)
@@ -52,7 +53,7 @@ var (
 	skillDir = filepath.Join("skills", "mentor")
 
 	// "## Real-World Example" is deliberately absent: it is optional — kept
-	// only where the example embeds exact syntax (see templates/approach.md).
+	// only where the example embeds exact syntax (see templates/technique.md).
 	// When present it must sit between Common Pitfalls and Sources
 	// (checkApproach enforces that).
 	approachSections = []string{
@@ -161,11 +162,11 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 
 // checkRouting audits every per-goal file under skills/mentor/playbooks/:
 // date line, hidden gem, at least minGoalRows sequentially numbered rows,
-// cross-references, and orphans. rankedNames is every approach — technique
-// or record — each of which must appear in at least one ranked row: the
-// ranking is the only routing surface (Plugins/Built-ins/Integrations lines
-// are forbidden relics).
-func (a *auditor) checkRouting(dir string, rankedNames []string, approaches map[string]bool) []string {
+// cross-references, and orphans. ranked maps every approach id — technique
+// or record — to its file path; each must appear in at least one ranked row:
+// the ranking is the only routing surface (Plugins/Built-ins/Integrations
+// lines are forbidden relics).
+func (a *auditor) checkRouting(dir string, ranked map[string]string) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing playbooks directory (per-goal files)")
@@ -217,9 +218,9 @@ func (a *auditor) checkRouting(dir string, rankedNames []string, approaches map[
 			a.issue(dir, "broken reference %s", ref)
 		}
 	}
-	for _, name := range rankedNames {
-		if !strings.Contains(text, "approaches/"+name+".md") {
-			a.issue(filepath.Join(a.skill, "approaches", name+".md"), "orphan: not ranked by any playbooks file")
+	for name, path := range ranked {
+		if !strings.Contains(text, "/"+name+".md") {
+			a.issue(path, "orphan: not ranked by any playbooks file")
 		}
 	}
 	return goals
@@ -340,30 +341,27 @@ func fileKind(path string) string {
 }
 
 func (a *auditor) run() error {
-	solDir := filepath.Join(a.skill, "approaches")
-	files, _ := filepath.Glob(filepath.Join(solDir, "*.md"))
-	if len(files) == 0 {
-		return fmt.Errorf("approaches directory empty/missing")
+	techDir := filepath.Join(a.skill, "approaches", "techniques")
+	recDir := filepath.Join(a.skill, "approaches", "records")
+	techFiles, _ := filepath.Glob(filepath.Join(techDir, "*.md"))
+	if len(techFiles) == 0 {
+		return fmt.Errorf("approaches/techniques directory empty/missing")
 	}
-	var techNames []string
-	var techFiles, recFiles []string
+	recFiles, _ := filepath.Glob(filepath.Join(recDir, "*.md"))
+
+	// ranked maps every approach id to its file path — the orphan check and
+	// per-kind checks report against the real subfolder location.
+	ranked := map[string]string{}
 	recordKind := map[string]string{} // id -> kind
-	approaches := map[string]bool{}
-	for _, f := range files {
-		id := strings.TrimSuffix(filepath.Base(f), ".md")
-		if id == "index" {
-			continue // the compiled index; freshness is tools/approaches-index -check
-		}
-		approaches[id] = true
-		if k := fileKind(f); k != "" {
-			recordKind[id] = k
-			recFiles = append(recFiles, f)
-		} else {
-			techNames = append(techNames, id)
-			techFiles = append(techFiles, f)
-		}
+	for _, f := range techFiles {
+		ranked[strings.TrimSuffix(filepath.Base(f), ".md")] = f
 	}
-	a.approaches = len(approaches)
+	for _, f := range recFiles {
+		id := strings.TrimSuffix(filepath.Base(f), ".md")
+		ranked[id] = f
+		recordKind[id] = fileKind(f) // "" (missing kind) is the generator's error
+	}
+	a.approaches = len(ranked)
 
 	catalog := map[string]bool{}
 	catPath := filepath.Join(a.skill, "marketplace.md")
@@ -374,25 +372,22 @@ func (a *auditor) run() error {
 	for _, n := range pluginNames(string(catText)) {
 		catalog[n] = true
 	}
-	// Every solution — technique or record — must be a ranked row; kind is a
+	// Every approach — technique or record — must be a ranked row; kind is a
 	// semantic label, not a routing tier. Promoted plugins additionally must
 	// not retain a marketplace.md directory row.
-	rankedNames := slices.Clone(techNames)
 	for id, kind := range recordKind {
-		recPath := filepath.Join(solDir, id+".md")
 		switch kind {
 		case "plugin":
 			if catalog[id] {
-				a.issue(recPath, "promoted plugin still has a marketplace.md row — remove the directory row")
+				a.issue(ranked[id], "promoted plugin still has a marketplace.md row — remove the directory row")
 			}
-		case "integration", "doc":
+		case "integration", "doc", "":
 		default:
-			a.issue(recPath, "unknown kind '%s'", kind)
+			a.issue(ranked[id], "unknown kind '%s'", kind)
 		}
-		rankedNames = append(rankedNames, id)
 	}
 
-	goals := a.checkRouting(filepath.Join(a.skill, "playbooks"), rankedNames, approaches)
+	goals := a.checkRouting(filepath.Join(a.skill, "playbooks"), ranked)
 	a.goals = len(goals)
 	for _, f := range recFiles {
 		a.checkRecord(f, goals)
@@ -437,11 +432,32 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 	return
 }
 
-// checkRecord audits one flat record file under approaches/: date line only.
-// Content completeness (session_signal, no inline goals/best_when) is the
-// generator's job.
+// checkRecord audits one flat record under approaches/records/: it must be a
+// pure ----delimited YAML frontmatter file with a valid last_verified date.
+// Content completeness (kind, session_signal, no inline goals/best_when) is
+// the generator's job.
 func (a *auditor) checkRecord(path string, _ []string) {
-	a.dateLine(path, "Last verified", lines(path))
+	ls := lines(path)
+	if len(ls) < 3 || ls[0] != "---" {
+		a.issue(path, "record must be a pure YAML frontmatter file starting with ---")
+		return
+	}
+	closed, dated := false, false
+	for _, l := range ls[1:] {
+		if l == "---" {
+			closed = true
+			break
+		}
+		if m := reLastVer.FindStringSubmatch(l); m != nil && validDate(m[1]) {
+			dated = true
+		}
+	}
+	if !closed {
+		a.issue(path, "frontmatter never closed with ---")
+	}
+	if !dated {
+		a.issue(path, "missing 'last_verified: YYYY-MM-DD' with a real date")
+	}
 }
 
 // findRoot walks upward from dir to the first directory containing

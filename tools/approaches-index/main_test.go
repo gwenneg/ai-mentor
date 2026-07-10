@@ -15,8 +15,8 @@ func techniqueMD(setupSig, sessionSig string) string {
 // recordMD has no goals/best_when — every record derives both from its
 // ranked rows; inline copies are an error.
 func recordMD(kind, sessionSig string) string {
-	return "# record\n*Last verified: 2026-07-03*\n\n" +
-		"kind: " + kind + "\nsession_signal: " + sessionSig + "\n"
+	return "---\nkind: " + kind + "\nlast_verified: 2026-07-03\n" +
+		"session_signal: \"" + sessionSig + "\"\n---\n"
 }
 
 func validTree() map[string]string {
@@ -26,22 +26,22 @@ func validTree() map[string]string {
 
 | # | Solution | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Alpha](../approaches/alpha.md) | Alpha shines | y |
-| 2 | [Beta](../approaches/beta.md) | Beta fits | y |
-| 3 | [neat-plugin](../approaches/neat-plugin.md) | Plugin shines | y |
+| 1 | [Alpha](../approaches/techniques/alpha.md) | Alpha shines | y |
+| 2 | [Beta](../approaches/techniques/beta.md) | Beta fits | y |
+| 3 | [neat-plugin](../approaches/records/neat-plugin.md) | Plugin shines | y |
 `,
 		"skills/mentor/playbooks/other-goal.md": `# other-goal
 *Last verified: 2026-07-03*
 
 | # | Solution | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Beta](../approaches/beta.md) | Beta wins here | y |
-| 2 | [some-integration](../approaches/some-integration.md) | Integrating | y |
+| 1 | [Beta](../approaches/techniques/beta.md) | Beta wins here | y |
+| 2 | [some-integration](../approaches/records/some-integration.md) | Integrating | y |
 `,
-		"skills/mentor/approaches/alpha.md":            techniqueMD("`x` exists", "uses alpha"),
-		"skills/mentor/approaches/beta.md":             techniqueMD("—", "uses beta"),
-		"skills/mentor/approaches/neat-plugin.md":      recordMD("plugin", "neat-plugin installed"),
-		"skills/mentor/approaches/some-integration.md": recordMD("integration", "repo uses it"),
+		"skills/mentor/approaches/techniques/alpha.md":         techniqueMD("`x` exists", "uses alpha"),
+		"skills/mentor/approaches/techniques/beta.md":          techniqueMD("—", "uses beta"),
+		"skills/mentor/approaches/records/neat-plugin.md":      recordMD("plugin", "neat-plugin installed"),
+		"skills/mentor/approaches/records/some-integration.md": recordMD("integration", "repo uses it"),
 	}
 }
 
@@ -91,37 +91,37 @@ func TestSourceIssuesAreCaught(t *testing.T) {
 		expect string
 	}{
 		{"technique without ranked row", func(f map[string]string) {
-			f["skills/mentor/approaches/orphan.md"] = techniqueMD("—", "sig")
-		}, "technique has no ranked row"},
+			f["skills/mentor/approaches/techniques/orphan.md"] = techniqueMD("—", "sig")
+		}, "'orphan' (technique) has no ranked row"},
 		{"missing signals section", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Signals", "## Whatever", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Signals", "## Whatever", 1)
 		}, "missing or incomplete '## Signals'"},
 		{"incomplete signals section", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "- Session: uses alpha\n", "", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "- Session: uses alpha\n", "", 1)
 		}, "missing or incomplete '## Signals'"},
 		{"ranked row to missing solution", func(f map[string]string) {
-			delete(f, "skills/mentor/approaches/alpha.md")
-		}, "approaches/alpha.md, which does not exist"},
+			delete(f, "skills/mentor/approaches/techniques/alpha.md")
+		}, "missing approach file for 'alpha'"},
 		{"record with inline goals", func(f map[string]string) {
-			f["skills/mentor/approaches/neat-plugin.md"] = strings.Replace(
-				f["skills/mentor/approaches/neat-plugin.md"],
+			f["skills/mentor/approaches/records/neat-plugin.md"] = strings.Replace(
+				f["skills/mentor/approaches/records/neat-plugin.md"],
 				"kind: plugin\n", "kind: plugin\ngoals: test-goal\n", 1)
 		}, "carries inline goals:/best_when:"},
 		{"record with inline best_when", func(f map[string]string) {
-			f["skills/mentor/approaches/some-integration.md"] = strings.Replace(
-				f["skills/mentor/approaches/some-integration.md"],
+			f["skills/mentor/approaches/records/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/records/some-integration.md"],
 				"kind: integration\n", "kind: integration\nbest_when: something\n", 1)
 		}, "carries inline goals:/best_when:"},
 		{"plugin record not ranked", func(f map[string]string) {
 			f["skills/mentor/playbooks/test-goal.md"] = strings.Replace(
 				f["skills/mentor/playbooks/test-goal.md"],
-				"| 3 | [neat-plugin](../approaches/neat-plugin.md) | Plugin shines | y |\n", "", 1)
-		}, "plugin has no ranked row"},
+				"| 3 | [neat-plugin](../approaches/records/neat-plugin.md) | Plugin shines | y |\n", "", 1)
+		}, "'neat-plugin' (plugin) has no ranked row"},
 		{"record missing session_signal", func(f map[string]string) {
-			f["skills/mentor/approaches/some-integration.md"] = strings.Replace(
-				f["skills/mentor/approaches/some-integration.md"], "session_signal: repo uses it\n", "", 1)
+			f["skills/mentor/approaches/records/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/records/some-integration.md"], "session_signal: \"repo uses it\"\n", "", 1)
 		}, "record is missing session_signal"},
 	}
 	for _, tc := range cases {

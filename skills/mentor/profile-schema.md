@@ -49,7 +49,7 @@ Last new-capability check: <what's-new week slug, e.g. 2026-w26 — always a wee
 | fan-out-workflows | declined | 2026-07-03 | "Too token-heavy for us" |
 ```
 
-`Capability` is a solution id: a `approaches/<id>.md` basename (the enumerable set is one row each in `approaches/index.md`), or a marketplace plugin name from `marketplace.md`. All kinds share the table and the statuses; ids are additive across versions and existing rows are never orphaned by schema changes — a user's hand-edited row always stays valid. A capability with no row is **unknown** — a discovery candidate (directory plugins only when stack/goal-relevant).
+`Capability` is a solution id: an approach-file basename (under `approaches/techniques/` or `approaches/records/`) (the enumerable set is one row each in `approaches/index.md`), or a marketplace plugin name from `marketplace.md`. All kinds share the table and the statuses; ids are additive across versions and existing rows are never orphaned by schema changes — a user's hand-edited row always stays valid. A capability with no row is **unknown** — a discovery candidate (directory plugins only when stack/goal-relevant).
 
 ## Statuses and transitions
 
