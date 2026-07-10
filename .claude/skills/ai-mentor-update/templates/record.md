@@ -14,7 +14,9 @@ The file is a single YAML frontmatter block and nothing else — no title, no bo
 ---
 kind: plugin | integration | doc
 last_verified: YYYY-MM-DD
-composes_with: [approach-ids, this-pairs-with]
+composes_with:
+  - approach-ids
+  - this-pairs-with
 install: /plugin install <id>@claude-plugins-official
 facts: "What it is and what the evaluation showed, 1-3 sentences. Hands-on evidence quoted or tightly paraphrased — never smoothed over."
 session_signal: "Conversation evidence that the user already uses this — installed and visible in the session, or its commands/tools ran."

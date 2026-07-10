@@ -1,7 +1,10 @@
 ---
 kind: plugin
 last_verified: 2026-07-03
-composes_with: [plan-mode, worktree-isolation, autonomous-loops]
+composes_with:
+  - plan-mode
+  - worktree-isolation
+  - autonomous-loops
 install: /plugin install code-modernization@claude-plugins-official
 facts: "Structured migration of legacy codebases. Hands-on (start verified): the preflight phase engages coherently."
 session_signal: "code-modernization is installed (its skills/commands are visible in the session) or its commands run in this conversation"

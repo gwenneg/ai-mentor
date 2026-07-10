@@ -1,7 +1,8 @@
 ---
 kind: plugin
 last_verified: 2026-07-03
-composes_with: [headless-mode]
+composes_with:
+  - headless-mode
 install: /plugin install commit-commands@claude-plugins-official
 facts: "/commit, /commit-push-pr, and /clean_gone git workflow commands. Hands-on: flawless first try."
 session_signal: "commit-commands is installed (its skills/commands are visible in the session) or its commands run in this conversation"

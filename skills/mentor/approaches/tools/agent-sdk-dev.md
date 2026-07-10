@@ -1,7 +1,9 @@
 ---
 kind: plugin
 last_verified: 2026-07-03
-composes_with: [custom-agents, headless-mode]
+composes_with:
+  - custom-agents
+  - headless-mode
 install: /plugin install agent-sdk-dev@claude-plugins-official
 facts: "Scaffolds Agent SDK projects and validates against best practices. Hands-on: sane strict-TS scaffold with streaming `query()`."
 session_signal: "agent-sdk-dev is installed (its skills/commands are visible in the session) or its commands run in this conversation"

@@ -1,7 +1,9 @@
 ---
 kind: plugin
 last_verified: 2026-07-03
-composes_with: [built-in-review-skills, subagent-delegation]
+composes_with:
+  - built-in-review-skills
+  - subagent-delegation
 install: /plugin install pr-review-toolkit@claude-plugins-official
 facts: "6-agent review covering comments, tests, types, error handling, and simplification. Hands-on: found a planted off-by-one at the exact line with a verified repro, and flagged the deliberate test-coverage gap."
 session_signal: "pr-review-toolkit is installed (its skills/commands are visible in the session) or its commands run in this conversation"

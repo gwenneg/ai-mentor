@@ -1,7 +1,9 @@
 ---
 kind: plugin
 last_verified: 2026-07-03
-composes_with: [mcp-context, deep-research]
+composes_with:
+  - mcp-context
+  - deep-research
 install: /plugin install context7@claude-plugins-official
 facts: "Pulls version-pinned documentation for any library on demand (Upstash-maintained MCP server). Hands-on: returned real Express v5 docs through the MCP tool, no account needed."
 session_signal: "context7 is installed (its MCP tools are visible in the session) or its doc lookups run in this conversation"
