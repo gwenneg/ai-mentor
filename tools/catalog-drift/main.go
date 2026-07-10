@@ -1,4 +1,4 @@
-// Check references/official-plugins.md against the live official marketplace.
+// Check plugins.md against the live official marketplace.
 //
 // Pure manifest diffing — no LLM. Reads the marketplace.json manifest, the
 // authoritative plugin list: it includes externally-hosted plugins that have
@@ -166,7 +166,7 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
-	catalog, err := os.ReadFile(filepath.Join(repo, skillDir, "references", "official-plugins.md"))
+	catalog, err := os.ReadFile(filepath.Join(repo, skillDir, "plugins.md"))
 	if err != nil {
 		fatal(err)
 	}

@@ -1,8 +1,8 @@
 # Plugin evaluation protocol
 
-The repeatable procedure behind the verdicts in `skills/mentor/references/official-plugins.md`. Any future evaluation MUST follow this protocol so results stay comparable across runs; if the protocol itself must change, change this file in the same PR as the re-evaluated verdicts and note the break in comparability.
+The repeatable procedure behind the verdicts in `skills/mentor/plugins.md`. Any future evaluation MUST follow this protocol so results stay comparable across runs; if the protocol itself must change, change this file in the same PR as the re-evaluated verdicts and note the break in comparability.
 
-First executed 2026-07-03 (all 52 plugins then in the catalog desk-checked, 15 hands-on). The catalog has since expanded to cover every externally-hosted marketplace plugin (204 more desk-checked 2026-07-08) — see the evaluation-passes line in `references/official-plugins.md`.
+First executed 2026-07-03 (all 52 plugins then in the catalog desk-checked, 15 hands-on). The catalog has since expanded to cover every externally-hosted marketplace plugin (204 more desk-checked 2026-07-08) — see the evaluation-passes line in `plugins.md`.
 
 ## When to re-run
 
@@ -94,4 +94,4 @@ The exact exercise per plugin. Re-runs use these verbatim; new plugins get an ex
 
 ## Recording results
 
-Update `references/official-plugins.md`: verdict column per plugin, and the header's evaluation line (date, desk-checked count, hands-on count). Ship via PR with the raw result blocks in the PR description or a linked comment. Never bump `*Last synced*` (that's the catalog-sync step's field).
+Update `plugins.md`: verdict column per plugin, and the header's evaluation line (date, desk-checked count, hands-on count). Ship via PR with the raw result blocks in the PR description or a linked comment. Never bump `*Last synced*` (that's the catalog-sync step's field).

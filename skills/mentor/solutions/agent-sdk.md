@@ -1,0 +1,12 @@
+# agent-sdk
+*Last verified: 2026-07-06*
+
+kind: doc
+goals: building-agents, llm-features
+best_when: someone is building an autonomous AI product or teammate, not just using Claude Code interactively
+composes_with: headless-mode, custom-agents
+facts: The Claude Agent SDK is the supported path for building custom agents as products — programmatic sessions, custom tool definitions, and agent loops outside the terminal. It is a different altitude than custom agent definitions (`.claude/agents/*.md`, which configure subagents inside Claude Code): the SDK builds standalone agent applications. Headless mode (`claude -p`) covers the simpler "script Claude in a pipeline" case without the SDK.
+session_signal: the repo imports @anthropic-ai/claude-agent-sdk or discusses building an agent product
+pitfalls:
+- Reaching for the SDK when headless mode or a custom skill would do — the SDK is for products, not automation glue.
+source: https://code.claude.com/docs/en/agent-sdk/overview

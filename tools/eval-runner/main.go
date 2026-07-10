@@ -165,30 +165,18 @@ func statementsByID(as []evalCase) map[string]string {
 }
 
 // approachNames enumerates every teachable unit for the B06 all-adopted
-// profile: approach basenames plus, when the capability registry exists,
-// its record ids — B06's "honest empty answer" only holds when the WHOLE
-// ignorance map is saturated.
+// profile: one solutions/<id>.md file per capability (index.md excluded) —
+// B06's "honest empty answer" only holds when the WHOLE ignorance map is
+// saturated.
 func approachNames(repo string) ([]string, error) {
-	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*.md"))
+	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "solutions", "*.md"))
 	if err != nil || len(files) == 0 {
-		return nil, fmt.Errorf("no approach files under %s/skills/mentor/approaches", repo)
+		return nil, fmt.Errorf("no solution files under %s/skills/mentor/solutions", repo)
 	}
-	names := make([]string, len(files))
-	for i, f := range files {
-		names[i] = strings.TrimSuffix(filepath.Base(f), ".md")
-	}
-	regs, _ := filepath.Glob(filepath.Join(repo, "skills", "mentor", "registry", "*.md"))
-	for _, rf := range regs {
-		reg, err := os.ReadFile(rf)
-		if err != nil {
-			continue
-		}
-		for _, l := range strings.Split(string(reg), "\n") {
-			if id, ok := strings.CutPrefix(l, "id: "); ok {
-				if id = strings.TrimSpace(id); id != "" && !slices.Contains(names, id) {
-					names = append(names, id)
-				}
-			}
+	var names []string
+	for _, f := range files {
+		if n := strings.TrimSuffix(filepath.Base(f), ".md"); n != "index" {
+			names = append(names, n)
 		}
 	}
 	return names, nil
@@ -210,16 +198,24 @@ type groundTruth struct {
 func buildGroundTruth(repo, fixture string) groundTruth {
 	skill := filepath.Join(repo, "skills", "mentor")
 	gt := groundTruth{fixture: fixtureFiles(fixture)}
-	if b, err := os.ReadFile(filepath.Join(skill, "references", "official-plugins.md")); err == nil {
+	if b, err := os.ReadFile(filepath.Join(skill, "plugins.md")); err == nil {
 		gt.plugins = pluginNames(string(b))
 	}
-	if files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*.md")); files != nil {
-		for _, f := range files {
-			gt.techniques = append(gt.techniques, strings.TrimSuffix(filepath.Base(f), ".md"))
+	files, _ := filepath.Glob(filepath.Join(skill, "solutions", "*.md"))
+	for _, f := range files {
+		id := strings.TrimSuffix(filepath.Base(f), ".md")
+		if id == "index" {
+			continue
+		}
+		switch solutionKind(f) {
+		case "builtin-command":
+			gt.commands = append(gt.commands, "/"+id)
+		case "integration", "doc":
+			gt.integrations = append(gt.integrations, id)
+		default:
+			gt.techniques = append(gt.techniques, id)
 		}
 	}
-	gt.commands = registryIDs(filepath.Join(skill, "registry", "builtin-commands.md"), "/")
-	gt.integrations = registryIDs(filepath.Join(skill, "registry", "integrations.md"), "")
 	return gt
 }
 
@@ -239,22 +235,19 @@ func fixtureFiles(dir string) []string {
 	return out
 }
 
-// registryIDs returns every `id:` value in a registry file, each with prefix
-// (e.g. "/" to render built-in commands as slash commands).
-func registryIDs(path, prefix string) []string {
-	var ids []string
+// solutionKind returns the value of a solution file's `kind:` line, or ""
+// for a technique deep-dive (which has no kind: line).
+func solutionKind(path string) string {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return ids
+		return ""
 	}
 	for _, l := range strings.Split(string(b), "\n") {
-		if id, ok := strings.CutPrefix(l, "id: "); ok {
-			if id = strings.TrimSpace(id); id != "" {
-				ids = append(ids, prefix+id)
-			}
+		if k, ok := strings.CutPrefix(l, "kind: "); ok {
+			return strings.TrimSpace(k)
 		}
 	}
-	return ids
+	return ""
 }
 
 // pluginNames extracts the plugin ids the catalog declares: the first

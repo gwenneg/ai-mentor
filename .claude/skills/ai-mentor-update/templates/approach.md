@@ -1,6 +1,6 @@
 # Approach Template
 
-Use this template when adding a new approach file to `approaches/`.
+Use this template when adding a new technique file to `solutions/`.
 
 Each approach file is the deep-dive reference for a single AI workflow technique. Developers land here from a goal file's "Deeper" link when they want the full picture: what it is, how to use it at every skill level, how to compose it with other approaches, and what to watch out for.
 
@@ -103,7 +103,7 @@ verified against.]
 - **Common Pitfalls come from experience** — describe mistakes developers actually make, not obvious warnings
 - **`## Sources` lists at least one official external link** — prefer official docs (Anthropic, tool maintainers) over community content. Each entry: `[Title](URL) — one-line description`
 - **No extra sections** beyond the template — keep the structure consistent across all approach files
-- **`## Signals` is required and machine-consumed** — the registry-index generator compiles it into `registry/index.md`; both lines must be present (`—` for a tier with no signal). Regenerate the index after editing it
+- **`## Signals` is required and machine-consumed** — the solutions-index generator compiles it into `solutions/index.md`; both lines must be present (`—` for a tier with no signal). Regenerate the index after editing it
 - **No sub-sections within "Basic (Beginner)"** — if the approach has distinct modes (e.g., "using" vs. "setting up"), pick the most common one for Basic and put variations in Advanced Patterns
 - **`*Last verified: YYYY-MM-DD*`** on line 2 — moves ONLY when the file's claims are verified against current official docs, or at creation from verified sources; never on mechanical edits
 - **Composing patterns reference other approaches by name** — this helps developers discover related techniques

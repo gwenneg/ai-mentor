@@ -49,8 +49,8 @@ Then ask the user which steps to run. The menu numbers are the Step headings bel
 >
 > 2. **Structural audit** — check all files against templates, cross-references, staleness
 > 3. **Content verification** — web-search claims in files against current tool docs
-> 4. **Process new changelogs** — incorporate what's-new digests not yet listed in `references/processed-changelogs.md`
-> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `references/official-plugins.md`
+> 4. **Process new changelogs** — incorporate what's-new digests not yet listed in `processed-changelogs.md`
+> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `plugins.md`
 >
 > You can pick any combination (e.g. "all", "2 and 4", "just 5"). The routine pass is 4 and 5; the others are occasional deep audits.
 
@@ -62,21 +62,21 @@ Wait for the user's response, then run the selected steps in order. *(Auto mode:
 
 *Skip this step if the user did not select it.*
 
-Read `templates/approach.md` from this skill's directory for the approach-file structure; the routing-table structure is specified inline below.
+Read `templates/approach.md` from this skill's directory for the technique-file structure; the problems-table structure is specified inline below.
 
-### Goal routing files
+### Problem files
 
-For each per-goal file in `skills/mentor/routing/`:
+For each per-goal file in `skills/mentor/problems/`:
 
 - `*Last verified: YYYY-MM-DD*` on line 2
-- One `routing/<slug>.md` file per goal in problem-mode.md's classification table (and no extras)
+- One `problems/<slug>.md` file per goal in problem-mode.md's classification table (and no extras)
 - Each file: a `**Hidden gem:**` line naming an approach that appears in its rows, and a ranked shortlist with sequential numbering, at least 3 rows, and approach links that resolve
 - Row content: "Best when" is one short clause; "Why it fits" is one sentence of goal-specific judgment — flag rows that have drifted into generic filler
-- The shortlist is curated, not exhaustive: top picks plus the hidden gem. Every approach file must still be referenced by at least one routing file (the audit's orphan check)
+- The shortlist is curated, not exhaustive: top picks plus the hidden gem. Every technique file must still be ranked by at least one problems file (the audit's orphan check)
 
-### Approach files
+### Technique files
 
-For each `.md` file in `skills/mentor/approaches/`:
+For each technique file in `skills/mentor/solutions/` (the deep-dives — any solution file *without* a `kind:` line):
 
 **Section order check** — verify these sections exist in this order:
 1. `# [Title]`
@@ -92,26 +92,26 @@ For each `.md` file in `skills/mentor/approaches/`:
 8. `## Common Pitfalls`
 9. `## Real-World Example` — optional; kept only where the example embeds exact syntax not shown elsewhere in the file. When present it sits between Common Pitfalls and Sources.
 10. `## Sources` (at least one entry, each a markdown link with a one-line description)
+11. `## Signals` (both a `- Setup:` and a `- Session:` line; `—` for a tier with no signal)
 
 **Line count check** — flag files under 40 lines.
 
 **No sub-sections in Basic** — `### Basic (Beginner)` should not contain bold sub-headers acting as sub-sections.
 
-### Registry files
+### Record files and the index
 
-For the capability registry (`skills/mentor/registry/`) and the external plugin catalog (`references/official-plugins.md`):
+For the flat record files in `skills/mentor/solutions/` (a solution file *with* a `kind:` line — built-in command, integration, or doc; the filename is its id) and the external plugin catalog (`plugins.md`):
 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
-- `index.md` is **generated** — never hand-edit it. After changing routing rows, an approach's `## Signals` section, or a registry record, run `go -C tools/registry-index run .` and commit the regenerated file (CI fails on a stale index). The old lockstep rules (one record per approach, `goals` mirroring routing) now hold by construction
-- `builtin-commands.md`: unique `id`s; every record referenced by at least one `**Built-ins:**` line in `routing/<goal>.md`, and every Built-ins token resolving to a record
-- `integrations.md`: unique `id`s that don't collide with builtin-command ids
-- Every `goals` slug in any record resolves to an existing `routing/<goal>.md`
+- `solutions/index.md` is **generated** — never hand-edit it. After changing problems rows, a technique's `## Signals` section, or a record file, run `go -C tools/solutions-index run .` and commit the regenerated file (CI fails on a stale index)
+- Every `kind: builtin-command` record is referenced by at least one `**Built-ins:**` line, every `kind: integration`/`doc` record by an `**Integrations:**` line, and every Built-ins/Integrations token resolves to a `solutions/<id>.md` file
+- Every `goals` slug in any record resolves to an existing `problems/<goal>.md`
 
 The Go audit (`go -C tools/structural-audit run .`) enforces all of this deterministically — run it first; this checklist explains its failures.
 
 ### Cross-references
 
-- Every `Deeper: See \`approaches/<name>.md\`` reference in goal files must point to an existing file.
+- Every `Deeper: See \`solutions/<name>.md\`` reference in goal files must point to an existing file.
 - Every approach file must be referenced by at least one goal file.
 - Report orphan and missing approach files.
 
@@ -149,7 +149,7 @@ Ask the user:
 > Verify all files or a specific one?
 >
 > - **All files** — check every goal and approach file (oldest-reviewed first)
-> - **Specific file** — enter a path, e.g. `approaches/plan-mode.md`, or `routing/<goal>.md` for one goal's rankings
+> - **Specific file** — enter a path, e.g. `solutions/plan-mode.md`, or `problems/<goal>.md` for one goal's rankings
 
 Wait for the user's response. *(Auto mode: skip the question — process the `--files` N oldest-verified files.)*
 
@@ -162,7 +162,7 @@ For each file in scope, use web search to verify claims against current tool doc
 - **Missing features**: Are there significant new Claude Code features related to this approach that the file doesn't mention?
 - **"How It Works" accuracy**: Are the step-by-step instructions still correct?
 
-### For the goal routing files (`routing/<goal>.md`), also check:
+### For the goal routing files (`problems/<goal>.md`), also check:
 
 - **Rankings**: Is the most broadly useful approach ranked first per goal?
 - **Hidden gems**: Does each still name the most non-obvious high-value approach, present in its section's rows?
@@ -188,7 +188,7 @@ If processing all files, ask after each file whether to continue to the next one
 
 *Skip this step if the user did not select it.*
 
-This is the routine maintenance path. New Claude Code capabilities are announced in the official what's-new digests, and `skills/mentor/references/processed-changelogs.md` is the ledger of which digests have already been incorporated into the catalog. The weekly digest slug (e.g. `2026-w26`) is the stable unit of processing.
+This is the routine maintenance path. New Claude Code capabilities are announced in the official what's-new digests, and `skills/mentor/processed-changelogs.md` is the ledger of which digests have already been incorporated into the catalog. The weekly digest slug (e.g. `2026-w26`) is the stable unit of processing.
 
 1. Fetch the digest index and collect the weekly slugs:
 
@@ -196,15 +196,15 @@ This is the routine maintenance path. New Claude Code capabilities are announced
    curl -s https://code.claude.com/docs/en/whats-new/index.md
    ```
 
-2. Read `skills/mentor/references/processed-changelogs.md`. Any digest in the index but not in the ledger is unprocessed.
+2. Read `skills/mentor/processed-changelogs.md`. Any digest in the index but not in the ledger is unprocessed.
 
 3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
    - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
-   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the registry consistent — CI fails otherwise: a new approach needs at least one routing row and a `## Signals` section; a new built-in command or integration gets a record in `registry/builtin-commands.md` / `registry/integrations.md`, referenced from the relevant `**Built-ins:**` line. Then regenerate the compiled index (`go -C tools/registry-index run .`) and commit it alongside the change.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the registry consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command or integration gets its own `solutions/<id>.md` record file, referenced from the relevant `**Built-ins:**` / `**Integrations:**` line. Then regenerate the compiled index (`go -C tools/solutions-index run .`) and commit it alongside the change.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
-4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated approaches/x.md and routing/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
+4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated solutions/x.md and problems/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.
 
 For breaking changes the digests may not mention (renamed flags, removed features), also skim the release-level changelog at `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md` for the same period — these matter to "Try it now" prompts even when they are not "notable".
 
@@ -237,12 +237,12 @@ Fetch the current plugin list from the marketplace manifest — the manifest is 
 curl -s https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | python3 -c "import json,sys; [print(p['name']) for p in json.load(sys.stdin)['plugins']]"
 ```
 
-Extract the plugin names currently documented in `skills/mentor/references/official-plugins.md` by reading the file and collecting all backtick-wrapped names in its tables.
+Extract the plugin names currently documented in `skills/mentor/plugins.md` by reading the file and collecting all backtick-wrapped names in its tables.
 
 Compare the two lists:
 
-- **New plugins** — present in the repo but not mentioned in `references/official-plugins.md`
-- **Removed plugins** — mentioned in `references/official-plugins.md` but no longer in the manifest
+- **New plugins** — present in the repo but not mentioned in `plugins.md`
+- **Removed plugins** — mentioned in `plugins.md` but no longer in the manifest
 
 For each new plugin, take its `description` (and `author`, to label Anthropic-built vs external) from the same manifest JSON — no per-plugin fetch needed. If a batch of new plugins is very large (e.g. a marketplace expansion), still list every name in the report, but it is acceptable to add table rows in slices across runs, oldest-known first, noting the remaining backlog count in the report.
 
@@ -253,20 +253,20 @@ For each new plugin, take its `description` (and `author`, to label Anthropic-bu
 
 **Source:** anthropics/claude-plugins-official (fetched today)
 
-### New plugins (not yet in references/official-plugins.md)
+### New plugins (not yet in plugins.md)
 - `<name>` (Anthropic-built / External) — <description>
   → Suggested table row: | `<name>` | <short description> | `<goal slug>` | ☑️ desk-checked — <reason> |
 
-### Removed plugins (in references/official-plugins.md but no longer in the manifest)
+### Removed plugins (in plugins.md but no longer in the manifest)
 - `<name>` — remove from the relevant table
 
 ### No changes
 (if lists match)
 ```
 
-Ask the user which additions and removals to apply *(auto mode: apply all — the API is authoritative)*. For confirmed changes, edit `references/official-plugins.md` and update its `*Last synced*` date to today.
+Ask the user which additions and removals to apply *(auto mode: apply all — the API is authoritative)*. For confirmed changes, edit `plugins.md` and update its `*Last synced*` date to today.
 
-Then reconcile the `**Plugins:**` lines in `routing/<goal>.md`: a removed plugin's token is deleted from any line naming it (mechanical — apply directly); a new plugin is only *suggested* for a goal's line when it clearly beats the current picks (editorial — list under suggested actions, never auto-applied). The structural audit fails on routing plugin tokens missing from the catalog, so removals must not be skipped.
+Then reconcile the `**Plugins:**` lines in `problems/<goal>.md`: a removed plugin's token is deleted from any line naming it (mechanical — apply directly); a new plugin is only *suggested* for a goal's line when it clearly beats the current picks (editorial — list under suggested actions, never auto-applied). The structural audit fails on routing plugin tokens missing from the catalog, so removals must not be skipped.
 
 The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
 

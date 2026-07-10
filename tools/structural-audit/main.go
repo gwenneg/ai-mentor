@@ -1,11 +1,12 @@
 // Deterministic structural audit for the ai-mentor catalog.
 //
-// Checks goal routing, approach files, cross-references, the changelog
-// ledger, and SKILL.md consistency. Exits 1 if any issue is found, 2 on a
-// fatal setup problem. No network, no LLM — safe as a PR gate. Stdlib only.
+// Checks the problems tables, solution files (technique deep-dives and flat
+// records), cross-references, the changelog ledger, and SKILL.md consistency.
+// Exits 1 if any issue is found, 2 on a fatal setup problem. No network, no
+// LLM — safe as a PR gate. Stdlib only.
 //
-// The compiled capability index (registry/index.md) is NOT audited here:
-// tools/registry-index generates it from the same sources and its -check
+// The compiled index (solutions/index.md) is NOT audited here:
+// tools/solutions-index generates it from the same sources and its -check
 // mode is the freshness gate in CI.
 //
 // Usage: go -C tools/structural-audit run . [repo-root]
@@ -34,8 +35,8 @@ var (
 	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef      = regexp.MustCompile(`(references|registry|routing|approaches)/[a-z0-9-]+\.md`)
-	reRef         = regexp.MustCompile(`approaches/[a-z0-9-]+\.md`)
+	reDocRef      = regexp.MustCompile(`(problems|solutions)/[a-z0-9-]+\.md|\b(plugins|profile-schema|processed-changelogs)\.md`)
+	reRef         = regexp.MustCompile(`solutions/[a-z0-9-]+\.md`)
 	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek        = regexp.MustCompile(`^\d{4}-w\d{2}$`)
@@ -44,7 +45,7 @@ var (
 	reBuiltinL    = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
 	reIntegL      = regexp.MustCompile(`^\*\*Integrations:\*\* `)
 	reIntegTok    = regexp.MustCompile("`([a-z0-9-]+)`")
-	reRegID       = regexp.MustCompile(`^id: ([a-z0-9-]+)$`)
+	reRegKind     = regexp.MustCompile(`^kind: ([a-z-]+)$`)
 	reRegGoals    = regexp.MustCompile(`^goals: (.+)$`)
 	reClassifyRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount       = regexp.MustCompile(`(\d+) goal categories`)
@@ -66,10 +67,10 @@ var (
 )
 
 type auditor struct {
-	root                     string // repo root; issue paths print relative to it
-	skill                    string // skills/mentor directory
-	issues                   []string
-	goals, approaches, weeks int
+	root                    string // repo root; issue paths print relative to it
+	skill                   string // skills/mentor directory
+	issues                  []string
+	goals, solutions, weeks int
 }
 
 func (a *auditor) issue(path, format string, args ...any) {
@@ -161,13 +162,15 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 	}
 }
 
-// checkRouting audits every per-goal file under skills/mentor/routing/:
+// checkRouting audits every per-goal file under skills/mentor/problems/:
 // date line, hidden gem, Plugins line with catalog-known tokens, at least
 // minGoalRows sequentially numbered rows, cross-references, and orphans.
-func (a *auditor) checkRouting(dir string, approachNames []string, catalog, registry, integrations map[string]bool, usedBuiltins, usedIntegrations map[string]bool) []string {
+// Built-ins and Integrations tokens must resolve to a solutions/<id>.md file
+// of any kind (a command can be documented as a technique deep-dive).
+func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, solutions map[string]bool, usedBuiltins, usedIntegrations map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
-		a.issue(dir, "missing routing directory (per-goal files)")
+		a.issue(dir, "missing problems directory (per-goal files)")
 		return nil
 	}
 	var goals []string
@@ -185,25 +188,24 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog, regi
 				plugs = true
 				for _, m := range rePlugTok.FindAllStringSubmatch(l, -1) {
 					if !catalog[m[1]] {
-						a.issue(f, "Plugins line names '%s', not found in references/official-plugins.md", m[1])
+						a.issue(f, "Plugins line names '%s', not found in plugins.md", m[1])
 					}
 				}
 			}
 			if reBuiltinL.MatchString(l) {
 				for _, m := range reBuiltin.FindAllStringSubmatch(l, -1) {
-					if !registry[m[1]] {
-						a.issue(f, "Built-ins line names '/%s', not found in registry/builtin-commands.md", m[1])
+					if !solutions[m[1]] {
+						a.issue(f, "Built-ins line names '/%s', which has no solutions/%s.md", m[1], m[1])
 					}
 					usedBuiltins[m[1]] = true
 				}
 			}
 			if reIntegL.MatchString(l) {
-				// reIntegTok's charset (no dots, no slashes) only matches record
-				// ids — backticked file names and the trailing registry pointer
-				// never capture.
+				// reIntegTok's charset (no dots, no slashes) only matches solution
+				// ids — backticked file names and placeholders never capture.
 				for _, m := range reIntegTok.FindAllStringSubmatch(l, -1) {
-					if !integrations[m[1]] {
-						a.issue(f, "Integrations line names '%s', not found in registry/integrations.md", m[1])
+					if !solutions[m[1]] {
+						a.issue(f, "Integrations line names '%s', which has no solutions/%s.md", m[1], m[1])
 					}
 					usedIntegrations[m[1]] = true
 				}
@@ -243,9 +245,9 @@ func (a *auditor) checkRouting(dir string, approachNames []string, catalog, regi
 			a.issue(dir, "broken reference %s", ref)
 		}
 	}
-	for _, name := range approachNames {
-		if !strings.Contains(text, "approaches/"+name+".md") {
-			a.issue(filepath.Join(a.skill, "approaches", name+".md"), "orphan: not referenced by any routing file")
+	for _, name := range techniqueNames {
+		if !strings.Contains(text, "solutions/"+name+".md") {
+			a.issue(filepath.Join(a.skill, "solutions", name+".md"), "orphan: not ranked by any problems file")
 		}
 	}
 	return goals
@@ -354,49 +356,78 @@ func (a *auditor) checkProblemMode(path string, goals []string) {
 	}
 }
 
+// fileKind returns the value of a solution file's kind: line, or "" for a
+// technique deep-dive (which has no kind: line).
+func fileKind(path string) string {
+	for _, l := range lines(path) {
+		if m := reRegKind.FindStringSubmatch(l); m != nil {
+			return m[1]
+		}
+	}
+	return ""
+}
+
 func (a *auditor) run() error {
-	approachDir := filepath.Join(a.skill, "approaches")
-	files, _ := filepath.Glob(filepath.Join(approachDir, "*.md"))
+	solDir := filepath.Join(a.skill, "solutions")
+	files, _ := filepath.Glob(filepath.Join(solDir, "*.md"))
 	if len(files) == 0 {
-		return fmt.Errorf("approach directory empty/missing")
+		return fmt.Errorf("solutions directory empty/missing")
 	}
-	a.approaches = len(files)
-	var names []string
+	var techNames []string
+	var techFiles, recFiles []string
+	recordKind := map[string]string{} // id -> kind
+	solutions := map[string]bool{}
 	for _, f := range files {
-		names = append(names, strings.TrimSuffix(filepath.Base(f), ".md"))
+		id := strings.TrimSuffix(filepath.Base(f), ".md")
+		if id == "index" {
+			continue // the compiled index; freshness is tools/solutions-index -check
+		}
+		solutions[id] = true
+		if k := fileKind(f); k != "" {
+			recordKind[id] = k
+			recFiles = append(recFiles, f)
+		} else {
+			techNames = append(techNames, id)
+			techFiles = append(techFiles, f)
+		}
 	}
+	a.solutions = len(solutions)
 
 	catalog := map[string]bool{}
-	catPath := filepath.Join(a.skill, "references", "official-plugins.md")
+	catPath := filepath.Join(a.skill, "plugins.md")
 	catText, catErr := os.ReadFile(catPath)
 	if catErr != nil {
-		a.issue(catPath, "missing official-plugins catalog")
+		a.issue(catPath, "missing plugins catalog")
 	}
 	for _, n := range pluginNames(string(catText)) {
 		catalog[n] = true
 	}
 
-	registry := a.checkRegistry(filepath.Join(a.skill, "registry", "builtin-commands.md"))
-	integrations := a.checkIntegrations(filepath.Join(a.skill, "registry", "integrations.md"), registry)
 	usedBuiltins, usedIntegrations := map[string]bool{}, map[string]bool{}
-	goals := a.checkRouting(filepath.Join(a.skill, "routing"), names, catalog, registry, integrations, usedBuiltins, usedIntegrations)
+	goals := a.checkRouting(filepath.Join(a.skill, "problems"), techNames, catalog, solutions, usedBuiltins, usedIntegrations)
 	a.goals = len(goals)
-	for id := range registry {
-		if !usedBuiltins[id] {
-			a.issue(filepath.Join(a.skill, "registry", "builtin-commands.md"), "registry id '%s' not referenced by any Built-ins line", id)
+	for id, kind := range recordKind {
+		recPath := filepath.Join(solDir, id+".md")
+		switch kind {
+		case "builtin-command":
+			if !usedBuiltins[id] {
+				a.issue(recPath, "command record not referenced by any Built-ins line")
+			}
+		case "integration", "doc":
+			if !usedIntegrations[id] {
+				a.issue(recPath, "integration record not referenced by any Integrations line")
+			}
+		default:
+			a.issue(recPath, "unknown kind '%s'", kind)
 		}
 	}
-	for id := range integrations {
-		if !usedIntegrations[id] {
-			a.issue(filepath.Join(a.skill, "registry", "integrations.md"), "registry id '%s' not referenced by any Integrations line", id)
-		}
+	for _, f := range recFiles {
+		a.checkRecord(f, goals)
 	}
-	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "builtin-commands.md"), goals)
-	a.checkRegistryGoals(filepath.Join(a.skill, "registry", "integrations.md"), goals)
-	for _, f := range files {
+	for _, f := range techFiles {
 		a.checkApproach(f)
 	}
-	a.checkLedger(filepath.Join(a.skill, "references", "processed-changelogs.md"))
+	a.checkLedger(filepath.Join(a.skill, "processed-changelogs.md"))
 	a.checkProblemMode(filepath.Join(a.skill, "problem-mode.md"), goals)
 	a.checkDocRefs(
 		filepath.Join(a.skill, "SKILL.md"),
@@ -433,35 +464,13 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 	return
 }
 
-// checkRegistry parses registry/builtin-commands.md: date line, unique
-// record ids. Returns the id set (empty map when the file is missing, which
-// is itself an issue).
-func (a *auditor) checkRegistry(path string) map[string]bool {
-	ids := map[string]bool{}
+// checkRecord audits one flat record file under solutions/: date line, and a
+// goals line naming only real goal slugs (files under problems/). Content
+// completeness (best_when, session_signal) is the generator's job.
+func (a *auditor) checkRecord(path string, goals []string) {
 	ls := lines(path)
-	if ls == nil {
-		a.issue(path, "missing builtin-commands registry")
-		return ids
-	}
 	a.dateLine(path, "Last verified", ls)
 	for _, l := range ls {
-		if m := reRegID.FindStringSubmatch(l); m != nil {
-			if ids[m[1]] {
-				a.issue(path, "duplicate registry id '%s'", m[1])
-			}
-			ids[m[1]] = true
-		}
-	}
-	if len(ids) == 0 {
-		a.issue(path, "registry parsed to zero records — format drift?")
-	}
-	return ids
-}
-
-// checkRegistryGoals verifies every record's goals line names only real
-// goal slugs (files under routing/).
-func (a *auditor) checkRegistryGoals(path string, goals []string) {
-	for _, l := range lines(path) {
 		m := reRegGoals.FindStringSubmatch(l)
 		if m == nil {
 			continue
@@ -469,35 +478,10 @@ func (a *auditor) checkRegistryGoals(path string, goals []string) {
 		for _, g := range strings.Split(m[1], ",") {
 			g = strings.TrimSpace(g)
 			if !slices.Contains(goals, g) {
-				a.issue(path, "registry goals name '%s', which has no routing/%s.md", g, g)
+				a.issue(path, "goals name '%s', which has no problems/%s.md", g, g)
 			}
 		}
 	}
-}
-
-// checkIntegrations audits registry/integrations.md: date line, unique ids
-// that don't collide with builtin-command ids. Returns the id set so
-// checkRouting can verify Integrations lines against it.
-func (a *auditor) checkIntegrations(path string, builtins map[string]bool) map[string]bool {
-	seen := map[string]bool{}
-	ls := lines(path)
-	if ls == nil {
-		a.issue(path, "missing integrations registry")
-		return seen
-	}
-	a.dateLine(path, "Last verified", ls)
-	for _, l := range ls {
-		if m := reRegID.FindStringSubmatch(l); m != nil {
-			if seen[m[1]] || builtins[m[1]] {
-				a.issue(path, "duplicate registry id '%s'", m[1])
-			}
-			seen[m[1]] = true
-		}
-	}
-	if len(seen) == 0 {
-		a.issue(path, "integrations registry parsed to zero records — format drift?")
-	}
-	return seen
 }
 
 // findRoot walks upward from dir to the first directory containing
@@ -541,7 +525,7 @@ func main() {
 	for _, is := range a.issues {
 		fmt.Printf("  - %s\n", is)
 	}
-	fmt.Printf("Audited %d routing goals, %d approaches, %d processed changelogs.\n", a.goals, a.approaches, a.weeks)
+	fmt.Printf("Audited %d problems, %d solutions, %d processed changelogs.\n", a.goals, a.solutions, a.weeks)
 	if len(a.issues) > 0 {
 		fmt.Printf("\n%d issue(s) found (listed above).\n", len(a.issues))
 		os.Exit(1)
