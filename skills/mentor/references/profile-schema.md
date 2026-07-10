@@ -54,15 +54,15 @@ Last new-capability check: <what's-new week slug, e.g. 2026-w26 — always a wee
 ## Statuses and transitions
 
 - **unknown → shown**: the mentor taught or demonstrated it this session.
-- **shown → adopted**: a positive signal is later observed (see the signal columns in `registry/index.md`) or the user confirms they use it.
-- **unknown → adopted**: a signal shows they already knew it — record silently, never "teach" it.
+- **shown → adopted**: a positive *personal* signal is later observed (see the signal columns in `registry/index.md`) or the user confirms they use it.
+- **unknown → adopted**: a *personal* signal shows they already knew it — record silently, never "teach" it. Personal means theirs: a session signal or user-level setup under `~/.claude/`. Project-level config (the repo's `.claude/`, `.mcp.json`, CI) never sets `adopted` on its own — a developer who checks out an unfamiliar repo does not know its stack; that's *present here, knowledge unconfirmed*: prime teaching material, not knowledge.
 - **any → declined**: the user waved it off. Record the reason verbatim if given. Never re-offer a declined capability unless the user asks, or the reason no longer applies (e.g. declined for a missing plan feature they now have) — and then at most once, naming why it's being raised again.
 
-Transitions move forward only; the exceptions are user edits (always win) and evidence contradicting the profile (a "declined" capability now configured in settings → flip to adopted).
+Transitions move forward only; the exceptions are user edits (always win) and *personal* evidence contradicting the profile (a "declined" capability now configured in their `~/.claude/` settings, or exercised in-session → flip to adopted; the repo's config alone never flips it).
 
 ## Rules for the mentor
 
-1. **Evidence beats memory.** Re-check the cheap setup/repo signals every invocation; the profile accumulates only what can't be re-checked (session-tier signals, shown/declined history).
+1. **Evidence beats memory — weighed by whose evidence it is.** Re-check the cheap setup/repo signals every invocation; the profile accumulates only what can't be re-checked (session-tier signals, shown/declined history). Configured is a repo fact; known is a person fact: only personal evidence updates knowledge statuses.
 2. **Never repeat.** Don't re-teach `shown`, don't re-offer `declined`, don't explain `adopted`. For a discovery product, re-showing a known capability is the primary failure mode.
 3. **Follow up on `shown`.** A capability shown but not adopted after a while is the opening move of the next session: "Last time I showed you X — did it stick?" The answer converts it to adopted, declined, or a re-teach with a different angle.
 4. **`Last new-capability check`** anchors "new since you last checked": anything landed in `references/processed-changelogs.md` after that week is fresh discovery material for this user, regardless of their level. Update it whenever new capabilities are surfaced.

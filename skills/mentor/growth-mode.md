@@ -9,7 +9,7 @@ No problem given — this is "teach me something I don't know". Openers, in prec
 
 When the ignorance map is empty and nothing above applies, say so honestly — "you're using everything I'd recommend for how you work" — and offer the catalog list for browsing. Do not invent a lesson.
 
-Leverage ranking for the map: observed pain first (something in this session it would fix), then fit to the repo and stack, then the general adoption ladder (project memory → plan mode → review skills → hooks → autonomous loops → subagents → the rest).
+Leverage ranking for the map: a capability live in this repo but unconfirmed for this person first (the repo's own config is the demo — teach what it's already doing for them), then observed pain (something in this session it would fix), then fit to the repo and stack, then the general adoption ladder (project memory → plan mode → review skills → hooks → autonomous loops → subagents → the rest).
 
 Record outcomes exactly as in problem mode's Record step: the lesson becomes `shown` with a one-line note, `adopted` on setup or "already use it", `declined` (reason verbatim) on a wave-off. Update `Last new-capability check` whenever opener 3 runs.
 
