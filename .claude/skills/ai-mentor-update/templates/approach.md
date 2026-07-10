@@ -1,8 +1,8 @@
-# Approach Template
+# Technique Deep-Dive Template
 
-Use this template when adding a new technique file to `approaches/`.
+Use this template when adding a **technique deep-dive** to `approaches/` — a file WITHOUT a `kind:` line, documenting a methodology we author and own. For the other format in the same directory (flat records: promoted plugins, integrations, docs — files WITH a `kind:` line), use `templates/record.md` instead. The two formats are deliberate: a deep-dive carries our own pedagogy; a record carries only verified facts about an external artifact, because the verifiability bar caps what we can honestly write about things we don't maintain.
 
-Each approach file is the deep-dive reference for a single AI workflow technique. Developers land here from a goal file's "Deeper" link when they want the full picture: what it is, how to use it at every skill level, how to compose it with other approaches, and what to watch out for.
+Each technique file is the deep-dive reference for a single AI workflow technique. Developers land here from a goal file's "Deeper" link when they want the full picture: what it is, how to use it at every skill level, how to compose it with other approaches, and what to watch out for.
 
 ---
 

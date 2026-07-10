@@ -62,7 +62,7 @@ Wait for the user's response, then run the selected steps in order. *(Auto mode:
 
 *Skip this step if the user did not select it.*
 
-Read `templates/approach.md` from this skill's directory for the technique-file structure; the playbooks-table structure is specified inline below.
+Read `templates/approach.md` (technique deep-dives — approach files without a `kind:` line) and `templates/record.md` (flat records — approach files with one) from this skill's directory for the two approach-file structures; the playbooks-table structure is specified inline below.
 
 ### Playbook files
 
