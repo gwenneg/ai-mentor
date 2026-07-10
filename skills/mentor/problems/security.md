@@ -5,8 +5,6 @@
 
 **Exemplar move:** Run /security-review on the current branch — special attention to auth middleware in src/middleware/auth.ts and raw database queries in src/services/; security audit next week.
 
-**Plugins:** `security-guidance` ✅ per-edit security hooks · `semgrep` ☑️ scanning · `42crunch-api-security-testing` ☑️ API security · `auth0` ☑️ authn/authz · `vanta` ☑️ compliance — 9 more in the catalog.
-
 **Built-ins:** `/security-review` — security review of the branch's pending changes. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |
@@ -15,3 +13,4 @@
 | 2 | [Subagent Delegation](../solutions/subagent-delegation.md) | Large codebase with multiple vulnerability classes to check | Security auditing is multi-dimensional — one concern per agent gives deeper analysis without attention dilution |
 | 3 | [Deep Research](../solutions/deep-research.md) | New CVE announced for a dependency in your stack | Hardening without context is guesswork — affected versions and exploitation prerequisites let you patch what matters |
 | 4 | [Hooks](../solutions/hooks-as-workflow.md) | Protect security-critical files from accidental modification | Most security regressions are accidental — a speed bump forces conscious acknowledgment before touching critical code |
+| 5 | [security-guidance](../solutions/security-guidance.md) | Security review should happen on every edit, automatically | A hook that reviews as code is written catches issues at the cheapest moment — before they exist in a diff |

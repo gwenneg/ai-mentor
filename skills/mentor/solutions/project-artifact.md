@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: documentation
-best_when: project status should live on a shareable page instead of being re-explained in every meeting
 composes_with: visual-artifacts
 install: /plugin install project-artifact@claude-plugins-official
 facts: Publishes a living project status page with workstreams and decisions. Hands-on: produced a project-specific tabbed status page with honest unverified-state markings.

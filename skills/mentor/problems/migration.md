@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Migrate React Router v5 to v6: 34 routes in src/routes/, useHistory in ~20 components, guards in src/auth/ProtectedRoute.tsx — map changes, categorize, order to stay functional.
 
-**Plugins:** `code-modernization` ✅ legacy-codebase migration (COBOL, old Java, monoliths) · `ui5-modernization`/`ui5-typescript-conversion` ☑️ SAPUI5 · `aws-transform`/`migration-to-aws` ☑️ moves to AWS — grep the catalog when the user names a stack.
-
 **Built-ins:** `/goal` — converge on zero errors after a mechanical migration. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |
@@ -15,3 +13,4 @@
 | 2 | [Subagent Delegation](../solutions/subagent-delegation.md) | Migration across independent modules or services | Migrations are embarrassingly parallel when modules don't share state — subagents do in minutes what takes sequential hours |
 | 3 | [Autonomous Loops](../solutions/autonomous-loops.md) | Upgrade where "it compiles and tests pass" is the goal | Mechanical migrations have a clear convergence criterion — AI doesn't get bored or lose focus on iteration 47 |
 | 4 | [Worktree Isolation](../solutions/worktree-isolation.md) | Risky upgrade you want to test without polluting main | A throwaway environment changes how you approach risk — bolder strategies, faster discovery, nothing at stake |
+| 5 | [code-modernization](../solutions/code-modernization.md) | A legacy codebase needs a structured migration, not one-shot edits | Preflight analysis before transformation keeps a monolith migration from becoming a pile of broken edits |

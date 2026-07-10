@@ -105,6 +105,7 @@ For the flat record files in `skills/mentor/solutions/` (a solution file *with* 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
 - `solutions/index.md` is **generated** — never hand-edit it. After changing problems rows, a technique's `## Signals` section, or a record file, run `go -C tools/solutions-index run .` and commit the regenerated file (CI fails on a stale index)
 - Every `kind: builtin-command` record is referenced by at least one `**Built-ins:**` line, every `kind: integration`/`doc` record by an `**Integrations:**` line, and every Built-ins/Integrations token resolves to a `solutions/<id>.md` file
+- Every `kind: plugin` record is a ranked row in at least one problems table, carries NO inline `goals:`/`best_when:` (both derive from its rows), and has no `marketplace.md` row. `**Plugins:**` lines are forbidden — a plugin is either a ranked solution or a marketplace.md lookup, never a line entry
 - Every `goals` slug in any record resolves to an existing `problems/<goal>.md`
 
 The Go audit (`go -C tools/structural-audit run .`) enforces all of this deterministically — run it first; this checklist explains its failures.
@@ -268,7 +269,7 @@ For each new plugin, take its `description` (and `author`, to label Anthropic-bu
 
 Ask the user which additions and removals to apply *(auto mode: apply all directory additions/removals — the API is authoritative; promoted-record removals and re-verification flags are always report-only)*. For confirmed changes, edit `marketplace.md` and update its `*Last synced*` date to today. Promoted `solutions/<id>.md` files are maintained by Step 3 (content verification against official docs), same as every other solution file.
 
-Then reconcile the `**Plugins:**` lines in `problems/<goal>.md`: a removed plugin's token is deleted from any line naming it (mechanical — apply directly); a new plugin is only *suggested* for a goal's line when it clearly beats the current picks (editorial — list under suggested actions, never auto-applied). The structural audit fails on routing plugin tokens missing from the catalog, so removals must not be skipped.
+Directory plugins are never listed in `problems/<goal>.md` (the audit forbids `**Plugins:**` lines), so directory changes need no goal-file reconciliation. If a removed plugin was PROMOTED, its ranked rows in `problems/<goal>.md` are part of the human decision flagged above — never auto-deleted.
 
 The evidence rules for this step are lighter than Steps 3 and 4: the GitHub API response is authoritative — no web search needed to verify presence or absence.
 

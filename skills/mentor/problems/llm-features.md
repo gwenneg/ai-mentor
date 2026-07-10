@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Design AI-generated ticket summaries: prompt strategy, UI handling of bad/refused summaries, eval plan, model tier and cost per 1K tickets, latency budget. No code.
 
-**Plugins:** `langfuse` ☑️ tracing and evals · `huggingface-skills` ☑️ models and datasets · `pinecone` ☑️ vector search — 6 more in the catalog.
-
 **Integrations:** `agent-sdk` — programmatic sessions and custom tools for AI features built into your own product. Facts and pitfalls: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |

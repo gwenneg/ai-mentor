@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: migration
-best_when: a legacy codebase (COBOL, old Java/C++, monolith) needs a structured migration, not one-shot edits
 composes_with: plan-mode, worktree-isolation, autonomous-loops
 install: /plugin install code-modernization@claude-plugins-official
 facts: Structured migration of legacy codebases. Hands-on (start verified): the preflight phase engages coherently.

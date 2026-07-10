@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Trace one payment end-to-end through services/payment-gateway/ — entry points, validation, fraud checks, processor integration, persistence, retry logic; produce an architecture summary with dependency diagram.
 
-**Plugins:** `context7` ✅ version-pinned library docs · `sourcegraph` ☑️ cross-repo search · `serena` ☑️ semantic analysis · `lumen` ☑️ local semantic search.
-
 **Built-ins:** `/init` — capture what you learn into a starter CLAUDE.md. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |
@@ -17,3 +15,4 @@
 | 4 | [LSP Self-Correction](../solutions/lsp-self-correction.md) | Tracing how components connect across a large codebase | LSP gives compiler-precise answers to who-calls-what, where text search misses indirect calls and aliased imports |
 | 5 | [Project Memory & Context Docs](../solutions/project-memory.md) | Want the map you built to persist across sessions | Exploration output is knowledge — storing it where every session reads converts one-off investigation into permanent capability |
 | 6 | [Session & Context Management](../solutions/session-context-management.md) | Long exploration is saturating the context window | Exploration quality degrades silently as context fills; curating the window keeps reasoning over conclusions, not noise |
+| 7 | [context7](../solutions/context7.md) | Working against a library version your training data predates | Version-pinned docs on demand beat guessing from stale memory — evaluation returned real Express v5 docs |

@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: greenfield
-best_when: a feature deserves a guided explore-design-review pipeline rather than ad-hoc prompting
 composes_with: plan-mode, custom-agents
 install: /plugin install feature-dev@claude-plugins-official
 facts: 7-phase guided feature development with explorer/architect/reviewer agents. Hands-on (start verified): the phased flow engages correctly and scales down sensibly on small repos.

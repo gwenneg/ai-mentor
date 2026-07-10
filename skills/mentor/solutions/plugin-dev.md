@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: building-skills-plugins
-best_when: building a plugin and wanting scaffolding, validation, and review in one guided flow
 composes_with: custom-plugins, custom-skills
 install: /plugin install plugin-dev@claude-plugins-official
 facts: 8-phase guided workflow for building plugins, with validator and reviewer agents. Hands-on: scaffolded a plugin that passed `claude plugin validate` and self-reviewed honestly. The entry point is `create-plugin`.

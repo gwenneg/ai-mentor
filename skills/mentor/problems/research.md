@@ -5,8 +5,6 @@
 
 **Exemplar move:** /deep-research Compare RabbitMQ, Kafka, NATS JetStream for ~50K events/sec, exactly-once payment delivery, Go and Python services — throughput, delivery guarantees, operational complexity, client maturity, AWS managed hosting.
 
-**Plugins:** `firecrawl` ☑️ crawling and structured extraction · `microsoft-docs` ☑️ Azure/.NET references · `zyte-web-data` ☑️ scraping — ~19 more domain-specific research tools in the catalog.
-
 **Built-ins:** `/deep-research` — multi-source, adversarially verified report. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |

@@ -5,8 +5,6 @@
 
 **Exemplar move:** /deep-research Compare zod vs joi for our Node.js API (src/validators/): TypeScript integration, bundle size, performance, maintenance activity, breaking-change history, CVEs — must stay maintained 3+ years.
 
-**Plugins:** `sonatype-guide` ☑️ vulnerability and version analysis · `ai-plugins` ☑️ (Endor Labs) supply-chain scanning.
-
 **Built-ins:** `/deep-research` — due diligence on a candidate dependency; `/schedule` — nightly dependency-PR triage. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |

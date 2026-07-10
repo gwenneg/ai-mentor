@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: release-management
-best_when: a team wants shared commit conventions and branch hygiene as slash commands
 composes_with: headless-mode
 install: /plugin install commit-commands@claude-plugins-official
 facts: /commit, /commit-push-pr, and /clean_gone git workflow commands. Hands-on: flawless first try.

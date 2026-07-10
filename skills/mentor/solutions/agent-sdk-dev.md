@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: building-agents
-best_when: starting an Agent SDK project and wanting a validated scaffold over a blank directory
 composes_with: custom-agents, headless-mode
 install: /plugin install agent-sdk-dev@claude-plugins-official
 facts: Scaffolds Agent SDK projects and validates against best practices. Hands-on: sane strict-TS scaffold with streaming `query()`.

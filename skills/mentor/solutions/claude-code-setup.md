@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: onboarding
-best_when: a repo is new to Claude Code and wants tailored automation recommendations from its actual contents
 composes_with: project-memory, hooks-as-workflow
 install: /plugin install claude-code-setup@claude-plugins-official
 facts: Analyzes a codebase and recommends tailored Claude Code automations. Hands-on: recommendations were concretely repo-tailored — each hook justified from real project facts, unjustified MCP servers declined.

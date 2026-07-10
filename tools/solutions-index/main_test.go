@@ -26,6 +26,7 @@ func validTree() map[string]string {
 |---|----------|-----------|-------------|
 | 1 | [Alpha](../solutions/alpha.md) | Alpha shines | y |
 | 2 | [Beta](../solutions/beta.md) | Beta fits | y |
+| 3 | [neat-plugin](../solutions/neat-plugin.md) | Plugin shines | y |
 `,
 		"skills/mentor/problems/other-goal.md": `# other-goal
 *Last verified: 2026-07-03*
@@ -38,6 +39,8 @@ func validTree() map[string]string {
 		"skills/mentor/solutions/beta.md":             techniqueMD("—", "uses beta"),
 		"skills/mentor/solutions/solo.md":             recordMD("builtin-command", "test-goal", "solo fits", "ran /solo"),
 		"skills/mentor/solutions/some-integration.md": recordMD("integration", "test-goal, other-goal", "integrating", "repo uses it"),
+		"skills/mentor/solutions/neat-plugin.md": "# neat-plugin\n*Last verified: 2026-07-03*\n\n" +
+			"kind: plugin\nsession_signal: neat-plugin installed\n",
 	}
 }
 
@@ -69,6 +72,8 @@ func TestValidTreeGenerates(t *testing.T) {
 		// record rows: everything from the file's own fields, id = filename
 		"| solo | builtin-command | test-goal | solo fits | — | ran /solo |",
 		"| some-integration | integration | other-goal, test-goal | integrating | — | repo uses it |",
+		// plugin record: ranked like a technique — goals/best_when from its row
+		"| neat-plugin | plugin | test-goal | plugin shines | — | neat-plugin installed |",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing row:\n%s\ngot:\n%s", want, out)
@@ -101,14 +106,28 @@ func TestSourceIssuesAreCaught(t *testing.T) {
 		{"ranked row to missing solution", func(f map[string]string) {
 			delete(f, "skills/mentor/solutions/alpha.md")
 		}, "solutions/alpha.md, which does not exist"},
-		{"ranked row ranks a record", func(f map[string]string) {
+		{"ranked row ranks a command record", func(f map[string]string) {
 			f["skills/mentor/problems/test-goal.md"] = strings.Replace(
 				f["skills/mentor/problems/test-goal.md"],
 				"| 2 | [Beta](../solutions/beta.md) | Beta fits | y |",
 				"| 2 | [Solo](../solutions/solo.md) | Solo here | y |", 1)
 			delete(f, "skills/mentor/solutions/beta.md") // beta would otherwise be unrouted
 			delete(f, "skills/mentor/problems/other-goal.md")
-		}, "ranks 'solo', a record"},
+		}, "ranks 'solo', a builtin-command record"},
+		{"plugin record with inline goals", func(f map[string]string) {
+			f["skills/mentor/solutions/neat-plugin.md"] = strings.Replace(
+				f["skills/mentor/solutions/neat-plugin.md"],
+				"kind: plugin\n", "kind: plugin\ngoals: test-goal\n", 1)
+		}, "carries inline goals:/best_when:"},
+		{"plugin record not ranked", func(f map[string]string) {
+			f["skills/mentor/problems/test-goal.md"] = strings.Replace(
+				f["skills/mentor/problems/test-goal.md"],
+				"| 3 | [neat-plugin](../solutions/neat-plugin.md) | Plugin shines | y |\n", "", 1)
+		}, "plugin has no ranked row"},
+		{"plugin record missing session_signal", func(f map[string]string) {
+			f["skills/mentor/solutions/neat-plugin.md"] = strings.Replace(
+				f["skills/mentor/solutions/neat-plugin.md"], "session_signal: neat-plugin installed\n", "", 1)
+		}, "plugin record is missing session_signal"},
 		{"record missing a field", func(f map[string]string) {
 			f["skills/mentor/solutions/some-integration.md"] = strings.Replace(
 				f["skills/mentor/solutions/some-integration.md"], "session_signal: repo uses it\n", "", 1)

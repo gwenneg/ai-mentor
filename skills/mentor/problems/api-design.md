@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Design a REST API for multi-tenant project management (projects, tasks, comments, members): URL structure, schemas, error codes, versioning, tenant scoping, pagination for 10K+ tasks. No code.
 
-**Plugins:** `apollo-skills` ☑️ GraphQL (client, server, federation) · `postman` ☑️ collections, tests, and mocks.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../solutions/plan-mode.md) | Starting a new API or major version from scratch | An API is a promise to consumers; planning the contract first finds design mistakes while fixing them is free |

@@ -3,7 +3,7 @@
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
-**Promotion rule:** a plugin graduates out of this directory into its own `solutions/<id>.md` record when it is Anthropic-maintained, hands-on evaluated, and named on at least one playbook's `**Plugins:**` line. Promoted plugins are ordinary solutions — teachable by default, indexed, profile-tracked. This directory holds the rest: the long tail plus everything not (yet) meeting that bar. Together, this file's rows and the `kind: plugin` records in `solutions/` cover the full marketplace manifest — the drift check verifies the union.
+**Promotion rule:** a plugin graduates out of this directory into its own `solutions/<id>.md` record when it is hands-on validated (author-agnostic — our own evaluation is the evidence that matters) and earns a ranked row in at least one `problems/<goal>.md` table, where it competes with every other approach on equal terms. Promoted plugins are ordinary solutions — teachable by default, indexed, profile-tracked, never listed here. This directory holds the rest: the long tail plus everything not (yet) meeting that bar, reachable only by stack-match grep or reactive mention. Together, this file's rows and the `kind: plugin` records in `solutions/` cover the full marketplace manifest — the drift check verifies the union.
 
 Each row: backticked name = the plugin's `id` (a legal profile capability id — the profile doesn't care where a capability is cataloged), goal column = the `problems/<goal>.md` it maps to, verdict = trust tier. Directory plugins are NOT teachable-by-default: they enter a user's ignorance map only on stack or goal relevance (a user who never touches SAP is never taught `ui5-modernization` as their daily surprise).
 
@@ -63,7 +63,6 @@ Hands-on evaluation of most integrations requires accounts or infrastructure (Sl
 
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
-| `context7` (Upstash) | Pulls version-pinned documentation for any library on demand | `code-understanding` | ✅ hands-on 2026-07-03 — returned real Express v5 docs, no account needed; headless callers must allowlist the MCP server |
 | `github` (GitHub) | Official GitHub MCP: issues, PRs, code review, repo management | `code-review` | ☑️ desk-checked — first-party GitHub; needs repo auth to exercise |
 | `gitlab` (GitLab) | GitLab MCP: merge requests, CI/CD, pipelines, issues | `ci-automation` | ☑️ desk-checked — first-party GitLab; needs instance auth |
 | `playwright` (Microsoft) | Browser automation and E2E testing MCP server | `testing` | ☑️ desk-checked — first-party Microsoft; needs browser install; note the built-in Chrome integration covers some of this |

@@ -167,7 +167,10 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 // minGoalRows sequentially numbered rows, cross-references, and orphans.
 // Built-ins and Integrations tokens must resolve to a solutions/<id>.md file
 // of any kind (a command can be documented as a technique deep-dive).
-func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, solutions, promoted map[string]bool, usedBuiltins, usedIntegrations, usedPlugins map[string]bool) []string {
+// rankedNames are the solutions that must appear in at least one ranked row:
+// technique deep-dives and promoted plugin records (plugins compete as
+// ordinary ranked approaches — there is no Plugins line).
+func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[string]bool, usedBuiltins, usedIntegrations map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing problems directory (per-goal files)")
@@ -179,22 +182,13 @@ func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, sol
 		ls := lines(f)
 		goals = append(goals, strings.TrimSuffix(filepath.Base(f), ".md"))
 		a.dateLine(f, "Last verified", ls)
-		rows, gem, plugs := []string{}, "", false
+		rows, gem := []string{}, ""
 		for _, l := range ls {
 			if m := reGem.FindStringSubmatch(l); m != nil {
 				gem = m[1]
 			}
 			if rePlugLine.MatchString(l) {
-				plugs = true
-				for _, m := range rePlugTok.FindAllStringSubmatch(l, -1) {
-					if promoted[m[1]] {
-						usedPlugins[m[1]] = true
-						continue
-					}
-					if !catalog[m[1]] {
-						a.issue(f, "Plugins line names '%s', which is neither a promoted plugin record nor a marketplace.md row", m[1])
-					}
-				}
+				a.issue(f, "Plugins line found — plugins are either ranked rows (promoted records) or marketplace.md lookups, never a line")
 			}
 			if reBuiltinL.MatchString(l) {
 				for _, m := range reBuiltin.FindAllStringSubmatch(l, -1) {
@@ -224,9 +218,6 @@ func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, sol
 		if len(rows) < minGoalRows {
 			a.issue(f, "only %d rows (expected at least %d)", len(rows), minGoalRows)
 		}
-		if !plugs {
-			a.issue(f, "missing Plugins line")
-		}
 		if gem == "" {
 			a.issue(f, "missing Hidden gem line")
 		} else {
@@ -249,7 +240,7 @@ func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, sol
 			a.issue(dir, "broken reference %s", ref)
 		}
 	}
-	for _, name := range techniqueNames {
+	for _, name := range rankedNames {
 		if !strings.Contains(text, "solutions/"+name+".md") {
 			a.issue(filepath.Join(a.skill, "solutions", name+".md"), "orphan: not ranked by any problems file")
 		}
@@ -406,18 +397,20 @@ func (a *auditor) run() error {
 	for _, n := range pluginNames(string(catText)) {
 		catalog[n] = true
 	}
-	promoted := map[string]bool{}
+	// Promoted plugins are ranked rows like techniques (never a directory row
+	// too); rankedNames feeds checkRouting's orphan check for both.
+	rankedNames := slices.Clone(techNames)
 	for id, kind := range recordKind {
 		if kind == "plugin" {
 			if catalog[id] {
 				a.issue(filepath.Join(solDir, id+".md"), "promoted plugin still has a marketplace.md row — remove the directory row")
 			}
-			promoted[id] = true
+			rankedNames = append(rankedNames, id)
 		}
 	}
 
-	usedBuiltins, usedIntegrations, usedPlugins := map[string]bool{}, map[string]bool{}, map[string]bool{}
-	goals := a.checkRouting(filepath.Join(a.skill, "problems"), techNames, catalog, solutions, promoted, usedBuiltins, usedIntegrations, usedPlugins)
+	usedBuiltins, usedIntegrations := map[string]bool{}, map[string]bool{}
+	goals := a.checkRouting(filepath.Join(a.skill, "problems"), rankedNames, solutions, usedBuiltins, usedIntegrations)
 	a.goals = len(goals)
 	for id, kind := range recordKind {
 		recPath := filepath.Join(solDir, id+".md")
@@ -431,9 +424,7 @@ func (a *auditor) run() error {
 				a.issue(recPath, "integration record not referenced by any Integrations line")
 			}
 		case "plugin":
-			if !usedPlugins[id] {
-				a.issue(recPath, "plugin record not referenced by any Plugins line")
-			}
+			// ranked-orphan check covers it via rankedNames
 		default:
 			a.issue(recPath, "unknown kind '%s'", kind)
 		}

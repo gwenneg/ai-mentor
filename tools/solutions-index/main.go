@@ -118,14 +118,27 @@ func (g *gen) solutions() map[string]*row {
 				}
 			}
 		}
-		if isRecord[id] {
+		switch {
+		case r.kind == "plugin":
+			// Ranked like a technique: goals and best_when come from the
+			// problems rows — inline copies would be a second home for the fact.
+			if len(r.goals) > 0 || r.bestWhen != "" {
+				g.errf(f, "plugin record carries inline goals:/best_when: — these derive from its ranked rows; remove them")
+			}
+			if r.sessionSig == "" {
+				g.errf(f, "plugin record is missing session_signal")
+			}
+			if r.setupSig == "" {
+				r.setupSig = "—"
+			}
+		case isRecord[id]:
 			if len(r.goals) == 0 || r.bestWhen == "" || r.sessionSig == "" {
 				g.errf(f, "record '%s' is missing one of goals/best_when/session_signal", id)
 			}
 			if r.setupSig == "" {
 				r.setupSig = "—"
 			}
-		} else {
+		default:
 			r.kind = "technique"
 			if r.setupSig == "" || r.sessionSig == "" {
 				g.errf(f, "missing or incomplete '## Signals' section (need '- Setup:' and '- Session:' lines)")
@@ -151,8 +164,8 @@ func (g *gen) solutions() map[string]*row {
 				g.errf(f, "ranked row references solutions/%s.md, which does not exist", slug)
 				continue
 			}
-			if isRecord[slug] {
-				g.errf(f, "ranked row ranks '%s', a record — only techniques are ranked; records ride the Built-ins/Integrations lines", slug)
+			if isRecord[slug] && rows[slug].kind != "plugin" {
+				g.errf(f, "ranked row ranks '%s', a %s record — only techniques and plugins are ranked; commands and integrations ride the Built-ins/Integrations lines", slug, rows[slug].kind)
 				continue
 			}
 			cs := cells(l) // | # | Solution | Best when | Why it fits |
@@ -171,8 +184,8 @@ func (g *gen) solutions() map[string]*row {
 		}
 	}
 	for id, r := range rows {
-		if !isRecord[id] && len(r.goals) == 0 {
-			g.errf(filepath.Join(g.skill, "solutions", id+".md"), "technique has no ranked row in any problems file — cannot index it")
+		if (r.kind == "technique" || r.kind == "plugin") && len(r.goals) == 0 {
+			g.errf(filepath.Join(g.skill, "solutions", id+".md"), "%s has no ranked row in any problems file — cannot index it", r.kind)
 		}
 	}
 	return rows

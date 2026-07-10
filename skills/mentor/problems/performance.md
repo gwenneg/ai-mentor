@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. /api/v2/orders averages 2.4s — trace src/controllers/orders_controller.py through OrderService.list_with_details() and OrderRepository, rank bottlenecks (N+1 queries, missing indexes), no code changes yet.
 
-**Plugins:** `codspeed` ☑️ benchmarking and flamegraphs · `clickhouse-best-practices` ☑️ query/schema optimization.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../solutions/plan-mode.md) | Not sure where the bottleneck actually is | Performance budgets are finite and intuition unreliable — analysis sends effort where the data says it should go |

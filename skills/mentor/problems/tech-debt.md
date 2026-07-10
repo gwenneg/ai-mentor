@@ -5,8 +5,6 @@
 
 **Exemplar move:** Spawn four parallel agents auditing src/: duplication clusters, deprecated APIs (TODO/FIXME/@deprecated), test-coverage gaps vs tests/, functions over cyclomatic complexity 10 — consolidate into one prioritized report.
 
-**Plugins:** none mapped for this goal yet.
-
 **Built-ins:** `/code-review` — find the bugs before tidying; `/simplify` — reuse/simplification cleanup, quality only. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |

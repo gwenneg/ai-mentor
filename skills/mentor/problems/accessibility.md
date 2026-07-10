@@ -5,8 +5,6 @@
 
 **Exemplar move:** Connect to the browser at localhost:3000/settings, record tab order; verify the Delete Account modal in src/components/Settings/DeleteAccountModal.tsx traps focus and Escape returns focus to the trigger.
 
-**Plugins:** none mapped for this goal yet.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Browser Integration](../solutions/browser-integration.md) | Verifying tab order, focus traps, or screen reader behavior | Tests the actual user experience — tab order, focus management, live regions — where the hardest a11y bugs hide |

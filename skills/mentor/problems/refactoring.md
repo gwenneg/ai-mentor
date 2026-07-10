@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Extract auth from ~800-line src/controllers/user_controller.rb into AuthService — which methods move, new interfaces, which callers update, change order keeping tests passing each step.
 
-**Plugins:** none recommended — the ⚠️-flagged `code-simplifier` duplicates the built-in /simplify; lead with the built-in.
-
 **Built-ins:** `/simplify` — apply reuse and simplification cleanups to changed code. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |

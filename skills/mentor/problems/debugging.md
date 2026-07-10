@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Job scheduler double-processes jobs under load — analyze the concurrency model in src/scheduler/worker_pool.go and src/scheduler/job_queue.go, give ranked hypotheses, don't fix anything yet.
 
-**Plugins:** `logrocket` ☑️ session-replay debugging for user-reported frontend bugs.
-
 **Built-ins:** `/run` — drive the real app to reproduce the symptom; `/goal` — machine-verifiable finish line, mechanical iteration. Facts and pitfalls per command: its `solutions/<id>.md` record.
 
 | # | Approach | Best when | Why it fits |

@@ -2,8 +2,6 @@
 *Last verified: 2026-07-03*
 
 kind: plugin
-goals: security
-best_when: security review should be automatic on every edit, not a step someone remembers
 composes_with: hooks-as-workflow, security-review
 install: /plugin install security-guidance@claude-plugins-official
 facts: Per-edit security hooks plus a Stop-time LLM diff review — 12 hooks, ~0 always-on tokens. Hands-on: an injection attempt produced hardened parameterized code; invisible when quiet. Complements the on-demand /security-review built-in.
