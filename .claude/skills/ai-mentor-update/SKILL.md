@@ -50,7 +50,7 @@ Then ask the user which steps to run. The menu numbers are the Step headings bel
 > 2. **Structural audit** — check all files against templates, cross-references, staleness
 > 3. **Content verification** — web-search claims in files against current tool docs
 > 4. **Process new changelogs** — incorporate what's-new digests not yet listed in `processed-changelogs.md`
-> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `plugins.md`
+> 5. **Plugin catalog sync** — check `claude-plugins-official` for new or removed plugins not yet reflected in `marketplace.md` or the promoted `solutions/` records
 >
 > You can pick any combination (e.g. "all", "2 and 4", "just 5"). The routine pass is 4 and 5; the others are occasional deep audits.
 
@@ -100,7 +100,7 @@ For each technique file in `skills/mentor/solutions/` (the deep-dives — any so
 
 ### Record files and the index
 
-For the flat record files in `skills/mentor/solutions/` (a solution file *with* a `kind:` line — built-in command, integration, or doc; the filename is its id) and the external plugin catalog (`plugins.md`):
+For the flat record files in `skills/mentor/solutions/` (a solution file *with* a `kind:` line — built-in command, integration, doc, or promoted plugin; the filename is its id) and the marketplace directory (`marketplace.md`):
 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
 - `solutions/index.md` is **generated** — never hand-edit it. After changing problems rows, a technique's `## Signals` section, or a record file, run `go -C tools/solutions-index run .` and commit the regenerated file (CI fails on a stale index)
@@ -237,12 +237,13 @@ Fetch the current plugin list from the marketplace manifest — the manifest is 
 curl -s https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | python3 -c "import json,sys; [print(p['name']) for p in json.load(sys.stdin)['plugins']]"
 ```
 
-Extract the plugin names currently documented in `skills/mentor/plugins.md` by reading the file and collecting all backtick-wrapped names in its tables.
+Extract the plugin names currently documented in TWO places: `skills/mentor/marketplace.md` (backtick-wrapped names in its tables) and the promoted `kind: plugin` records in `skills/mentor/solutions/` (their filenames). The documented set is the union — `tools/catalog-drift` computes exactly this.
 
-Compare the two lists:
+Compare against the manifest:
 
-- **New plugins** — present in the repo but not mentioned in `plugins.md`
-- **Removed plugins** — mentioned in `plugins.md` but no longer in the manifest
+- **New plugins** — in the manifest but documented in neither place → add a `marketplace.md` row (new plugins always enter through the directory; promotion to `solutions/` is a separate, human editorial decision per the promotion rule in `marketplace.md`'s header)
+- **Removed plugins** — documented (directory row or promoted record) but no longer in the manifest. A directory row is removed outright. A **promoted record** leaving the marketplace is NEVER auto-deleted: flag it for a human decision (demote, delete, or keep with a delisted note) — profile rows may point at it
+- **Changed metadata on promoted plugins** — if the manifest description of a promoted plugin materially changed, flag its `solutions/<id>.md` for re-verification (its facts are hands-on claims; Step 3 re-verifies them like any other solution file)
 
 For each new plugin, take its `description` (and `author`, to label Anthropic-built vs external) from the same manifest JSON — no per-plugin fetch needed. If a batch of new plugins is very large (e.g. a marketplace expansion), still list every name in the report, but it is acceptable to add table rows in slices across runs, oldest-known first, noting the remaining backlog count in the report.
 
@@ -253,18 +254,19 @@ For each new plugin, take its `description` (and `author`, to label Anthropic-bu
 
 **Source:** anthropics/claude-plugins-official (fetched today)
 
-### New plugins (not yet in plugins.md)
+### New plugins (not yet documented)
 - `<name>` (Anthropic-built / External) — <description>
   → Suggested table row: | `<name>` | <short description> | `<goal slug>` | ☑️ desk-checked — <reason> |
 
-### Removed plugins (in plugins.md but no longer in the manifest)
-- `<name>` — remove from the relevant table
+### Removed plugins (documented but no longer in the manifest)
+- `<name>` — remove from the relevant marketplace.md table
+- `<name>` (PROMOTED — human decision needed) — solutions/<name>.md still exists; demote, delete, or keep with a delisted note
 
 ### No changes
 (if lists match)
 ```
 
-Ask the user which additions and removals to apply *(auto mode: apply all — the API is authoritative)*. For confirmed changes, edit `plugins.md` and update its `*Last synced*` date to today.
+Ask the user which additions and removals to apply *(auto mode: apply all directory additions/removals — the API is authoritative; promoted-record removals and re-verification flags are always report-only)*. For confirmed changes, edit `marketplace.md` and update its `*Last synced*` date to today. Promoted `solutions/<id>.md` files are maintained by Step 3 (content verification against official docs), same as every other solution file.
 
 Then reconcile the `**Plugins:**` lines in `problems/<goal>.md`: a removed plugin's token is deleted from any line naming it (mechanical — apply directly); a new plugin is only *suggested* for a goal's line when it clearly beats the current picks (editorial — list under suggested actions, never auto-applied). The structural audit fails on routing plugin tokens missing from the catalog, so removals must not be skipped.
 

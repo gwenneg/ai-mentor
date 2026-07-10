@@ -167,7 +167,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 // minGoalRows sequentially numbered rows, cross-references, and orphans.
 // Built-ins and Integrations tokens must resolve to a solutions/<id>.md file
 // of any kind (a command can be documented as a technique deep-dive).
-func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, solutions map[string]bool, usedBuiltins, usedIntegrations map[string]bool) []string {
+func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, solutions, promoted map[string]bool, usedBuiltins, usedIntegrations, usedPlugins map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing problems directory (per-goal files)")
@@ -187,8 +187,12 @@ func (a *auditor) checkRouting(dir string, techniqueNames []string, catalog, sol
 			if rePlugLine.MatchString(l) {
 				plugs = true
 				for _, m := range rePlugTok.FindAllStringSubmatch(l, -1) {
+					if promoted[m[1]] {
+						usedPlugins[m[1]] = true
+						continue
+					}
 					if !catalog[m[1]] {
-						a.issue(f, "Plugins line names '%s', not found in plugins.md", m[1])
+						a.issue(f, "Plugins line names '%s', which is neither a promoted plugin record nor a marketplace.md row", m[1])
 					}
 				}
 			}
@@ -394,17 +398,26 @@ func (a *auditor) run() error {
 	a.solutions = len(solutions)
 
 	catalog := map[string]bool{}
-	catPath := filepath.Join(a.skill, "plugins.md")
+	catPath := filepath.Join(a.skill, "marketplace.md")
 	catText, catErr := os.ReadFile(catPath)
 	if catErr != nil {
-		a.issue(catPath, "missing plugins catalog")
+		a.issue(catPath, "missing marketplace directory")
 	}
 	for _, n := range pluginNames(string(catText)) {
 		catalog[n] = true
 	}
+	promoted := map[string]bool{}
+	for id, kind := range recordKind {
+		if kind == "plugin" {
+			if catalog[id] {
+				a.issue(filepath.Join(solDir, id+".md"), "promoted plugin still has a marketplace.md row — remove the directory row")
+			}
+			promoted[id] = true
+		}
+	}
 
-	usedBuiltins, usedIntegrations := map[string]bool{}, map[string]bool{}
-	goals := a.checkRouting(filepath.Join(a.skill, "problems"), techNames, catalog, solutions, usedBuiltins, usedIntegrations)
+	usedBuiltins, usedIntegrations, usedPlugins := map[string]bool{}, map[string]bool{}, map[string]bool{}
+	goals := a.checkRouting(filepath.Join(a.skill, "problems"), techNames, catalog, solutions, promoted, usedBuiltins, usedIntegrations, usedPlugins)
 	a.goals = len(goals)
 	for id, kind := range recordKind {
 		recPath := filepath.Join(solDir, id+".md")
@@ -416,6 +429,10 @@ func (a *auditor) run() error {
 		case "integration", "doc":
 			if !usedIntegrations[id] {
 				a.issue(recPath, "integration record not referenced by any Integrations line")
+			}
+		case "plugin":
+			if !usedPlugins[id] {
+				a.issue(recPath, "plugin record not referenced by any Plugins line")
 			}
 		default:
 			a.issue(recPath, "unknown kind '%s'", kind)

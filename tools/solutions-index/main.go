@@ -190,7 +190,7 @@ func (g *gen) build() string {
 	var b strings.Builder
 	b.WriteString("# Solutions Index\n")
 	b.WriteString("*Generated — do not edit. Sources: the problems tables and each solutions/ file. Regenerate: `go -C tools/solutions-index run .`*\n\n")
-	b.WriteString("One row per first-party solution (marketplace plugins live in `plugins.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.\n\n")
+	b.WriteString("One row per first-party solution (unpromoted marketplace plugins live in `marketplace.md`). Setup signals are re-checkable disk evidence; session signals are conversation evidence accumulated in the profile. `—` means no signal of that tier exists.\n\n")
 	b.WriteString("| Id | Kind | Goals | Best when | Setup signal | Session signal |\n")
 	b.WriteString("|----|------|-------|-----------|--------------|----------------|\n")
 	for _, id := range ids {

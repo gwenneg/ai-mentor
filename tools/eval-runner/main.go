@@ -198,7 +198,7 @@ type groundTruth struct {
 func buildGroundTruth(repo, fixture string) groundTruth {
 	skill := filepath.Join(repo, "skills", "mentor")
 	gt := groundTruth{fixture: fixtureFiles(fixture)}
-	if b, err := os.ReadFile(filepath.Join(skill, "plugins.md")); err == nil {
+	if b, err := os.ReadFile(filepath.Join(skill, "marketplace.md")); err == nil {
 		gt.plugins = pluginNames(string(b))
 	}
 	files, _ := filepath.Glob(filepath.Join(skill, "solutions", "*.md"))
@@ -212,6 +212,8 @@ func buildGroundTruth(repo, fixture string) groundTruth {
 			gt.commands = append(gt.commands, "/"+id)
 		case "integration", "doc":
 			gt.integrations = append(gt.integrations, id)
+		case "plugin":
+			gt.plugins = append(gt.plugins, id)
 		default:
 			gt.techniques = append(gt.techniques, id)
 		}

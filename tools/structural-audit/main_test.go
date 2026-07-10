@@ -33,7 +33,7 @@ func validTree() map[string]string {
 
 **Hidden gem:** Alpha — because.
 
-**Plugins:** ` + "`alpha-tool`" + ` ☑️ something useful.
+**Plugins:** ` + "`alpha-tool`" + ` ☑️ something useful · ` + "`shiny-plugin`" + ` ✅ promoted record.
 
 **Integrations:** ` + "`some-integration`" + ` — wires the thing in.
 
@@ -50,6 +50,7 @@ func validTree() map[string]string {
 		"skills/mentor/solutions/gamma.md":            approachMD(),
 		"skills/mentor/solutions/testcmd.md":          recordMD("builtin-command"),
 		"skills/mentor/solutions/some-integration.md": recordMD("integration"),
+		"skills/mentor/solutions/shiny-plugin.md":     recordMD("plugin"),
 		"skills/mentor/processed-changelogs.md": `# Ledger
 *Updated: 2026-07-03*
 
@@ -57,7 +58,7 @@ func validTree() map[string]string {
 |------|-----------|---------|
 | [2026-w26](https://example.com) | 2026-07-01 | processed |
 `,
-		"skills/mentor/plugins.md": `# Catalog
+		"skills/mentor/marketplace.md": `# Catalog
 *Last synced: 2026-07-03*
 
 | ` + "`alpha-tool`" + ` | does a thing | ` + "`test-goal`" + ` | ☑️ desk-checked |
@@ -117,19 +118,20 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			delete(f, "skills/mentor/solutions/gamma.md")
 		}, "only 2 rows"},
 		{"missing plugins line", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "**Plugins:** `alpha-tool` ☑️ something useful.\n\n", "", 1)
+			f[routing] = strings.Replace(f[routing], "**Plugins:** `alpha-tool` ☑️ something useful · `shiny-plugin` ✅ promoted record.\n\n", "", 1)
+			delete(f, "skills/mentor/solutions/shiny-plugin.md") // else it just reports as orphan
 		}, "missing Plugins line"},
 		{"phantom plugin token", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`ghost-tool` ☑️ something useful", 1)
-		}, "Plugins line names 'ghost-tool', not found"},
+		}, "Plugins line names 'ghost-tool', which is neither"},
 		{"plugins line names a goal slug (not a plugin)", func(f map[string]string) {
 			// `test-goal` is backticked in the catalog's goal column but is not a
 			// plugin — the old all-tokens parser let this pass.
 			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`test-goal` ☑️ something useful", 1)
-		}, "Plugins line names 'test-goal', not found"},
-		{"missing plugin catalog", func(f map[string]string) {
-			delete(f, "skills/mentor/plugins.md")
-		}, "missing plugins catalog"},
+		}, "Plugins line names 'test-goal', which is neither"},
+		{"missing marketplace directory", func(f map[string]string) {
+			delete(f, "skills/mentor/marketplace.md")
+		}, "missing marketplace directory"},
 		{"missing hidden gem", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "**Hidden gem:** Alpha — because.\n", "", 1)
 		}, "missing Hidden gem line"},
@@ -232,6 +234,12 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"orphan integration record", func(f map[string]string) {
 			f["skills/mentor/solutions/unrouted.md"] = recordMD("integration")
 		}, "integration record not referenced by any Integrations line"},
+		{"orphan plugin record", func(f map[string]string) {
+			f["skills/mentor/solutions/lonely-plugin.md"] = recordMD("plugin")
+		}, "plugin record not referenced by any Plugins line"},
+		{"promoted plugin still in the directory", func(f map[string]string) {
+			f["skills/mentor/marketplace.md"] += "| `shiny-plugin` | dup row | `test-goal` | ☑️ desk-checked |\n"
+		}, "promoted plugin still has a marketplace.md row"},
 		{"unknown record kind", func(f map[string]string) {
 			f["skills/mentor/solutions/testcmd.md"] = strings.Replace(
 				f["skills/mentor/solutions/testcmd.md"], "kind: builtin-command", "kind: gadget", 1)

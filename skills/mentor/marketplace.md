@@ -1,7 +1,11 @@
-# Official Claude Code Plugins Catalog
+# Marketplace Directory
 *Last synced: 2026-07-09 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest · Evaluation passes: 2026-07-03 (52 desk-checked; 15 exercised hands-on), 2026-07-08 (204 desk-checked)*
 
-All plugins below are in the official marketplace and installable via `/plugin install <name>@claude-plugins-official`. None are installed by default. This catalog lists every plugin in the marketplace manifest (255 as of 2026-07-09): the Anthropic-built and repo-hosted partner plugins in the sections below, plus all externally-hosted partner plugins in the final section. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored. The goal column names the goal routing file (`problems/<goal>.md`) each plugin maps to. **This is the external plugin catalog — deliberately separate from the first-party solutions catalog (`solutions/`)**: third-party, two orders of magnitude larger, trust-tiered, and consulted by grep on stack or goal relevance rather than enumerated. Each row: backticked name = the plugin's `id` (a legal profile capability id — the profile doesn't care where a capability is cataloged), goal column = goal membership, verdict = trust tier. Plugins are NOT teachable-by-default: they enter a user's ignorance map only on stack or goal relevance (a user who never touches SAP is never taught `ui5-modernization` as their daily surprise); the solutions catalog is teachable by default.
+The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
+
+**Promotion rule:** a plugin graduates out of this directory into its own `solutions/<id>.md` record when it is Anthropic-maintained, hands-on evaluated, and named on at least one playbook's `**Plugins:**` line. Promoted plugins are ordinary solutions — teachable by default, indexed, profile-tracked. This directory holds the rest: the long tail plus everything not (yet) meeting that bar. Together, this file's rows and the `kind: plugin` records in `solutions/` cover the full marketplace manifest — the drift check verifies the union.
+
+Each row: backticked name = the plugin's `id` (a legal profile capability id — the profile doesn't care where a capability is cataloged), goal column = the `problems/<goal>.md` it maps to, verdict = trust tier. Directory plugins are NOT teachable-by-default: they enter a user's ignorance map only on stack or goal relevance (a user who never touches SAP is never taught `ui5-modernization` as their daily surprise).
 
 Verdicts are produced by the repeatable protocol in `evals/plugin-evaluation.md` — same fixture, same per-plugin exercises, same criteria on every run, so evaluations stay comparable over time.
 
@@ -19,15 +23,8 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
-| `security-guidance` | Per-edit security hooks + Stop-time LLM diff review (12 hooks, ~0 always-on tokens) | `security` | ✅ hands-on 2026-07-03 — injection attempt produced hardened parameterized code; invisible when quiet (complements on-demand `/security-review`) |
-| `hookify` | Creates hooks from conversation patterns or explicit rules | `ci-automation` | ✅ hands-on 2026-07-03 — generated a working PostToolUse hook, verified firing; headless caveat: can't write settings files non-interactively |
-| `feature-dev` | 7-phase guided feature development with explorer/architect/reviewer agents | `greenfield` | ✅ hands-on 2026-07-03 (start verified) — phased flow engages correctly, scales down sensibly on small repos; overlaps plan mode, packaged as one pipeline |
-| `commit-commands` | `/commit`, `/commit-push-pr`, `/clean_gone` git workflow commands | `release-management` | ✅ hands-on 2026-07-03 — flawless first try; ⚠️ mostly duplicates native committing — value is team commit conventions and `clean_gone` |
 | `code-review` | Multi-agent PR review with confidence scoring | `code-review` | ⚠️ duplicates the built-in `/code-review`, `/review`, and `/code-review ultra` — recommend the built-ins first |
-| `pr-review-toolkit` | 6-agent review covering comments, tests, types, error handling, simplification | `code-review` | ✅ hands-on 2026-07-03 — found a planted off-by-one at the exact line with a verified repro and flagged the deliberate test gap; token-hungry (~2k always-on + multiple subagents); overlaps built-in reviews but adds comment/test-coverage/type-design angles |
-| `code-modernization` | Structured migration of legacy codebases (COBOL, legacy Java/C++, monoliths) | `migration` | ✅ hands-on 2026-07-03 (start verified) — preflight phase engages coherently; needs a generous turn budget and Bash allowlisting (its multi-command probes fragment under default permissions); biggest component surface in the catalog |
 | `code-simplifier` | Agent for clarity and maintainability refactors | `refactoring` | ⚠️ overlaps the built-in `/simplify` skill — recommend the built-in first |
-| `frontend-design` | Auto-invoked skill for bold, production-grade UI design | `greenfield` | ✅ hands-on 2026-07-03 — auto-engaged (invocation observed directly in transcript) and produced a branded page in 4 turns; caveat: its "self-contained" output included a Google Fonts link |
 | `ralph-loop` | Continuous while-true agent loops re-running the same prompt until completion | `migration` | ⚠️ overlaps the built-in `/loop` and `/goal` — recommend the built-ins first |
 | `playground` | Interactive single-file HTML playgrounds with visual controls and live preview | `greenfield` | ☑️ desk-checked — partially overlaps the built-in Artifact tool for shareable pages |
 
@@ -43,19 +40,12 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
 | `skill-creator` | Creates and improves skills, measures skill performance | `building-skills-plugins` | ☑️ desk-checked — in active daily use by this catalog's maintainer, which is stronger evidence than most desk checks |
-| `plugin-dev` | 8-phase guided workflow for building plugins, with validator and reviewer agents | `building-skills-plugins` | ✅ hands-on 2026-07-03 — scaffolded a plugin that passed `claude plugin validate` and self-reviewed honestly; entry point is `create-plugin`; heaviest always-on context of the evaluated set (~2.3k tokens) |
-| `mcp-server-dev` | Guided MCP server design and implementation | `building-mcp-integrations` | ✅ hands-on 2026-07-03 — produced a syntax-clean stdio server with current SDK idioms (registerTool, zod validation, stdout hygiene) plus both config snippets; the SDK-idiom guidance is the value over base Claude |
-| `agent-sdk-dev` | Scaffolds Agent SDK projects, validates against best practices | `building-agents` | ✅ hands-on 2026-07-03 — sane strict-TS scaffold with streaming `query()`; pins deps to `latest` when the registry is unreachable, and its verifier agents only work after `npm install` |
 | `mcp-tunnels` | Connects Claude to a private MCP server through an Anthropic MCP tunnel | `building-mcp-integrations` | ☑️ desk-checked — needs Docker Compose infrastructure to exercise |
 
 ### Project & session management
 
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
-| `claude-md-management` | Audits and maintains CLAUDE.md files | `documentation` | ✅ hands-on 2026-07-03 — scored audit (rubric + real gaps found, cross-checked against the codebase); note the skill is invoked as `claude-md-improver` |
-| `claude-code-setup` | Analyzes a codebase and recommends tailored Claude Code automations | `onboarding` | ✅ hands-on 2026-07-03 — recommendations were concretely repo-tailored (justified each hook from real project facts, declined unjustified MCP servers); conceptually overlaps this plugin's own growth mode |
-| `session-report` | Generates an HTML report of session token usage and cache efficiency | `devops` | ✅ hands-on 2026-07-03 — self-contained HTML with real usage numbers; cheapest always-on cost (~70 tokens) but needs >12 turns and default permissions block its bundled analyzer; reports a 7-day window, not strictly the current session |
-| `project-artifact` | Publishes a living project status page with workstreams and decisions | `documentation` | ✅ hands-on 2026-07-03 — produced a project-specific tabbed status page with honest unverified-state markings; publishing needs an interactive claude.ai session (headless falls back to a local HTML file + refresh config) |
 
 ### Language servers (LSPs)
 

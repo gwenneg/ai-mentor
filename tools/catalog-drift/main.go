@@ -1,4 +1,5 @@
-// Check plugins.md against the live official marketplace.
+// Check the documented plugins (marketplace.md directory rows plus promoted
+// kind: plugin records in solutions/) against the live official marketplace.
 //
 // Pure manifest diffing — no LLM. Reads the marketplace.json manifest, the
 // authoritative plugin list: it includes externally-hosted plugins that have
@@ -161,15 +162,34 @@ func fatal(err error) {
 	os.Exit(2)
 }
 
+// promotedPlugins returns the ids of `kind: plugin` records under
+// solutions/ — marketplace plugins promoted out of the directory. They are
+// documented plugins too: the drift check covers directory ∪ promoted.
+func promotedPlugins(repo string) []string {
+	var ids []string
+	files, _ := filepath.Glob(filepath.Join(repo, skillDir, "solutions", "*.md"))
+	for _, f := range files {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			continue
+		}
+		if strings.Contains(string(b), "\nkind: plugin\n") {
+			ids = append(ids, strings.TrimSuffix(filepath.Base(f), ".md"))
+		}
+	}
+	return ids
+}
+
 func main() {
 	repo, err := findRoot(".")
 	if err != nil {
 		fatal(err)
 	}
-	catalog, err := os.ReadFile(filepath.Join(repo, skillDir, "plugins.md"))
+	catalog, err := os.ReadFile(filepath.Join(repo, skillDir, "marketplace.md"))
 	if err != nil {
 		fatal(err)
 	}
+	documented := append(pluginNames(string(catalog)), promotedPlugins(repo)...)
 
 	client := &http.Client{Timeout: 30 * time.Second}
 	live, err := fetchLiveNames(client, manifestURL)
@@ -177,7 +197,7 @@ func main() {
 		fatal(err)
 	}
 
-	if report(os.Stdout, live, pluginNames(string(catalog))) {
+	if report(os.Stdout, live, documented) {
 		os.Exit(1)
 	}
 }
