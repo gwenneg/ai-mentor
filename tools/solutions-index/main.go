@@ -2,11 +2,12 @@
 // from the authored sources of truth:
 //
 //   - problems/*.md    goal membership, rank, and best-when triggers for
-//     technique solutions (the ranked rows)
+//     every ranked solution (the ranked rows)
 //   - solutions/*.md   every solution, one file each. A file with a `kind:`
-//     line is a flat record (built-in command, integration, or doc — the
-//     filename is its id); any other file is a technique deep-dive with a
-//     "## Signals" section.
+//     line is a flat record (plugin, integration, or doc — the filename is
+//     its id; the kind is a semantic label, not a routing tier); any other
+//     file is a technique deep-dive with a "## Signals" section. Everything
+//     is ranked: goals and best_when always derive from the rows.
 //
 // index.md is a build artifact: never hand-edit it. After editing any source
 // above, regenerate with `go -C tools/solutions-index run .`. In CI, `-check`
@@ -80,7 +81,7 @@ func cells(l string) []string {
 
 // solutions parses every solutions/*.md file into a row. A `kind:` line makes
 // the file a flat record (filename = id); otherwise it is a technique
-// deep-dive whose goals and best_when come from the problems tables.
+// deep-dive. Goals and best_when always come from the problems tables.
 func (g *gen) solutions() map[string]*row {
 	rows := map[string]*row{}
 	isRecord := map[string]bool{}
@@ -118,27 +119,20 @@ func (g *gen) solutions() map[string]*row {
 				}
 			}
 		}
-		switch {
-		case r.kind == "plugin":
-			// Ranked like a technique: goals and best_when come from the
-			// problems rows — inline copies would be a second home for the fact.
+		if isRecord[id] {
+			// Every record is ranked like a technique: goals and best_when come
+			// from the problems rows — inline copies would be a second home for
+			// the fact. The kind: line is a semantic label, not a routing tier.
 			if len(r.goals) > 0 || r.bestWhen != "" {
-				g.errf(f, "plugin record carries inline goals:/best_when: — these derive from its ranked rows; remove them")
+				g.errf(f, "record carries inline goals:/best_when: — these derive from its ranked rows; remove them")
 			}
 			if r.sessionSig == "" {
-				g.errf(f, "plugin record is missing session_signal")
+				g.errf(f, "record is missing session_signal")
 			}
 			if r.setupSig == "" {
 				r.setupSig = "—"
 			}
-		case isRecord[id]:
-			if len(r.goals) == 0 || r.bestWhen == "" || r.sessionSig == "" {
-				g.errf(f, "record '%s' is missing one of goals/best_when/session_signal", id)
-			}
-			if r.setupSig == "" {
-				r.setupSig = "—"
-			}
-		default:
+		} else {
 			r.kind = "technique"
 			if r.setupSig == "" || r.sessionSig == "" {
 				g.errf(f, "missing or incomplete '## Signals' section (need '- Setup:' and '- Session:' lines)")
@@ -146,7 +140,7 @@ func (g *gen) solutions() map[string]*row {
 		}
 	}
 
-	// technique goals and best_when come from the problems tables
+	// goals and best_when come from the problems tables — for every ranked solution
 	bestRank := map[string]int{}
 	problems, _ := filepath.Glob(filepath.Join(g.skill, "problems", "*.md"))
 	slices.Sort(problems)
@@ -162,10 +156,6 @@ func (g *gen) solutions() map[string]*row {
 			r := rows[slug]
 			if r == nil {
 				g.errf(f, "ranked row references solutions/%s.md, which does not exist", slug)
-				continue
-			}
-			if isRecord[slug] && rows[slug].kind != "plugin" {
-				g.errf(f, "ranked row ranks '%s', a %s record — only techniques and plugins are ranked; commands and integrations ride the Built-ins/Integrations lines", slug, rows[slug].kind)
 				continue
 			}
 			cs := cells(l) // | # | Solution | Best when | Why it fits |
@@ -184,7 +174,7 @@ func (g *gen) solutions() map[string]*row {
 		}
 	}
 	for id, r := range rows {
-		if (r.kind == "technique" || r.kind == "plugin") && len(r.goals) == 0 {
+		if len(r.goals) == 0 {
 			g.errf(filepath.Join(g.skill, "solutions", id+".md"), "%s has no ranked row in any problems file — cannot index it", r.kind)
 		}
 	}

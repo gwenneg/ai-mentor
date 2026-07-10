@@ -5,10 +5,6 @@
 
 **Exemplar move:** Run `/code-review high` on the branch diff — focus on src/services/billing/ discount stacking edge cases and Stripe webhook failure-mode error handling.
 
-**Integrations:** `claude-code-action` — Claude reviews on every PR via the maintained GitHub Action, findings posted as inline comments. Facts and pitfalls: its `solutions/<id>.md` record.
-
-**Built-ins:** `/code-review` — structured correctness pass on the diff; `/security-review` — security lens on pending changes; `/verify` — watch the change actually work before merging. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Built-In Review Skills](../solutions/built-in-review-skills.md) | Quick review of a focused diff or your own pre-PR code | Most review value is systematic checking — codified reviewer instincts applied consistently to every line |
@@ -17,3 +13,4 @@
 | 4 | [MCP Context](../solutions/mcp-context.md) | PR implements a design doc or addresses an issue | The most expensive bugs are specification bugs — grounding review in requirements catches code solving the wrong problem |
 | 5 | [Cloud Sessions](../solutions/cloud-sessions.md) | Deep review off your machine, or PRs that fix themselves | Most post-review churn is mechanical; a watching cloud agent handles it so human reviewers focus on design |
 | 6 | [pr-review-toolkit](../solutions/pr-review-toolkit.md) | A substantial PR deserves specialized review angles beyond one general pass | Six specialized reviewers each read one concern deeply — found a planted off-by-one at the exact line in evaluation |
+| 7 | [claude-code-action](../solutions/claude-code-action.md) | Claude should review every PR automatically, findings as inline comments | Review that runs on every PR catches what reviewers skip on busy days; the Action makes it one workflow file |

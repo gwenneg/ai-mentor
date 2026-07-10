@@ -104,9 +104,9 @@ For the flat record files in `skills/mentor/solutions/` (a solution file *with* 
 
 - `*Last verified: YYYY-MM-DD*` on line 2 (`*Last synced*` for the plugin catalog)
 - `solutions/index.md` is **generated** — never hand-edit it. After changing problems rows, a technique's `## Signals` section, or a record file, run `go -C tools/solutions-index run .` and commit the regenerated file (CI fails on a stale index)
-- Every `kind: builtin-command` record is referenced by at least one `**Built-ins:**` line, every `kind: integration`/`doc` record by an `**Integrations:**` line, and every Built-ins/Integrations token resolves to a `solutions/<id>.md` file
-- Every `kind: plugin` record is a ranked row in at least one problems table, carries NO inline `goals:`/`best_when:` (both derive from its rows), and has no `marketplace.md` row. `**Plugins:**` lines are forbidden — a plugin is either a ranked solution or a marketplace.md lookup, never a line entry
-- Every `goals` slug in any record resolves to an existing `problems/<goal>.md`
+- Every record (any kind) is a ranked row in at least one problems table and carries NO inline `goals:`/`best_when:` — both derive from its rows. Capability lines (`**Plugins:**`/`**Built-ins:**`/`**Integrations:**`) are forbidden: the ranking is the only routing surface
+- Built-in slash commands have no records at all — each lives inside its covering technique deep-dive (`/code-review` et al. in `built-in-review-skills`, `/goal`+`/loop` in `autonomous-loops`, `/schedule` in `scheduled-agents`, `/init` in `project-memory`)
+- Every `kind: plugin` record has no `marketplace.md` row (promotion removes the directory row)
 
 The Go audit (`go -C tools/structural-audit run .`) enforces all of this deterministically — run it first; this checklist explains its failures.
 
@@ -202,7 +202,7 @@ This is the routine maintenance path. New Claude Code capabilities are announced
 3. For each unprocessed digest, oldest first, fetch `https://code.claude.com/docs/en/whats-new/<slug>.md` and triage each announced change:
 
    - **A changed command, flag, or behavior** → find the covering files (grep `skills/mentor/` for the feature name and its aliases — check synonyms and spelling variants, e.g. "auto memory" vs "auto-memory") and update them. The digest itself is an official source; quote it as the evidence.
-   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the registry consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command or integration gets its own `solutions/<id>.md` record file, referenced from the relevant `**Built-ins:**` / `**Integrations:**` line. Then regenerate the compiled index (`go -C tools/solutions-index run .`) and commit it alongside the change.
+   - **A new workflow-relevant capability** → add it to the closest approach file, or scaffold a new approach from the templates if it is a distinct recommendable technique. If it is not worth covering, say why in the ledger row. Keep the catalog consistent — CI fails otherwise: a new technique needs at least one problems row and a `## Signals` section; a new built-in command folds into its covering technique deep-dive (or a new technique if none covers it); a new integration gets its own `solutions/<id>.md` record file plus a ranked row in at least one problems table. Then regenerate the compiled index (`go -C tools/solutions-index run .`) and commit it alongside the change.
    - **UX, enterprise-admin, install, or surface changes** → no action; the catalog is workflow-focused.
 
 4. Append one row per digest to the ledger — slug, today's date, one-line outcome ("updated solutions/x.md and problems/debugging.md", "no workflow-relevant changes", ...) — and update the ledger's `*Updated*` date. Every processed digest gets a row, including no-op weeks; a gap in the ledger means unprocessed work.

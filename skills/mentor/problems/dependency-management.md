@@ -5,8 +5,6 @@
 
 **Exemplar move:** /deep-research Compare zod vs joi for our Node.js API (src/validators/): TypeScript integration, bundle size, performance, maintenance activity, breaking-change history, CVEs — must stay maintained 3+ years.
 
-**Built-ins:** `/deep-research` — due diligence on a candidate dependency; `/schedule` — nightly dependency-PR triage. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Deep Research](../solutions/deep-research.md) | Evaluating a library you haven't used before | Adoption is a long-term bet; research automates the due diligence — maintenance health, CVEs, licenses — most developers skip |

@@ -43,7 +43,7 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 
 - **Headless goal loops**: Run `claude -p "/goal coverage above 85% for src/billing/"` in CI or a background terminal. The AI works unattended and exits when done. Combine with `--output-format json` to capture the final result programmatically.
 - **Compound conditions**: Goal conditions can be up to 4,000 characters. Use this to set multi-part goals: `/goal all tests pass AND no eslint errors AND no TypeScript errors`. The evaluator checks all parts.
-- **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it or when Claude decides the work is done. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence.
+- **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it or when Claude decides the work is done. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence. Both run in the open session on this machine — for recurring work that must survive a closed laptop, use `/schedule` (see Scheduled Agents).
 
 ## Common Pitfalls
 

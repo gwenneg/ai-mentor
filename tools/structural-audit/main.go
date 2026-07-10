@@ -41,12 +41,9 @@ var (
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek        = regexp.MustCompile(`^\d{4}-w\d{2}$`)
 	reDateTail    = regexp.MustCompile(`^` + datePat + `\*`)
-	reBuiltin     = regexp.MustCompile("`/([a-z0-9-]+)`")
 	reBuiltinL    = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
 	reIntegL      = regexp.MustCompile(`^\*\*Integrations:\*\* `)
-	reIntegTok    = regexp.MustCompile("`([a-z0-9-]+)`")
 	reRegKind     = regexp.MustCompile(`^kind: ([a-z-]+)$`)
-	reRegGoals    = regexp.MustCompile(`^goals: (.+)$`)
 	reClassifyRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount       = regexp.MustCompile(`(\d+) goal categories`)
 )
@@ -163,14 +160,12 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 }
 
 // checkRouting audits every per-goal file under skills/mentor/problems/:
-// date line, hidden gem, Plugins line with catalog-known tokens, at least
-// minGoalRows sequentially numbered rows, cross-references, and orphans.
-// Built-ins and Integrations tokens must resolve to a solutions/<id>.md file
-// of any kind (a command can be documented as a technique deep-dive).
-// rankedNames are the solutions that must appear in at least one ranked row:
-// technique deep-dives and promoted plugin records (plugins compete as
-// ordinary ranked approaches — there is no Plugins line).
-func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[string]bool, usedBuiltins, usedIntegrations map[string]bool) []string {
+// date line, hidden gem, at least minGoalRows sequentially numbered rows,
+// cross-references, and orphans. rankedNames is every solution — technique
+// or record — each of which must appear in at least one ranked row: the
+// ranking is the only routing surface (Plugins/Built-ins/Integrations lines
+// are forbidden relics).
+func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[string]bool) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
 		a.issue(dir, "missing problems directory (per-goal files)")
@@ -187,26 +182,8 @@ func (a *auditor) checkRouting(dir string, rankedNames []string, solutions map[s
 			if m := reGem.FindStringSubmatch(l); m != nil {
 				gem = m[1]
 			}
-			if rePlugLine.MatchString(l) {
-				a.issue(f, "Plugins line found — plugins are either ranked rows (promoted records) or marketplace.md lookups, never a line")
-			}
-			if reBuiltinL.MatchString(l) {
-				for _, m := range reBuiltin.FindAllStringSubmatch(l, -1) {
-					if !solutions[m[1]] {
-						a.issue(f, "Built-ins line names '/%s', which has no solutions/%s.md", m[1], m[1])
-					}
-					usedBuiltins[m[1]] = true
-				}
-			}
-			if reIntegL.MatchString(l) {
-				// reIntegTok's charset (no dots, no slashes) only matches solution
-				// ids — backticked file names and placeholders never capture.
-				for _, m := range reIntegTok.FindAllStringSubmatch(l, -1) {
-					if !solutions[m[1]] {
-						a.issue(f, "Integrations line names '%s', which has no solutions/%s.md", m[1], m[1])
-					}
-					usedIntegrations[m[1]] = true
-				}
+			if rePlugLine.MatchString(l) || reBuiltinL.MatchString(l) || reIntegL.MatchString(l) {
+				a.issue(f, "capability line found — every solution is a ranked row; Plugins/Built-ins/Integrations lines are forbidden")
 			}
 			if m := reRow.FindStringSubmatch(l); m != nil {
 				if n, _ := strconv.Atoi(m[1]); n != len(rows)+1 {
@@ -397,38 +374,26 @@ func (a *auditor) run() error {
 	for _, n := range pluginNames(string(catText)) {
 		catalog[n] = true
 	}
-	// Promoted plugins are ranked rows like techniques (never a directory row
-	// too); rankedNames feeds checkRouting's orphan check for both.
+	// Every solution — technique or record — must be a ranked row; kind is a
+	// semantic label, not a routing tier. Promoted plugins additionally must
+	// not retain a marketplace.md directory row.
 	rankedNames := slices.Clone(techNames)
-	for id, kind := range recordKind {
-		if kind == "plugin" {
-			if catalog[id] {
-				a.issue(filepath.Join(solDir, id+".md"), "promoted plugin still has a marketplace.md row — remove the directory row")
-			}
-			rankedNames = append(rankedNames, id)
-		}
-	}
-
-	usedBuiltins, usedIntegrations := map[string]bool{}, map[string]bool{}
-	goals := a.checkRouting(filepath.Join(a.skill, "problems"), rankedNames, solutions, usedBuiltins, usedIntegrations)
-	a.goals = len(goals)
 	for id, kind := range recordKind {
 		recPath := filepath.Join(solDir, id+".md")
 		switch kind {
-		case "builtin-command":
-			if !usedBuiltins[id] {
-				a.issue(recPath, "command record not referenced by any Built-ins line")
+		case "plugin":
+			if catalog[id] {
+				a.issue(recPath, "promoted plugin still has a marketplace.md row — remove the directory row")
 			}
 		case "integration", "doc":
-			if !usedIntegrations[id] {
-				a.issue(recPath, "integration record not referenced by any Integrations line")
-			}
-		case "plugin":
-			// ranked-orphan check covers it via rankedNames
 		default:
 			a.issue(recPath, "unknown kind '%s'", kind)
 		}
+		rankedNames = append(rankedNames, id)
 	}
+
+	goals := a.checkRouting(filepath.Join(a.skill, "problems"), rankedNames, solutions)
+	a.goals = len(goals)
 	for _, f := range recFiles {
 		a.checkRecord(f, goals)
 	}
@@ -472,24 +437,11 @@ func diff(a, b []string) (onlyA, onlyB []string) {
 	return
 }
 
-// checkRecord audits one flat record file under solutions/: date line, and a
-// goals line naming only real goal slugs (files under problems/). Content
-// completeness (best_when, session_signal) is the generator's job.
-func (a *auditor) checkRecord(path string, goals []string) {
-	ls := lines(path)
-	a.dateLine(path, "Last verified", ls)
-	for _, l := range ls {
-		m := reRegGoals.FindStringSubmatch(l)
-		if m == nil {
-			continue
-		}
-		for _, g := range strings.Split(m[1], ",") {
-			g = strings.TrimSpace(g)
-			if !slices.Contains(goals, g) {
-				a.issue(path, "goals name '%s', which has no problems/%s.md", g, g)
-			}
-		}
-	}
+// checkRecord audits one flat record file under solutions/: date line only.
+// Content completeness (session_signal, no inline goals/best_when) is the
+// generator's job.
+func (a *auditor) checkRecord(path string, _ []string) {
+	a.dateLine(path, "Last verified", lines(path))
 }
 
 // findRoot walks upward from dir to the first directory containing

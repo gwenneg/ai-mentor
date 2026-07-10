@@ -5,8 +5,6 @@
 
 **Exemplar move:** Read src/api/routes/payments.ts, src/api/middleware/auth.ts, docs/openapi.yaml, and the Notion design doc linked in docs/DESIGN_DECISIONS.md; generate payments API reference with auth, schemas, error codes, rate limits.
 
-**Built-ins:** `/init` — bootstrap CLAUDE.md so sessions stop re-learning the repo. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [MCP Context](../solutions/mcp-context.md) | Existing docs, specs, and decisions are scattered | Documentation quality is proportional to context quality — MCP bridges where knowledge lives and where it needs to go |

@@ -5,8 +5,6 @@
 
 **Exemplar move:** Spawn four parallel agents auditing src/: duplication clusters, deprecated APIs (TODO/FIXME/@deprecated), test-coverage gaps vs tests/, functions over cyclomatic complexity 10 — consolidate into one prioritized report.
 
-**Built-ins:** `/code-review` — find the bugs before tidying; `/simplify` — reuse/simplification cleanup, quality only. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Subagent Delegation](../solutions/subagent-delegation.md) | Multi-dimensional audit across the whole codebase | Each debt dimension needs a different scanning strategy — specialized agents apply the right one without conflating them |

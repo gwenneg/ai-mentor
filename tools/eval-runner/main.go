@@ -188,7 +188,6 @@ func approachNames(repo string) ([]string, error) {
 type groundTruth struct {
 	fixture      []string
 	plugins      []string
-	commands     []string
 	techniques   []string
 	integrations []string
 }
@@ -208,13 +207,13 @@ func buildGroundTruth(repo, fixture string) groundTruth {
 			continue
 		}
 		switch solutionKind(f) {
-		case "builtin-command":
-			gt.commands = append(gt.commands, "/"+id)
 		case "integration", "doc":
 			gt.integrations = append(gt.integrations, id)
 		case "plugin":
 			gt.plugins = append(gt.plugins, id)
 		default:
+			// techniques — built-in commands live inside their covering
+			// technique files now, so the judge gets no separate command list.
 			gt.techniques = append(gt.techniques, id)
 		}
 	}
@@ -644,8 +643,8 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
 	b.WriteString(strings.Join(r.ground.plugins, ", ") + "\n")
-	b.WriteString("Known-real built-in commands: " + strings.Join(r.ground.commands, ", ") + ". Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
-	b.WriteString("These command/technique/integration lists are NOT exhaustive of Claude Code (e.g. /plan, /model, /effort, --worktree, Shift+Tab are real but unlisted) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
+	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
+	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
 
 	for i, resp := range responses {
 		label := "Response"

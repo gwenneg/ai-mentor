@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Extract auth from ~800-line src/controllers/user_controller.rb into AuthService — which methods move, new interfaces, which callers update, change order keeping tests passing each step.
 
-**Built-ins:** `/simplify` — apply reuse and simplification cleanups to changed code. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../solutions/plan-mode.md) | Complex refactor that could go sideways | Refactoring is dependency management — planning reveals the graph before cutting instead of one crash at a time |

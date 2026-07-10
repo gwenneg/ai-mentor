@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Trace one payment end-to-end through services/payment-gateway/ — entry points, validation, fraud checks, processor integration, persistence, retry logic; produce an architecture summary with dependency diagram.
 
-**Built-ins:** `/init` — capture what you learn into a starter CLAUDE.md. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../solutions/plan-mode.md) | Onboarding to a new team or project | Understanding is about building the right mental model — learn the shape of the system first, details later |

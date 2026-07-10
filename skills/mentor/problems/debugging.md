@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Job scheduler double-processes jobs under load — analyze the concurrency model in src/scheduler/worker_pool.go and src/scheduler/job_queue.go, give ranked hypotheses, don't fix anything yet.
 
-**Built-ins:** `/run` — drive the real app to reproduce the symptom; `/goal` — machine-verifiable finish line, mechanical iteration. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../solutions/plan-mode.md) | Complex bug with multiple possible causes | Bugs survive because developers jump to the first plausible explanation; enumerating all possibilities cuts time to resolution |

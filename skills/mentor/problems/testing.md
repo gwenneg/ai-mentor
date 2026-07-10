@@ -5,8 +5,6 @@
 
 **Exemplar move:** /goal Raise src/services/order-processing/ coverage from 52% to 80% — run `npx jest --coverage --collectCoverageFrom='src/services/order-processing/**/*.ts'`, target untested branches and error paths, keep existing tests passing.
 
-**Built-ins:** `/verify` — confirm the feature works end-to-end, not just green tests; `/run` — launch the app and see the change working; `/goal` — iterate unattended until the suite is green. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Autonomous Loops](../solutions/autonomous-loops.md) | Coverage must reach a specific threshold to merge | Coverage improvement is iterative optimization — find the gap, write a test, measure, repeat without getting bored |

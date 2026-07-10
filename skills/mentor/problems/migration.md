@@ -5,8 +5,6 @@
 
 **Exemplar move:** Enter plan mode. Migrate React Router v5 to v6: 34 routes in src/routes/, useHistory in ~20 components, guards in src/auth/ProtectedRoute.tsx — map changes, categorize, order to stay functional.
 
-**Built-ins:** `/goal` — converge on zero errors after a mechanical migration. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../solutions/plan-mode.md) | Large migration touching dozens of files | Migrations are dependency graphs, not task lists — planning reveals the structure so you traverse it in the right order |

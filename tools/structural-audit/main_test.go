@@ -21,15 +21,10 @@ func approachMD() string {
 	return b.String()
 }
 
+// recordMD has no goals/best_when — every record derives both from its
+// ranked rows (the generator enforces that; the audit only needs kind).
 func recordMD(kind string) string {
-	return "# record\n*Last verified: 2026-07-03*\n\n" +
-		"kind: " + kind + "\ngoals: test-goal\nbest_when: testing the audit\nsession_signal: seen\n"
-}
-
-// pluginRecordMD has no goals/best_when — promoted plugins derive both from
-// their ranked rows (the generator enforces that; the audit only needs kind).
-func pluginRecordMD() string {
-	return "# record\n*Last verified: 2026-07-03*\n\nkind: plugin\nsession_signal: seen\n"
+	return "# record\n*Last verified: 2026-07-03*\n\nkind: " + kind + "\nsession_signal: seen\n"
 }
 
 func validTree() map[string]string {
@@ -39,23 +34,19 @@ func validTree() map[string]string {
 
 **Hidden gem:** Alpha — because.
 
-**Integrations:** ` + "`some-integration`" + ` — wires the thing in.
-
-**Built-ins:** ` + "`/testcmd`" + ` — does the thing.
-
 | # | Solution | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Alpha](../solutions/alpha.md) | x | y |
 | 2 | [Beta](../solutions/beta.md) | x | y |
 | 3 | [Gamma](../solutions/gamma.md) | x | y |
 | 4 | [shiny-plugin](../solutions/shiny-plugin.md) | x | y |
+| 5 | [some-integration](../solutions/some-integration.md) | x | y |
 `,
 		"skills/mentor/solutions/alpha.md":            approachMD(),
 		"skills/mentor/solutions/beta.md":             approachMD(),
 		"skills/mentor/solutions/gamma.md":            approachMD(),
-		"skills/mentor/solutions/testcmd.md":          recordMD("builtin-command"),
 		"skills/mentor/solutions/some-integration.md": recordMD("integration"),
-		"skills/mentor/solutions/shiny-plugin.md":     pluginRecordMD(),
+		"skills/mentor/solutions/shiny-plugin.md":     recordMD("plugin"),
 		"skills/mentor/processed-changelogs.md": `# Ledger
 *Updated: 2026-07-03*
 
@@ -122,10 +113,6 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f[routing] = f[routing][:i]
 			delete(f, "skills/mentor/solutions/gamma.md")
 		}, "only 2 rows"},
-		{"plugins line reintroduced", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "**Integrations:**",
-				"**Plugins:** `alpha-tool` ☑️ something useful.\n\n**Integrations:**", 1)
-		}, "Plugins line found"},
 		{"missing marketplace directory", func(f map[string]string) {
 			delete(f, "skills/mentor/marketplace.md")
 		}, "missing marketplace directory"},
@@ -145,8 +132,8 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "verified recently", 1)
 		}, "line 2 must be"},
 		{"bad record date line", func(f map[string]string) {
-			f["skills/mentor/solutions/testcmd.md"] = strings.Replace(
-				f["skills/mentor/solutions/testcmd.md"], "*Last verified: 2026-07-03*", "recently", 1)
+			f["skills/mentor/solutions/some-integration.md"] = strings.Replace(
+				f["skills/mentor/solutions/some-integration.md"], "*Last verified: 2026-07-03*", "recently", 1)
 		}, "line 2 must be"},
 		{"missing approach section", func(f map[string]string) {
 			f["skills/mentor/solutions/alpha.md"] = strings.Replace(
@@ -219,32 +206,27 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"missing problems directory", func(f map[string]string) {
 			delete(f, routing)
 		}, "missing problems directory"},
-		{"phantom builtin token", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "`/testcmd`", "`/ghostcmd`", 1)
-		}, "Built-ins line names '/ghostcmd', which has no solutions/ghostcmd.md"},
-		{"phantom integration token", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "**Integrations:** `some-integration`", "**Integrations:** `ghost-integration`", 1)
-		}, "Integrations line names 'ghost-integration', which has no solutions/ghost-integration.md"},
-		{"orphan command record", func(f map[string]string) {
-			f["skills/mentor/solutions/othercmd.md"] = recordMD("builtin-command")
-		}, "command record not referenced by any Built-ins line"},
+		{"built-ins line reintroduced", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "| # |",
+				"**Built-ins:** `/testcmd` — does the thing.\n\n| # |", 1)
+		}, "capability line found"},
+		{"plugins line reintroduced", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "| # |",
+				"**Plugins:** `alpha-tool` ☑️ something useful.\n\n| # |", 1)
+		}, "capability line found"},
 		{"orphan integration record", func(f map[string]string) {
 			f["skills/mentor/solutions/unrouted.md"] = recordMD("integration")
-		}, "integration record not referenced by any Integrations line"},
+		}, "orphan: not ranked by any problems file"},
 		{"orphan plugin record", func(f map[string]string) {
-			f["skills/mentor/solutions/lonely-plugin.md"] = pluginRecordMD()
+			f["skills/mentor/solutions/lonely-plugin.md"] = recordMD("plugin")
 		}, "orphan: not ranked by any problems file"},
 		{"promoted plugin still in the directory", func(f map[string]string) {
 			f["skills/mentor/marketplace.md"] += "| `shiny-plugin` | dup row | `test-goal` | ☑️ desk-checked |\n"
 		}, "promoted plugin still has a marketplace.md row"},
 		{"unknown record kind", func(f map[string]string) {
-			f["skills/mentor/solutions/testcmd.md"] = strings.Replace(
-				f["skills/mentor/solutions/testcmd.md"], "kind: builtin-command", "kind: gadget", 1)
+			f["skills/mentor/solutions/some-integration.md"] = strings.Replace(
+				f["skills/mentor/solutions/some-integration.md"], "kind: integration", "kind: gadget", 1)
 		}, "unknown kind 'gadget'"},
-		{"record goals name unknown goal", func(f map[string]string) {
-			f["skills/mentor/solutions/testcmd.md"] = strings.Replace(
-				f["skills/mentor/solutions/testcmd.md"], "goals: test-goal", "goals: no-such-goal", 1)
-		}, "goals name 'no-such-goal', which has no problems/no-such-goal.md"},
 		{"missing ledger", func(f map[string]string) {
 			delete(f, "skills/mentor/processed-changelogs.md")
 		}, "missing processed-changelog ledger"},

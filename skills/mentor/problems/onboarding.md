@@ -5,8 +5,6 @@
 
 **Exemplar move:** Pull the Confluence "Engineering Onboarding" guide and #platform-team pinned messages, cross-reference with README.md and docker-compose.yml — flag outdated steps, produce one consolidated setup guide.
 
-**Built-ins:** `/init` — generate the repo's starter CLAUDE.md. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [MCP Context](../solutions/mcp-context.md) | Team knowledge scattered across Confluence, Slack, Notion, and READMEs | The onboarding bottleneck is finding information, not understanding it — MCP brings every source into one queryable context |

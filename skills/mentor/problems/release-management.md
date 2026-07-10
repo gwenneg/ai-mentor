@@ -5,8 +5,6 @@
 
 **Exemplar move:** Create .claude/skills/release-notes/SKILL.md: /release-notes finds the latest git tag, categorizes commits by conventional prefixes, prepends a versioned changelog entry to CHANGELOG.md, adds migration notes for BREAKING CHANGE footers.
 
-**Built-ins:** `/schedule` — scheduled release chores on cloud infrastructure. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Custom Skills](../solutions/custom-skills.md) | Need categorized release notes from commit history | Release prep is procedural — same steps, same order — so a skill removes forgotten or misordered steps |

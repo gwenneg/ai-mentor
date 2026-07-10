@@ -5,8 +5,6 @@
 
 **Exemplar move:** Run /security-review on the current branch — special attention to auth middleware in src/middleware/auth.ts and raw database queries in src/services/; security audit next week.
 
-**Built-ins:** `/security-review` — security review of the branch's pending changes. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Built-In Review Skills](../solutions/built-in-review-skills.md) | Quick security scan before a release or audit | Vulnerabilities follow well-known patterns — encoded checks applied exhaustively to every changed line beat manual review |

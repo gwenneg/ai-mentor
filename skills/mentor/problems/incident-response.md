@@ -5,8 +5,6 @@
 
 **Exemplar move:** Connect to Grafana and Datadog MCP servers. payment-service returns 503s on ~12% of requests — pull error timeline, latest deploy, top service:payment-service log errors; correlate spike with deploy timestamp.
 
-**Built-ins:** `/loop` — poll the deploy or error rate while you investigate; `/deep-research` — check whether the root cause is a known upstream issue. Facts and pitfalls per command: its `solutions/<id>.md` record.
-
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [MCP Context](../solutions/mcp-context.md) | Error spike correlating with a recent deploy | Incidents are data problems — MCP makes Claude a unified query layer across your observability stack, collapsing data-gathering |

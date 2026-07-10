@@ -54,7 +54,9 @@ A reviewer following a defined methodology catches more than one who "just reads
 
 - **Running only `/simplify` without `/code-review` first**: Simplification can mask bugs. If you have a logic error in duplicated code, `/simplify` might deduplicate it — now the bug is in one place but still exists. Review for correctness first.
 - **Treating AI review as authoritative**: These skills catch real bugs, but they also produce false positives. A finding that says "possible null pointer" might be guarded by an upstream check the AI did not trace. Always evaluate findings with your domain knowledge.
-- **Ignoring effort levels**: Running high-effort review on every trivial change wastes time. Use low/medium for routine work, save high effort for complex or risky changes.
+- **Ignoring effort levels**: Running high-effort review on every trivial change wastes time. Use low/medium for routine work, save high effort for complex or risky changes (`--fix` applies findings to the working tree, `--comment` posts them as inline PR comments — say which one the situation wants).
+- **Running `/security-review` after merging**: it reviews the pending changes on the current branch — run it before merging. A clean pass is one lens, not a security audit; critical paths still need a human pass.
+- **Running `/verify` or `/run` on diffs with no runtime surface**: docs-only or test-only changes have no behavior to observe, and a library with no runnable surface gives `/run` nothing to drive.
 - **Not using `--comment` in team workflows**: If you review locally but do not post comments, your teammates do not benefit. Use `--comment` to make findings visible on the PR.
 
 ## Sources
