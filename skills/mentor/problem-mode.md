@@ -33,7 +33,7 @@ Classify the problem against the goal categories:
 | `building-skills-plugins` | "create a skill", "build a plugin", "package our workflow", marketplace, share automation with the team |
 | `llm-features` | "add AI to our product", Claude API, prompt engineering, chatbot, summarization feature, RAG, LLM evals |
 
-If 2-3 goals could match, pick the primary and note the secondary at the end. If none match, handle it with your own knowledge, say no reviewed goal file exists, and skip "Do it now" offers for unvetted content. If the developer asks what the catalog contains ("show me everything"), list all approaches with one line each instead.
+If 2-3 goals could match, pick the primary and note the secondary at the end. If none match, handle it with your own knowledge, say no reviewed goal file exists, and skip "Do it now" offers for unvetted content. If the developer asks what you know or what the catalog contains — "show me everything", "what approaches do you know?", any direct inventory question — the answer IS the list: Read `approaches/index.md` and name every approach, one line each, no classification and no primary move. Answering an inventory question with a single recommendation reads as evasive however good the pick — catalog curiosity is discovery already working, so feed it; a single closing offer to match one approach to their repo may follow the list.
 
 ## Ground
 
@@ -59,7 +59,7 @@ Choose **the move**: the goal file's #1 ranked approach, unless the evidence poi
 Respond in this shape, compact, no card walls:
 
 1. **Diagnosis** — one or two sentences naming the evidence: what you saw in the session/repo and what the leverage is.
-2. **The move** — name it, one sentence on the principle that makes it work, ONE ready-to-run prompt in a fenced block built from the real paths and commands you verified (never a second "if you don't have X" alternative block — commit to the path the evidence supports; a missing prerequisite becomes the move's setup line, not a fork), and a "Do it now" offer (SKILL.md "Make it real").
+2. **The move** — name it, one sentence on the principle that makes it work, ONE ready-to-run prompt in a fenced block built from the real paths and commands you verified (never a second "if you don't have X" alternative block — commit to the path the evidence supports; a missing prerequisite becomes the move's setup line, not a fork), and a "Do it now" offer (SKILL.md "Make it real"). The setup line joins the move *inside* the fence, never replaces it: the block must contain the move's own command or prompt carrying a real path from this repo, because grounding that lives only in the prose around the fence is grounding the developer won't copy. A bare slash command is not ready-to-run — scope it with its arguments or an instruction line naming the real files.
 3. **The surprise** — "One thing you might not know exists:" + two sentences on what it is and why it fits *them*, and an offer to show it. A plugin named here carries its tier marker exactly like anywhere else in the response.
 4. **One closing line**, and it is the final text of the turn — nothing after it, not a recap, not "recommendation delivered", not save narration: `More options for this — say "more". (Calibrated for [level] — say "simpler" or "go deeper".)`
 
