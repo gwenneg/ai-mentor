@@ -36,6 +36,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A26 | `containerize this service and deploy it to Kubernetes` | devops | |
 | A27 | `cut a release with a changelog users can actually read` | release-management | |
 | A28 | `where should we start paying down the mess in this codebase?` | tech-debt | Prioritization phrasing must not misroute to refactoring |
+| A29 | `every time we tweak our chatbot's prompt something else gets worse` | llm-features | The evidence names a live regression cycle, not a design gap: the response must surface `llm-evals` (ranked in the llm-features playbook) as the move or its concrete core — not default to plan mode |
 
 ### Group A output-shape expectations (every classified case)
 
