@@ -187,7 +187,8 @@ func approachNames(repo string) ([]string, error) {
 // not the judge's own memory.
 type groundTruth struct {
 	fixture      []string
-	plugins      []string
+	plugins      []string // directory plugins ∪ promoted (the fabrication whitelist)
+	promoted     []string // promoted plugin ids — first-class approaches, no tier label
 	techniques   []string
 	integrations []string
 }
@@ -211,6 +212,7 @@ func buildGroundTruth(repo, fixture string) groundTruth {
 			gt.integrations = append(gt.integrations, id)
 		case "plugin":
 			gt.plugins = append(gt.plugins, id)
+			gt.promoted = append(gt.promoted, id)
 		default:
 			// techniques — built-in commands live inside their covering
 			// technique files now, so the judge gets no separate command list.
@@ -643,6 +645,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
 	b.WriteString(strings.Join(r.ground.plugins, ", ") + "\n")
+	b.WriteString("Of the plugins above, these are PROMOTED first-class approaches (hands-on validated, ranked in the playbooks): " + strings.Join(r.ground.promoted, ", ") + ". They carry NO tier label — expecting a label on them is an error. Tier-label rules apply only to the remaining (directory) plugins.\n")
 	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
 	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
 

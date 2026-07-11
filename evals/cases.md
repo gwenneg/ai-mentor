@@ -26,9 +26,9 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A16 | `package our release workflow so the whole team can use it` | building-skills-plugins | |
 | A17 | `add an AI summary box to our dashboard` | llm-features | Must not route to greenfield or UI work |
 | A18 | `my long session keeps getting dumber` | (no dedicated goal) | Should surface session-context-management, not misclassify |
-| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (✅, from the goal routing file's Plugins line) as the move or its tool |
+| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (hands-on-validated tool record, ranked in the migration playbook) as the move or its tool — a desk-checked directory plugin (e.g. `aws-transform`) must not displace it |
 | A20 | `convert our SAPUI5 app from JavaScript to TypeScript` | migration | Stack-match rule: must surface `ui5-typescript-conversion` with the "not hands-on evaluated" label |
-| A21 | `my tests pass but I'm not convinced the feature really works` | testing | The move must be the `/verify` built-in directly (from the goal file's Built-ins line / registry), with the copy-ready command; a `verify` profile row is recorded |
+| A21 | `my tests pass but I'm not convinced the feature really works` | testing | The move must be `/verify` directly (taught inside `built-in-review-skills`, ranked in the testing playbook), with the copy-ready command; the profile row is `built-in-review-skills` |
 | A22 | `write API docs for our orders endpoints` | documentation | |
 | A23 | `build a discount-code feature from scratch` | greenfield | "From scratch" must not misroute to refactoring despite touching existing checkout code |
 | A24 | `check this codebase for injection vulnerabilities before launch` | security | Must not route to code-review; there is no diff, the subject is the codebase |
@@ -44,7 +44,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 - Exactly **one** surprising pick, labeled as such, drawn from capabilities the profile doesn't mark known — or zero when the relevance floor applies (incident pressure with a narrow question, or no ignorance-map entry related to the goal/stack); never two, and never filler
 - Ends with the single closing line (more options + calibration offer); the ranked list appears only after replying "more". The closing line must be the last user-visible text — trailing recaps or profile-save narration after it violate this
 - No safe/surprising *card wall*: response is prose + one fenced prompt, not 3-5 formatted cards
-- When a catalog plugin matches the goal or named stack, it appears with its tier label — anywhere in the response, move or surprise; a ⚠️ plugin never appears without its built-in alternative (this alternative rule binds ONLY to plugins the catalog marks ⚠️ — a ☑️ desk-checked plugin needs only its "not hands-on evaluated" label, no alternative required). This rule covers marketplace plugins only: approaches, techniques, and built-in commands carry no tier labels
+- When a marketplace-DIRECTORY plugin matches the goal or named stack, it appears with its tier label — anywhere in the response, move or surprise; a ⚠️ plugin never appears without its built-in alternative (this alternative rule binds ONLY to plugins the catalog marks ⚠️ — a ☑️ desk-checked plugin needs only its "not hands-on evaluated" label, no alternative required). PROMOTED plugins (those with an `approaches/tools/` record — the judge prompt lists them) are first-class approaches: hands-on by definition, no tier label expected or required. Techniques and built-in commands carry no tier labels either. A directory plugin supplements generic approaches; it must never displace a promoted or ranked approach that covers the same job
 - Zero permission prompts during the run
 
 ## Group B — Growth mode (bare invocation)
@@ -56,9 +56,9 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 | B01 | No profile file | First-meeting announcement (names the profile path once); teaches ONE capability from the ignorance map; creates the profile with correct schema |
 | B02 | One `shown` row from a past date | Opens by following up on the shown capability ("did it stick?") before teaching anything new |
 | B03 | A `declined` row (e.g. fan-out-workflows, "too token-heavy") | The declined capability is never offered; no reference to it |
-| B04 | Empty profile, but fixture repo has hooks configured in `.claude/settings.json` | hooks-as-workflow is silently recorded `adopted`, not taught; the lesson picks something else |
+| B04 | Empty profile, but fixture repo has hooks configured in `.claude/settings.json` | Project-level config is a repo fact, not personal knowledge: hooks-as-workflow must NOT be recorded `adopted` (no personal evidence). It is present-here-unconfirmed — prime lesson material ranked first in growth mode — so teaching it (using the repo's own hook as the demo) is the expected move; the row it earns is `shown`, never a silent `adopted` |
 | B05 | Profile with `Last new-capability check: 2026-w20` (older than the newest ledger rows) | Opens with what's-new since that week when a ledger row since carries real content; when every row since is a bootstrap/no-op entry (as in this repo's ledger), simply proceeding with another opener IS the correct fall-through — no acknowledgment of the ledger check is required. The only failure is fabricating a change |
-| B06 | Profile marks every approach and every registry record (built-ins, integrations) adopted/declined | Honest empty-map answer ("you're using everything I'd recommend") — plugins may only surface with concrete stack/goal relevance, never as filler; offers the catalog list, invents nothing |
+| B06 | Profile marks every approach (techniques and tool records alike) adopted/declined | Honest empty-map answer ("you're using everything I'd recommend") — directory plugins may only surface with concrete stack/goal relevance, never as filler; offers the catalog list, invents nothing |
 
 ## Group C — Never-repeat under problem mode
 
