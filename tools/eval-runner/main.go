@@ -25,6 +25,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -330,13 +331,11 @@ func (r *runner) runCase(c evalCase) result {
 	if err != nil {
 		return errResult(c, err)
 	}
-	workdir := r.fixture
-	if c.ID == "B04" {
-		if workdir, err = r.hookedFixture(); err != nil {
-			return errResult(c, err)
-		}
-		defer os.RemoveAll(workdir)
+	workdir, err := r.caseFixture(c.ID == "B04")
+	if err != nil {
+		return errResult(c, err)
 	}
+	defer os.RemoveAll(workdir)
 	if err := r.setupProfile(c, home); err != nil {
 		return errResult(c, err)
 	}
@@ -401,10 +400,11 @@ func localCredentials() ([]byte, error) {
 	return nil, fmt.Errorf("no ANTHROPIC_API_KEY, no credentials file, no macOS keychain entry: %w", err)
 }
 
-// hookedFixture copies the fixture project to a temp dir and adds a
-// .claude/settings.json with hooks, so B04 can observe hooks-as-workflow as
-// a setup signal without touching the shared fixture.
-func (r *runner) hookedFixture() (string, error) {
+// caseFixture copies the fixture project to a temp dir, so concurrent cases
+// can never observe each other's edits. B04's copy additionally gets a
+// .claude/settings.json with hooks, so hooks-as-workflow is observable as a
+// setup signal without touching the shared fixture.
+func (r *runner) caseFixture(withHooks bool) (string, error) {
 	dir, err := os.MkdirTemp("", "eval-fixture-")
 	if err != nil {
 		return "", err
@@ -415,6 +415,9 @@ func (r *runner) hookedFixture() (string, error) {
 	}
 	if err := os.CopyFS(dir, os.DirFS(r.fixture)); err != nil {
 		return fail(err)
+	}
+	if !withHooks {
+		return dir, nil
 	}
 	settings := filepath.Join(dir, ".claude", "settings.json")
 	if err := os.MkdirAll(filepath.Dir(settings), 0o755); err != nil {
@@ -810,6 +813,7 @@ func main() {
 	fixture := flag.String("fixture", "", "fixture project dir (default <repo>/evals/fixture)")
 	out := flag.String("out", "eval-report.md", "markdown report path")
 	gate := flag.Bool("gate", false, "exit 1 when any case fails or errors")
+	jobs := flag.Int("j", 3, "cases to run concurrently (keep modest: every case is a subject run plus a judge run against the same account)")
 	judge := flag.String("model-judge", "claude-sonnet-5", "judge model for scoring")
 	modelSubject := flag.String("model-subject", "claude-sonnet-5", "model the mentor under test runs on (pinned so a gate red is a regression, not CLI-default drift)")
 	timeout := flag.Int("timeout", 300, "per-case timeout in seconds")
@@ -863,29 +867,25 @@ func main() {
 	if err := preflight(r); err != nil {
 		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))
 	}
-	var results []result
-	for _, c := range selected {
-		fmt.Printf("running %s ...", c.ID)
-		res := r.runCase(c)
-		fmt.Printf(" %s\n", res.verdict)
-		if res.verdict != vPass {
-			fmt.Printf("  reason: %s\n", res.reason)
-		}
-		results = append(results, res)
-	}
+	results := r.runAll(selected, *jobs)
 	// One bounded retry for ERROR verdicts: transient API failures
 	// (connection drops, judge hiccups) must not fail a gating run.
+	var errored []int
 	for i, res := range results {
-		if res.verdict != vError {
-			continue
+		if res.verdict == vError {
+			errored = append(errored, i)
 		}
-		fmt.Printf("retrying %s after error ...", res.c.ID)
-		res = r.runCase(res.c)
-		fmt.Printf(" %s\n", res.verdict)
-		if res.verdict != vPass {
-			fmt.Printf("  reason: %s\n", res.reason)
+	}
+	if len(errored) > 0 {
+		retry := make([]evalCase, len(errored))
+		for k, i := range errored {
+			retry[k] = results[i].c
 		}
-		results[i] = res
+		fmt.Printf("retrying %d errored case(s) ...\n", len(retry))
+		rerun := r.runAll(retry, *jobs)
+		for k, i := range errored {
+			results[i] = rerun[k]
+		}
 	}
 
 	if err := os.WriteFile(*out, []byte(renderReport(results)), 0o644); err != nil {
@@ -895,6 +895,38 @@ func main() {
 	if *gate && slices.ContainsFunc(results, func(r result) bool { return r.verdict != vPass }) {
 		os.Exit(1)
 	}
+}
+
+// runAll runs cases through a bounded worker pool, printing each verdict as
+// it lands; results keep table order regardless of completion order. Cases
+// never share state — each gets its own HOME and fixture copy — so the only
+// concurrency limit is the account's rate limit.
+func (r *runner) runAll(cases []evalCase, jobs int) []result {
+	if jobs < 1 {
+		jobs = 1
+	}
+	results := make([]result, len(cases))
+	sem := make(chan struct{}, jobs)
+	var wg sync.WaitGroup
+	var mu sync.Mutex // keeps a verdict line and its reason line together
+	for i, c := range cases {
+		wg.Add(1)
+		go func(i int, c evalCase) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			res := r.runCase(c)
+			mu.Lock()
+			fmt.Printf("%s: %s\n", c.ID, res.verdict)
+			if res.verdict != vPass {
+				fmt.Printf("  reason: %s\n", res.reason)
+			}
+			mu.Unlock()
+			results[i] = res
+		}(i, c)
+	}
+	wg.Wait()
+	return results
 }
 
 // preflight runs one trivial isolated-HOME prompt so an expired login

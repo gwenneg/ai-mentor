@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -254,8 +256,9 @@ func TestRunCaseStubbed(t *testing.T) {
 	if argAfter(mentor, "--plugin-dir") != r.repo {
 		t.Errorf("mentor call missing --plugin-dir %s: %v", r.repo, mentor)
 	}
-	if mentor[0] != "dir="+r.fixture {
-		t.Errorf("mentor must run in the fixture dir, got %s", mentor[0])
+	dir := callField(mentor, "dir")
+	if dir == r.fixture || !strings.Contains(dir, "eval-fixture-") {
+		t.Errorf("mentor must run in a per-case fixture copy, got %s", dir)
 	}
 	home := envValue(mentor, "HOME")
 	if home == "" || home == os.Getenv("HOME") {
@@ -416,27 +419,86 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 	}
 }
 
-func TestHookedFixtureForB04(t *testing.T) {
+func TestCaseFixtureCopies(t *testing.T) {
 	r := newTestRunner(t)
 	if err := os.WriteFile(filepath.Join(r.fixture, "package.json"), []byte("{}\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	dir, err := r.hookedFixture()
+	plain, err := r.caseFixture(false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dir)
-	if dir == r.fixture {
-		t.Fatal("B04 must run in a copy, not the shared fixture")
+	defer os.RemoveAll(plain)
+	if plain == r.fixture {
+		t.Fatal("every case must run in a copy, not the shared fixture")
 	}
-	if readFile(filepath.Join(dir, "package.json")) == "" {
+	if readFile(filepath.Join(plain, "package.json")) == "" {
 		t.Error("fixture contents not copied")
 	}
-	if !strings.Contains(readFile(filepath.Join(dir, ".claude", "settings.json")), `"hooks"`) {
-		t.Error("hooks settings not written into the copy")
+	if _, err := os.Stat(filepath.Join(plain, ".claude")); err == nil {
+		t.Error("a plain copy must not carry hooks")
+	}
+
+	hooked, err := r.caseFixture(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(hooked)
+	if !strings.Contains(readFile(filepath.Join(hooked, ".claude", "settings.json")), `"hooks"`) {
+		t.Error("hooks settings not written into the B04 copy")
 	}
 	if _, err := os.Stat(filepath.Join(r.fixture, ".claude")); err == nil {
 		t.Error("the shared fixture must stay untouched")
+	}
+}
+
+// runAll must keep results in table order however the goroutines finish, and
+// the pool must actually bound concurrency.
+func TestRunAllOrderAndBound(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "test-key")
+	r := newTestRunner(t)
+
+	var mu sync.Mutex
+	inflight, peak := 0, 0
+	orig := runClaude
+	t.Cleanup(func() { runClaude = orig })
+	runClaude = func(ctx context.Context, dir string, env []string, args ...string) (string, error) {
+		mu.Lock()
+		inflight++
+		if inflight > peak {
+			peak = inflight
+		}
+		mu.Unlock()
+		time.Sleep(10 * time.Millisecond)
+		mu.Lock()
+		inflight--
+		mu.Unlock()
+		if slices.Contains(args, "--plugin-dir") {
+			return `{"result": "a lesson"}`, nil
+		}
+		return `{"pass": true, "checks": []}`, nil
+	}
+
+	cases := make([]evalCase, 8)
+	for i := range cases {
+		cases[i] = evalCase{Group: "B", ID: fmt.Sprintf("B%02d", i+1), Expected: "x"}
+	}
+	results := r.runAll(cases, 2)
+	for i, res := range results {
+		if res.c.ID != cases[i].ID {
+			t.Fatalf("result %d is %s, want %s — order not preserved", i, res.c.ID, cases[i].ID)
+		}
+		if res.verdict != vPass {
+			t.Errorf("%s: want PASS, got %s (%s)", res.c.ID, res.verdict, res.reason)
+		}
+	}
+	// Each case runs a mentor call then a judge call, so with -j 2 at most
+	// 2 claude invocations are ever in flight.
+	if peak > 2 {
+		t.Errorf("concurrency bound violated: %d claude calls in flight with jobs=2", peak)
+	}
+	if peak < 2 {
+		t.Errorf("cases did not actually run concurrently (peak %d)", peak)
 	}
 }
 
