@@ -81,7 +81,7 @@ jobs:
           fi
           new_digests=$(comm -23 \
             <(printf '%s\n' "$index_slugs") \
-            <(grep -oE '20[0-9]{2}-w[0-9]+' skills/mentor/references/processed-changelogs.md | sort -u))
+            <(grep -oE '20[0-9]{2}-w[0-9]+' skills/mentor/processed-changelogs.md | sort -u))
           if [ "$drift" -eq 1 ] || [ -n "$new_digests" ]; then
             echo "Work found — catalog drift: $([ "$drift" -eq 1 ] && echo yes || echo no); new digests: $(tr '\n' ' ' <<< "$new_digests")"
             echo "work=true" >> "$GITHUB_OUTPUT"

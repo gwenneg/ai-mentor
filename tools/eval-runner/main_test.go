@@ -173,7 +173,6 @@ func newTestRunner(t *testing.T) *runner {
 		ground: groundTruth{
 			fixture:      []string{"package.json", "src/orders.js"},
 			plugins:      []string{"security-guidance", "code-modernization"},
-			commands:     []string{"/verify", "/loop"},
 			techniques:   []string{"plan-mode"},
 			integrations: []string{"github-actions"},
 		},
@@ -409,7 +408,7 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 		"security-guidance", // authoritative plugin list inlined (fabrication — #6)
 		"COMPLETE list",     // plugin list framed as exhaustive
 		"is a fabrication",  // fabrication instruction present
-		"/verify",           // known-real commands listed
+		"/verify",           // commands named in the not-exhaustive caveat
 	} {
 		if !strings.Contains(jp, want) {
 			t.Errorf("judge prompt missing %q", want)

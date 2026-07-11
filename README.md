@@ -32,7 +32,7 @@ Prefer not to add a marketplace? Two supported alternatives. Both load the plugi
 **From a release zip** — nothing to clone; pinned to the release you pick (find the latest tag on the [releases page](https://github.com/gwenneg/ai-mentor/releases)):
 
 ```
-claude --plugin-url https://github.com/gwenneg/ai-mentor/archive/refs/tags/v0.6.0.zip
+claude --plugin-url https://github.com/gwenneg/ai-mentor/archive/refs/tags/v0.9.1.zip
 ```
 
 **From a clone** — update whenever you like with `git pull`:
@@ -110,11 +110,11 @@ Ask anything mentor-shaped in a normal session — "what's the best way to use A
 
 ## AI workflow approaches
 
-Each approach file covers: what it is, why it works, when to use it (and when not to), beginner through advanced usage, common pitfalls, and verified official sources — plus a real-world example where exact syntax earns it.
+The catalog holds approaches in two forms. **Technique deep-dives** are methodologies, each covering: what it is, why it works, when to use it (and when not to), beginner through advanced usage, common pitfalls, and verified official sources. **Tool records** are verified fact sheets about external tools — hands-on-validated marketplace plugins (like `pr-review-toolkit` or `context7`), the GitHub Action, the Agent SDK — carrying exactly what our evaluation confirmed, nothing more. Both kinds compete in the same per-problem ranking and are tracked in the same profile under the same never-repeat rule.
 
-Approaches include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Model & Effort Selection, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Official Plugins, Custom Plugins, Custom Agents, Project Memory & Context Docs, Session & Context Management, Background Agents, Scheduled & Recurring Agents, Cloud Sessions & Remote Work, Permissions & Safe Autonomy, Visual Artifacts, and Channels.
+Techniques include: Plan Mode, Autonomous Loops, Subagent Delegation, Worktree Isolation, Fan-Out Workflows, Deep Research, Browser Integration, Headless Mode, MCP Context, Checkpoints & Rewind, Model & Effort Selection, LSP Self-Correction, Built-in Review Skills, Hooks as Workflow, Custom Skills, Official Plugins, Custom Plugins, Custom Agents, Project Memory & Context Docs, Session & Context Management, Background Agents, Scheduled & Recurring Agents, Cloud Sessions & Remote Work, Permissions & Safe Autonomy, Visual Artifacts, and Channels. Built-in commands (`/verify`, `/code-review`, `/goal`, ...) are taught inside the techniques that wield them.
 
-Approaches are one slice of the catalog: built-in commands (`/verify`, `/code-review`, ...) and integrations (the GitHub Action, the Agent SDK, key official docs) are first-class teachable units too, tracked in the same profile under the same never-repeat rule — and official marketplace plugins are recommended when one matches your stack or goal.
+Beyond the validated set, the full official plugin marketplace (~250 plugins) is a lookup directory: when your problem names a stack or vendor, a purpose-built plugin is surfaced with an honest evaluation label — hands-on verified, desk-checked, or caution.
 
 ## License
 

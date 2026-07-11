@@ -9,7 +9,7 @@ import (
 
 func approachMD() string {
 	var b strings.Builder
-	b.WriteString("# Approach\n*Last verified: 2026-07-03*\n\n")
+	b.WriteString("# Solution\n*Last verified: 2026-07-03*\n\n")
 	for _, s := range approachSections[:len(approachSections)-2] {
 		b.WriteString(s + "\n\nfiller\n\n")
 	}
@@ -21,63 +21,48 @@ func approachMD() string {
 	return b.String()
 }
 
+// recordMD has no goals/best_when — every record derives both from its
+// ranked rows (the generator enforces that; the audit only needs kind).
+func recordMD(kind string) string {
+	return "---\nkind: " + kind + "\nlast_verified: 2026-07-03\nsession_signal: \"seen\"\n---\n"
+}
+
 func validTree() map[string]string {
 	return map[string]string{
-		"skills/mentor/routing/test-goal.md": `# test-goal
+		"skills/mentor/playbooks/test-goal.md": `# test-goal
 *Last verified: 2026-07-03*
 
 **Hidden gem:** Alpha — because.
 
-**Plugins:** ` + "`alpha-tool`" + ` ☑️ something useful.
-
-**Integrations:** ` + "`some-integration`" + ` — wires the thing in.
-
-**Built-ins:** ` + "`/testcmd`" + ` — does the thing.
-
-| # | Approach | Best when | Why it fits |
+| # | Solution | Best when | Why it fits |
 |---|----------|-----------|-------------|
-| 1 | [Alpha](../approaches/alpha.md) | x | y |
-| 2 | [Beta](../approaches/beta.md) | x | y |
-| 3 | [Gamma](../approaches/gamma.md) | x | y |
+| 1 | [Alpha](../approaches/techniques/alpha.md) | x | y |
+| 2 | [Beta](../approaches/techniques/beta.md) | x | y |
+| 3 | [Gamma](../approaches/techniques/gamma.md) | x | y |
+| 4 | [shiny-plugin](../approaches/tools/shiny-plugin.md) | x | y |
+| 5 | [some-integration](../approaches/tools/some-integration.md) | x | y |
 `,
-		"skills/mentor/approaches/alpha.md": approachMD(),
-		"skills/mentor/approaches/beta.md":  approachMD(),
-		"skills/mentor/approaches/gamma.md": approachMD(),
-		"skills/mentor/references/processed-changelogs.md": `# Ledger
+		"skills/mentor/approaches/techniques/alpha.md":       approachMD(),
+		"skills/mentor/approaches/techniques/beta.md":        approachMD(),
+		"skills/mentor/approaches/techniques/gamma.md":       approachMD(),
+		"skills/mentor/approaches/tools/some-integration.md": recordMD("integration"),
+		"skills/mentor/approaches/tools/shiny-plugin.md":     recordMD("plugin"),
+		"skills/mentor/processed-changelogs.md": `# Ledger
 *Updated: 2026-07-03*
 
 | Week | Processed | Outcome |
 |------|-----------|---------|
 | [2026-w26](https://example.com) | 2026-07-01 | processed |
 `,
-		"skills/mentor/registry/integrations.md": `# Integrations
-*Last verified: 2026-07-03*
-
-## some-integration
-
-id: some-integration
-kind: integration
-goals: test-goal
-`,
-		"skills/mentor/registry/builtin-commands.md": `# Registry
-*Last verified: 2026-07-03*
-
-## testcmd
-
-id: testcmd
-kind: builtin-command
-goals: test-goal
-best_when: testing the audit
-`,
-		"skills/mentor/references/official-plugins.md": `# Catalog
+		"skills/mentor/marketplace.md": `# Catalog
 *Last synced: 2026-07-03*
 
 | ` + "`alpha-tool`" + ` | does a thing | ` + "`test-goal`" + ` | ☑️ desk-checked |
 `,
-		"skills/mentor/references/profile-schema.md": "# Profile schema\n",
+		"skills/mentor/profile-schema.md": "# Profile schema\n",
 		"skills/mentor/problem-mode.md": `# Problem mode
 
-Full schema: ` + "`references/profile-schema.md`" + `
+Full schema: ` + "`profile-schema.md`" + `
 
 | ` + "`test-goal`" + ` | keywords |
 
@@ -114,7 +99,7 @@ func TestValidTreePasses(t *testing.T) {
 // Every corruption must produce at least one issue mentioning the expected
 // text — i.e. every check must be able to fail the gate, not just print.
 func TestCorruptionsAreCaught(t *testing.T) {
-	routing := "skills/mentor/routing/test-goal.md"
+	routing := "skills/mentor/playbooks/test-goal.md"
 	cases := []struct {
 		name   string
 		mutate func(f map[string]string)
@@ -126,93 +111,86 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"fewer than 3 rows", func(f map[string]string) {
 			i := strings.Index(f[routing], "| 3 |")
 			f[routing] = f[routing][:i]
-			delete(f, "skills/mentor/approaches/gamma.md")
+			delete(f, "skills/mentor/approaches/techniques/gamma.md")
 		}, "only 2 rows"},
-		{"missing plugins line", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "**Plugins:** `alpha-tool` ☑️ something useful.\n\n", "", 1)
-		}, "missing Plugins line"},
-		{"phantom plugin token", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`ghost-tool` ☑️ something useful", 1)
-		}, "Plugins line names 'ghost-tool', not found"},
-		{"plugins line names a goal slug (not a plugin)", func(f map[string]string) {
-			// `test-goal` is backticked in the catalog's goal column but is not a
-			// plugin — the old all-tokens parser let this pass.
-			f[routing] = strings.Replace(f[routing], "`alpha-tool` ☑️ something useful", "`test-goal` ☑️ something useful", 1)
-		}, "Plugins line names 'test-goal', not found"},
-		{"missing plugin catalog", func(f map[string]string) {
-			delete(f, "skills/mentor/references/official-plugins.md")
-		}, "missing official-plugins catalog"},
+		{"missing marketplace directory", func(f map[string]string) {
+			delete(f, "skills/mentor/marketplace.md")
+		}, "missing marketplace directory"},
 		{"missing hidden gem", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "**Hidden gem:** Alpha — because.\n", "", 1)
 		}, "missing Hidden gem line"},
-		{"gem names unranked approach", func(f map[string]string) {
+		{"gem names unranked solution", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "**Hidden gem:** Alpha", "**Hidden gem:** Omega", 1)
 		}, "does not match any ranked row"},
 		{"broken reference", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "approaches/beta.md", "approaches/missing.md", 1)
-		}, "broken reference approaches/missing.md"},
-		{"orphan approach", func(f map[string]string) {
-			f["skills/mentor/approaches/orphan.md"] = approachMD()
-		}, "orphan: not referenced"},
+			f[routing] = strings.Replace(f[routing], "approaches/techniques/beta.md", "approaches/techniques/missing.md", 1)
+		}, "broken reference approaches/techniques/missing.md"},
+		{"orphan technique", func(f map[string]string) {
+			f["skills/mentor/approaches/techniques/orphan.md"] = approachMD()
+		}, "orphan: not ranked by any playbooks file"},
 		{"bad routing date line", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "verified recently", 1)
 		}, "line 2 must be"},
+		{"bad record date line", func(f map[string]string) {
+			f["skills/mentor/approaches/tools/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/tools/some-integration.md"], "last_verified: 2026-07-03", "last_verified: recently", 1)
+		}, "missing 'last_verified"},
 		{"missing approach section", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Common Pitfalls", "## Pitfalls", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Common Pitfalls", "## Pitfalls", 1)
 		}, "missing section '## Common Pitfalls'"},
 		{"sections out of order", func(f map[string]string) {
-			a := f["skills/mentor/approaches/alpha.md"]
+			a := f["skills/mentor/approaches/techniques/alpha.md"]
 			a = strings.Replace(a, "## Why It Works\n\nfiller\n\n", "", 1)
-			f["skills/mentor/approaches/alpha.md"] = a + "## Why It Works\n\nfiller\n"
+			f["skills/mentor/approaches/techniques/alpha.md"] = a + "## Why It Works\n\nfiller\n"
 		}, "out of order"},
 		{"approach too short", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.ReplaceAll(
-				f["skills/mentor/approaches/alpha.md"], "filler\n", "")
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.ReplaceAll(
+				f["skills/mentor/approaches/techniques/alpha.md"], "filler\n", "")
 		}, "(expected at least 40)"},
 		{"optional example section out of order", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Common Pitfalls",
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Common Pitfalls",
 				"## Real-World Example\n\nfiller\n\n## Common Pitfalls", 1)
 		}, "section '## Real-World Example' out of order"},
 		{"no sources", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "- [Doc](https://example.com/doc)\n", "", 1)
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "- [Doc](https://example.com/doc)\n", "", 1)
 		}, "0 Sources entries"},
+		{"approach missing signals section", func(f map[string]string) {
+			f["skills/mentor/approaches/techniques/alpha.md"] = strings.Replace(
+				f["skills/mentor/approaches/techniques/alpha.md"], "## Signals", "## Adoption evidence", 1)
+		}, "missing section '## Signals'"},
 		{"bad week slug", func(f map[string]string) {
-			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
-				f["skills/mentor/references/processed-changelogs.md"], "[2026-w26]", "[week-26]", 1)
+			f["skills/mentor/processed-changelogs.md"] = strings.Replace(
+				f["skills/mentor/processed-changelogs.md"], "[2026-w26]", "[week-26]", 1)
 		}, "not a week slug"},
 		{"duplicate ledger row", func(f map[string]string) {
-			f["skills/mentor/references/processed-changelogs.md"] +=
+			f["skills/mentor/processed-changelogs.md"] +=
 				"| [2026-w26](https://example.com) | 2026-07-02 | again |\n"
 		}, "duplicate ledger row"},
 		{"invalid ledger date", func(f map[string]string) {
-			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
-				f["skills/mentor/references/processed-changelogs.md"], "2026-07-01", "yesterday", 1)
+			f["skills/mentor/processed-changelogs.md"] = strings.Replace(
+				f["skills/mentor/processed-changelogs.md"], "2026-07-01", "yesterday", 1)
 		}, "invalid processed date"},
 		{"impossible ledger date", func(f map[string]string) {
-			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
-				f["skills/mentor/references/processed-changelogs.md"], "2026-07-01", "2026-99-99", 1)
+			f["skills/mentor/processed-changelogs.md"] = strings.Replace(
+				f["skills/mentor/processed-changelogs.md"], "2026-07-01", "2026-99-99", 1)
 		}, "invalid processed date"},
 		{"malformed short ledger row", func(f map[string]string) {
-			f["skills/mentor/references/processed-changelogs.md"] +=
+			f["skills/mentor/processed-changelogs.md"] +=
 				"| [2026-w27](https://example.com) | 2026-07-02 |\n"
 		}, "is malformed"},
 		{"impossible routing date", func(f map[string]string) {
 			f[routing] = strings.Replace(f[routing], "*Last verified: 2026-07-03*", "*Last verified: 2026-99-99*", 1)
 		}, "line 2 must be"},
 		{"broken doc reference in a mode file", func(f map[string]string) {
-			delete(f, "skills/mentor/references/profile-schema.md")
-		}, "broken reference references/profile-schema.md"},
+			delete(f, "skills/mentor/profile-schema.md")
+		}, "broken reference profile-schema.md"},
 		{"empty ledger outcome", func(f map[string]string) {
-			f["skills/mentor/references/processed-changelogs.md"] = strings.Replace(
-				f["skills/mentor/references/processed-changelogs.md"], "| processed |", "|  |", 1)
+			f["skills/mentor/processed-changelogs.md"] = strings.Replace(
+				f["skills/mentor/processed-changelogs.md"], "| processed |", "|  |", 1)
 		}, "empty outcome"},
-		{"approach missing signals section", func(f map[string]string) {
-			f["skills/mentor/approaches/alpha.md"] = strings.Replace(
-				f["skills/mentor/approaches/alpha.md"], "## Signals", "## Adoption evidence", 1)
-		}, "missing section '## Signals'"},
 		{"goal missing from classification table", func(f map[string]string) {
 			f["skills/mentor/problem-mode.md"] = strings.Replace(
 				f["skills/mentor/problem-mode.md"], "`test-goal`", "`other-goal`", 1)
@@ -225,41 +203,32 @@ func TestCorruptionsAreCaught(t *testing.T) {
 			f["skills/mentor/problem-mode.md"] = strings.Replace(
 				f["skills/mentor/problem-mode.md"], "1 goal categories", "24 goal categories", 1)
 		}, "prose says '24 goal categories' but there are 1"},
-		{"missing routing directory", func(f map[string]string) {
+		{"missing playbooks directory", func(f map[string]string) {
 			delete(f, routing)
-		}, "missing routing directory"},
-		{"phantom builtin token", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "`/testcmd`", "`/ghostcmd`", 1)
-		}, "Built-ins line names '/ghostcmd', not found"},
-		{"phantom integration token", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "**Integrations:** `some-integration`", "**Integrations:** `ghost-integration`", 1)
-		}, "Integrations line names 'ghost-integration', not found"},
-		{"orphan integration id", func(f map[string]string) {
-			f["skills/mentor/registry/integrations.md"] += "\n## unrouted\n\nid: unrouted\nkind: integration\ngoals: test-goal\n"
-		}, "registry id 'unrouted' not referenced by any Integrations line"},
-		{"orphan registry id", func(f map[string]string) {
-			f["skills/mentor/registry/builtin-commands.md"] += "\n## other\n\nid: othercmd\nkind: builtin-command\ngoals: test-goal\n"
-		}, "registry id 'othercmd' not referenced"},
-		{"duplicate registry id", func(f map[string]string) {
-			f["skills/mentor/registry/builtin-commands.md"] += "\nid: testcmd\n"
-		}, "duplicate registry id 'testcmd'"},
-		{"registry goals name unknown goal", func(f map[string]string) {
-			f["skills/mentor/registry/builtin-commands.md"] = strings.Replace(
-				f["skills/mentor/registry/builtin-commands.md"], "goals: test-goal", "goals: no-such-goal", 1)
-		}, "registry goals name 'no-such-goal'"},
-		{"integration id collides with builtin", func(f map[string]string) {
-			f["skills/mentor/registry/integrations.md"] = strings.Replace(
-				f["skills/mentor/registry/integrations.md"], "id: some-integration", "id: testcmd", 1)
-		}, "duplicate registry id 'testcmd'"},
-		{"missing integrations registry", func(f map[string]string) {
-			delete(f, "skills/mentor/registry/integrations.md")
-		}, "missing integrations registry"},
-		{"missing registry", func(f map[string]string) {
-			delete(f, "skills/mentor/registry/builtin-commands.md")
-			f[routing] = strings.Replace(f[routing], "\n**Built-ins:** `/testcmd` — does the thing.\n", "", 1)
-		}, "missing builtin-commands registry"},
+		}, "missing playbooks directory"},
+		{"built-ins line reintroduced", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "| # |",
+				"**Built-ins:** `/testcmd` — does the thing.\n\n| # |", 1)
+		}, "capability line found"},
+		{"plugins line reintroduced", func(f map[string]string) {
+			f[routing] = strings.Replace(f[routing], "| # |",
+				"**Plugins:** `alpha-tool` ☑️ something useful.\n\n| # |", 1)
+		}, "capability line found"},
+		{"orphan integration record", func(f map[string]string) {
+			f["skills/mentor/approaches/tools/unrouted.md"] = recordMD("integration")
+		}, "orphan: not ranked by any playbooks file"},
+		{"orphan plugin record", func(f map[string]string) {
+			f["skills/mentor/approaches/tools/lonely-plugin.md"] = recordMD("plugin")
+		}, "orphan: not ranked by any playbooks file"},
+		{"promoted plugin still in the directory", func(f map[string]string) {
+			f["skills/mentor/marketplace.md"] += "| `shiny-plugin` | dup row | `test-goal` | ☑️ desk-checked |\n"
+		}, "promoted plugin still has a marketplace.md row"},
+		{"unknown record kind", func(f map[string]string) {
+			f["skills/mentor/approaches/tools/some-integration.md"] = strings.Replace(
+				f["skills/mentor/approaches/tools/some-integration.md"], "kind: integration", "kind: gadget", 1)
+		}, "unknown kind 'gadget'"},
 		{"missing ledger", func(f map[string]string) {
-			delete(f, "skills/mentor/references/processed-changelogs.md")
+			delete(f, "skills/mentor/processed-changelogs.md")
 		}, "missing processed-changelog ledger"},
 	}
 
@@ -294,10 +263,10 @@ func TestPluginNamesIgnoresGoalSlugs(t *testing.T) {
 	}
 }
 
-func TestEmptyApproachDirIsFatal(t *testing.T) {
+func TestEmptySolutionsDirIsFatal(t *testing.T) {
 	repo := t.TempDir()
 	a := &auditor{root: repo, skill: filepath.Join(repo, skillDir)}
 	if err := a.run(); err == nil {
-		t.Error("empty approach directory should be fatal")
+		t.Error("empty solutions directory should be fatal")
 	}
 }

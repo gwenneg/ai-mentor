@@ -165,30 +165,18 @@ func statementsByID(as []evalCase) map[string]string {
 }
 
 // approachNames enumerates every teachable unit for the B06 all-adopted
-// profile: approach basenames plus, when the capability registry exists,
-// its record ids — B06's "honest empty answer" only holds when the WHOLE
-// ignorance map is saturated.
+// profile: one approaches/<id>.md file per capability (index.md excluded) —
+// B06's "honest empty answer" only holds when the WHOLE ignorance map is
+// saturated.
 func approachNames(repo string) ([]string, error) {
-	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*.md"))
+	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*", "*.md"))
 	if err != nil || len(files) == 0 {
-		return nil, fmt.Errorf("no approach files under %s/skills/mentor/approaches", repo)
+		return nil, fmt.Errorf("no approach files under %s/skills/mentor/solutions", repo)
 	}
-	names := make([]string, len(files))
-	for i, f := range files {
-		names[i] = strings.TrimSuffix(filepath.Base(f), ".md")
-	}
-	regs, _ := filepath.Glob(filepath.Join(repo, "skills", "mentor", "registry", "*.md"))
-	for _, rf := range regs {
-		reg, err := os.ReadFile(rf)
-		if err != nil {
-			continue
-		}
-		for _, l := range strings.Split(string(reg), "\n") {
-			if id, ok := strings.CutPrefix(l, "id: "); ok {
-				if id = strings.TrimSpace(id); id != "" && !slices.Contains(names, id) {
-					names = append(names, id)
-				}
-			}
+	var names []string
+	for _, f := range files {
+		if n := strings.TrimSuffix(filepath.Base(f), ".md"); n != "index" {
+			names = append(names, n)
 		}
 	}
 	return names, nil
@@ -199,8 +187,8 @@ func approachNames(repo string) ([]string, error) {
 // not the judge's own memory.
 type groundTruth struct {
 	fixture      []string
-	plugins      []string
-	commands     []string
+	plugins      []string // directory plugins ∪ promoted (the fabrication whitelist)
+	promoted     []string // promoted plugin ids — first-class approaches, no tier label
 	techniques   []string
 	integrations []string
 }
@@ -210,16 +198,27 @@ type groundTruth struct {
 func buildGroundTruth(repo, fixture string) groundTruth {
 	skill := filepath.Join(repo, "skills", "mentor")
 	gt := groundTruth{fixture: fixtureFiles(fixture)}
-	if b, err := os.ReadFile(filepath.Join(skill, "references", "official-plugins.md")); err == nil {
+	if b, err := os.ReadFile(filepath.Join(skill, "marketplace.md")); err == nil {
 		gt.plugins = pluginNames(string(b))
 	}
-	if files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*.md")); files != nil {
-		for _, f := range files {
-			gt.techniques = append(gt.techniques, strings.TrimSuffix(filepath.Base(f), ".md"))
+	files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*", "*.md"))
+	for _, f := range files {
+		id := strings.TrimSuffix(filepath.Base(f), ".md")
+		if id == "index" {
+			continue
+		}
+		switch approachKind(f) {
+		case "integration", "doc":
+			gt.integrations = append(gt.integrations, id)
+		case "plugin":
+			gt.plugins = append(gt.plugins, id)
+			gt.promoted = append(gt.promoted, id)
+		default:
+			// techniques — built-in commands live inside their covering
+			// technique files now, so the judge gets no separate command list.
+			gt.techniques = append(gt.techniques, id)
 		}
 	}
-	gt.commands = registryIDs(filepath.Join(skill, "registry", "builtin-commands.md"), "/")
-	gt.integrations = registryIDs(filepath.Join(skill, "registry", "integrations.md"), "")
 	return gt
 }
 
@@ -239,22 +238,19 @@ func fixtureFiles(dir string) []string {
 	return out
 }
 
-// registryIDs returns every `id:` value in a registry file, each with prefix
-// (e.g. "/" to render built-in commands as slash commands).
-func registryIDs(path, prefix string) []string {
-	var ids []string
+// approachKind returns the value of an approach file's `kind:` line, or ""
+// for a technique deep-dive (which has no kind: line).
+func approachKind(path string) string {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return ids
+		return ""
 	}
 	for _, l := range strings.Split(string(b), "\n") {
-		if id, ok := strings.CutPrefix(l, "id: "); ok {
-			if id = strings.TrimSpace(id); id != "" {
-				ids = append(ids, prefix+id)
-			}
+		if k, ok := strings.CutPrefix(l, "kind: "); ok {
+			return strings.TrimSpace(k)
 		}
 	}
-	return ids
+	return ""
 }
 
 // pluginNames extracts the plugin ids the catalog declares: the first
@@ -649,8 +645,9 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
 	b.WriteString(strings.Join(r.ground.plugins, ", ") + "\n")
-	b.WriteString("Known-real built-in commands: " + strings.Join(r.ground.commands, ", ") + ". Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
-	b.WriteString("These command/technique/integration lists are NOT exhaustive of Claude Code (e.g. /plan, /model, /effort, --worktree, Shift+Tab are real but unlisted) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
+	b.WriteString("Of the plugins above, these are PROMOTED first-class approaches (hands-on validated, ranked in the playbooks): " + strings.Join(r.ground.promoted, ", ") + ". They carry NO tier label — expecting a label on them is an error. Tier-label rules apply only to the remaining (directory) plugins.\n")
+	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
+	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
 
 	for i, resp := range responses {
 		label := "Response"
