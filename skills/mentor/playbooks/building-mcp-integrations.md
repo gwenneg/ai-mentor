@@ -8,7 +8,7 @@
 | # | Approach | Best when | Why it fits |
 |---|----------|-----------|-------------|
 | 1 | [Plan Mode](../approaches/techniques/plan-mode.md) | Not sure what the server should expose | Models select tools by description — a well-designed five-tool surface outperforms a twenty-tool REST dump |
-| 2 | [Official Plugins](../approaches/techniques/official-plugins.md) | Ready to implement | MCP's protocol surface is undifferentiated work; a guided workflow encodes current conventions so effort goes into tool semantics |
-| 3 | [MCP Context](../approaches/techniques/mcp-context.md) | Haven't used MCP as a consumer yet | Interface intuition comes from the consumer side — a week consuming MCP beats a month producing it blind |
-| 4 | [Headless Mode](../approaches/techniques/headless-mode.md) | Server built, needs regression testing | Whether a model can use your tools correctly is the real acceptance criterion — headless runs make it executable |
-| 5 | [mcp-server-dev](../approaches/tools/mcp-server-dev.md) | Writing an MCP server with current SDK idioms | SDK idioms move faster than training data — guided current patterns beat reconstructing them from memory |
+| 2 | [mcp-server-dev](../approaches/tools/mcp-server-dev.md) | Building or exposing an API as an MCP server | Hands-on validated guided flow with current SDK idioms — idioms move faster than training data, and design-plus-implementation in one pipeline is exactly the "expose our API to Claude" job |
+| 3 | [Official Plugins](../approaches/techniques/official-plugins.md) | Ready to implement | MCP's protocol surface is undifferentiated work; a guided workflow encodes current conventions so effort goes into tool semantics |
+| 4 | [MCP Context](../approaches/techniques/mcp-context.md) | Haven't used MCP as a consumer yet | Interface intuition comes from the consumer side — a week consuming MCP beats a month producing it blind |
+| 5 | [Headless Mode](../approaches/techniques/headless-mode.md) | Server built, needs regression testing | Whether a model can use your tools correctly is the real acceptance criterion — headless runs make it executable |

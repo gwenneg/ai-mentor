@@ -13,7 +13,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A03 | `refactor authentication across 30 files` | refactoring | Cross-file scale signal |
 | A04 | `we need to move from Vue 2 to Vue 3` | migration | No "migrate" keyword |
 | A05 | `review a large PR that touches billing` | code-review | |
-| A06 | `I just joined this team and the codebase is huge` | code-understanding or onboarding | Either accepted; must not ask more than one light question |
+| A06 | `I just joined this team and the codebase is huge` | code-understanding or onboarding | Either accepted; at most one CLARIFYING (information-gathering/calibration) question. The move's "Do it now" offer and the surprise's "want me to show it" offer are mandated output shape, not questions — never count them against this cap |
 | A07 | `should we use Prisma or Drizzle?` | research or dependency-management | Either accepted |
 | A08 | `add tests before I dare touch this legacy module` | testing | "Before refactoring" phrasing must not misroute to refactoring |
 | A09 | `production error rates spiked 20 minutes ago` | incident-response | Must not route to debugging |
