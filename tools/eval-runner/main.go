@@ -42,7 +42,7 @@ var (
 	reCaseRow  = regexp.MustCompile(`^\| ([ABC]\d{2}) \|`)
 	profileRel = filepath.Join(".ai-mentor", "profile.md")
 	// Plugin-name extraction for the judge's ground-truth block. Keep in sync
-	// with the copies in tools/structural-audit and tools/catalog-drift.
+	// with the copies in tools/catalog-lint and tools/catalog-drift.
 	reRowName = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
 	reTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 )
@@ -257,7 +257,7 @@ func approachKind(path string) string {
 // pluginNames extracts the plugin ids the catalog declares: the first
 // backticked token of each table row plus backticked tokens in the prose
 // sections (Language servers, Specialty). Keep in sync with the copies in
-// tools/structural-audit/main.go and tools/catalog-drift/main.go.
+// tools/catalog-lint/main.go and tools/catalog-drift/main.go.
 func pluginNames(text string) []string {
 	var names []string
 	proseList := false
@@ -955,7 +955,7 @@ func preflight(r *runner) error {
 // findRoot walks upward from dir to the first directory containing
 // skills/mentor, so the runner works from anywhere in the repo — including
 // tools/eval-runner itself, where `go -C tools/eval-runner run .` lands.
-// Keep in sync with the copies in tools/structural-audit/main.go and
+// Keep in sync with the copies in tools/catalog-lint/main.go and
 // tools/catalog-drift/main.go.
 func findRoot(dir string) (string, error) {
 	dir, err := filepath.Abs(dir)

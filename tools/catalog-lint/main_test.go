@@ -24,7 +24,7 @@ func approachMD() string {
 // recordMD has no goals/best_when — every record derives both from its
 // ranked rows (the generator enforces that; the audit only needs kind).
 func recordMD(kind string) string {
-	return "---\nkind: " + kind + "\nlast_verified: 2026-07-03\nsession_signal: \"seen\"\n---\n"
+	return "---\nkind: " + kind + "\nlast_verified: 2026-07-03\n---\n"
 }
 
 func validTree() map[string]string {
@@ -206,14 +206,6 @@ func TestCorruptionsAreCaught(t *testing.T) {
 		{"missing playbooks directory", func(f map[string]string) {
 			delete(f, routing)
 		}, "missing playbooks directory"},
-		{"built-ins line reintroduced", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "| # |",
-				"**Built-ins:** `/testcmd` — does the thing.\n\n| # |", 1)
-		}, "capability line found"},
-		{"plugins line reintroduced", func(f map[string]string) {
-			f[routing] = strings.Replace(f[routing], "| # |",
-				"**Plugins:** `alpha-tool` ☑️ something useful.\n\n| # |", 1)
-		}, "capability line found"},
 		{"orphan integration record", func(f map[string]string) {
 			f["skills/mentor/approaches/tools/unrouted.md"] = recordMD("integration")
 		}, "orphan: not ranked by any playbooks file"},

@@ -112,13 +112,13 @@ jobs:
             --allowedTools "WebSearch" "WebFetch" "Read" "Edit" "Write" "Glob" "Grep" \
               "Bash(date *)" "Bash(python3 *)" "Bash(git diff *)" "Bash(git status *)" \
               "Bash(curl -s https://code.claude.com/*)" "Bash(curl -s https://raw.githubusercontent.com/anthropics/*)" \
-              "Bash(go -C tools/structural-audit run .)" \
+              "Bash(go -C tools/catalog-lint run .)" \
             --max-turns 150 \
             | tee maintenance-report.md
 
-      - name: Structural audit (gates the PR — GITHUB_TOKEN PRs don't trigger CI)
+      - name: Catalog lint (gates the PR — GITHUB_TOKEN PRs don't trigger CI)
         if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.work == 'true'
-        run: go -C tools/structural-audit run .
+        run: go -C tools/catalog-lint run .
 
       - name: Open PR if anything changed
         if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.work == 'true'
