@@ -28,8 +28,8 @@ Context windows are finite and degrade as they fill; delegating subtasks to fres
 
 1. Describe a task with separable pieces, or ask for delegation outright: "Use a subagent to find every caller of the legacy API". Claude spawns subagents through its `Agent` tool — automatically when a side task would flood your context, or whenever you ask
 2. Built-in agent types cover the common cases: `Explore` (fast, read-only search — Claude picks a thoroughness level from quick to very thorough), `Plan` (research during plan mode), and `general-purpose` (reads and writes, multi-step tasks)
-3. The subagent works in its own context window and returns only a summary — the search results, logs, and file dumps it processed never enter your main conversation
-4. Name a custom subagent to invoke it directly: "Use the code-improver agent to suggest improvements in this project". Definitions live in `.claude/agents/` (see Custom Agent Definitions)
+3. The subagent works in its own context window and returns only a summary — the search results, logs, and file dumps it processed never enter your main conversation. Subagents run in the background by default (v2.1.198+): Claude keeps working while they run and picks up results when they finish, dropping to the foreground only when it needs the result before continuing, and background subagents surface their permission prompts in your main session
+4. Name a custom subagent to invoke it directly: "Use the code-improver agent to suggest improvements in this project". Definitions live in `.claude/agents/` (see Custom Agent Definitions); pin an agent's foreground/background behavior with the `background` frontmatter field
 5. The main session synthesizes the summaries and makes the decisions
 
 For example:

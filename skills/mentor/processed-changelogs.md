@@ -1,5 +1,5 @@
 # Processed Changelogs
-*Updated: 2026-07-03*
+*Updated: 2026-07-12*
 
 Tracks which official what's-new digests (https://code.claude.com/docs/en/whats-new/) have been incorporated into this catalog. The weekly digest slug (e.g. `2026-w26`) is the stable unit of processing: maintenance Step 4 fetches the digest index, processes any week not listed below (oldest first), and appends one row per digest with what was done. A digest is never processed twice, and a gap in this table is by definition unprocessed work.
 
@@ -21,3 +21,5 @@ The catalog's initial completeness was established by a one-time bootstrap on 20
 | [2026-w24](https://code.claude.com/docs/en/whats-new/2026-w24.md) | 2026-07-02 | Initial bootstrap — catalog built and verified against live docs |
 | [2026-w25](https://code.claude.com/docs/en/whats-new/2026-w25.md) | 2026-07-02 | Initial bootstrap — catalog built and verified against live docs |
 | [2026-w26](https://code.claude.com/docs/en/whats-new/2026-w26.md) | 2026-07-02 | Initial bootstrap — catalog built and verified against live docs |
+| [2026-w27](https://code.claude.com/docs/en/whats-new/2026-w27.md) | 2026-07-12 | Updated approaches/techniques/subagent-delegation.md (background-by-default, `background` frontmatter) and model-effort-selection.md (Sonnet 5 raised the everyday tier's ceiling); Chrome GA, Artifacts GA, dataviz, draft-PR automation already covered |
+| [2026-w28](https://code.claude.com/docs/en/whats-new/2026-w28.md) | 2026-07-12 | Updated approaches/techniques/browser-integration.md (Desktop in-app browser) and session-context-management.md (/doctor checkup folded in); remaining items UX/infra — no action |
