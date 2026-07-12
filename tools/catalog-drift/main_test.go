@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -17,13 +19,19 @@ func TestFetchLiveNamesParsesManifest(t *testing.T) {
 			{"name":""}]}`))
 	}))
 	defer srv.Close()
-	names, err := fetchLiveNames(&http.Client{Timeout: 5 * time.Second}, srv.URL)
+	names, paths, err := fetchLiveNames(&http.Client{Timeout: 5 * time.Second}, srv.URL)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	want := "alpha-one,partner-tool"
 	if strings.Join(names, ",") != want {
 		t.Errorf("fetchLiveNames = %v, want %s (external-source plugins must be included, empty names dropped)", names, want)
+	}
+	if paths["alpha-one"] != "plugins/alpha-one" {
+		t.Errorf("in-repo source must map to its repo-relative path, got %q", paths["alpha-one"])
+	}
+	if _, ok := paths["partner-tool"]; ok {
+		t.Error("an external (non-string) source must have no path entry — its content is not in the marketplace repo")
 	}
 }
 
@@ -32,7 +40,7 @@ func TestFetchLiveNamesEmptyManifestIsError(t *testing.T) {
 		w.Write([]byte(`{"plugins":[]}`))
 	}))
 	defer srv.Close()
-	if _, err := fetchLiveNames(&http.Client{Timeout: 5 * time.Second}, srv.URL); err == nil {
+	if _, _, err := fetchLiveNames(&http.Client{Timeout: 5 * time.Second}, srv.URL); err == nil {
 		t.Error("empty plugin list should be an error, not an in-sync verdict")
 	}
 }
@@ -128,5 +136,170 @@ func TestReportDedupsAndSorts(t *testing.T) {
 	}
 	if strings.Index(s, "+ a-plugin") > strings.Index(s, "+ b-plugin") {
 		t.Errorf("missing plugins should be sorted:\n%s", s)
+	}
+}
+
+// commitsServer serves the GitHub commits API shape, returning the given
+// committer date for every path, and records the requests it saw.
+func commitsServer(t *testing.T, date string, sawAuth *string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if sawAuth != nil {
+			*sawAuth = r.Header.Get("Authorization")
+		}
+		w.Write([]byte(`[{"commit":{"committer":{"date":"` + date + `"}}}]`))
+	}))
+}
+
+func TestUpstreamStaleRecordIsDrift(t *testing.T) {
+	srv := commitsServer(t, "2026-07-10T08:00:00Z", nil)
+	defer srv.Close()
+	records := []promotedRecord{{id: "alpha-one", lastVerified: "2026-07-03"}}
+	paths := map[string]string{"alpha-one": "plugins/alpha-one"}
+	findings, notes, err := checkUpstream(&http.Client{Timeout: 5 * time.Second}, srv.URL, "", records, paths)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(notes) != 0 {
+		t.Errorf("unexpected notes: %v", notes)
+	}
+	if len(findings) != 1 || findings[0].upstream != "2026-07-10" {
+		t.Fatalf("upstream commit after last_verified must be a finding, got %v", findings)
+	}
+	var out strings.Builder
+	if !reportUpstream(&out, 1, findings, notes) {
+		t.Error("an upstream finding must be drift (gate property: printed issues fail the exit)")
+	}
+	if !strings.Contains(out.String(), "! alpha-one — verified 2026-07-03, upstream changed 2026-07-10") {
+		t.Errorf("missing finding line:\n%s", out.String())
+	}
+	if !strings.Contains(out.String(), "step 3") {
+		t.Errorf("upstream drift must point at re-verification (step 3), not catalog sync:\n%s", out.String())
+	}
+}
+
+func TestUpstreamFreshRecordNotFlagged(t *testing.T) {
+	srv := commitsServer(t, "2026-06-19T00:46:00Z", nil)
+	defer srv.Close()
+	records := []promotedRecord{{id: "alpha-one", lastVerified: "2026-07-03"}}
+	paths := map[string]string{"alpha-one": "plugins/alpha-one"}
+	findings, _, err := checkUpstream(&http.Client{Timeout: 5 * time.Second}, srv.URL, "", records, paths)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Errorf("upstream commit before last_verified must not be flagged: %v", findings)
+	}
+	var out strings.Builder
+	if reportUpstream(&out, 1, findings, nil) {
+		t.Error("no findings must not be drift")
+	}
+	if !strings.Contains(out.String(), "hands-on evidence current") {
+		t.Errorf("missing all-clear line:\n%s", out.String())
+	}
+}
+
+// A commit on the verification day itself is not flagged — last_verified
+// carries no time of day, so same-day order is unknowable. Documented blind
+// spot: the next upstream commit flags the record.
+func TestUpstreamSameDayNotFlagged(t *testing.T) {
+	srv := commitsServer(t, "2026-07-03T23:59:59Z", nil)
+	defer srv.Close()
+	records := []promotedRecord{{id: "alpha-one", lastVerified: "2026-07-03"}}
+	paths := map[string]string{"alpha-one": "plugins/alpha-one"}
+	findings, _, err := checkUpstream(&http.Client{Timeout: 5 * time.Second}, srv.URL, "", records, paths)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Errorf("same-day upstream commit must not be flagged: %v", findings)
+	}
+}
+
+func TestUpstreamExternalSourceIsNoteNotDrift(t *testing.T) {
+	// No server: an external record must not trigger any API call.
+	records := []promotedRecord{{id: "partner-tool", lastVerified: "2026-07-03"}}
+	findings, notes, err := checkUpstream(&http.Client{Timeout: time.Second}, "http://127.0.0.1:0", "", records, map[string]string{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Errorf("uncheckable source must not be a finding: %v", findings)
+	}
+	if len(notes) != 1 || !strings.Contains(notes[0], "partner-tool") {
+		t.Fatalf("uncheckable source must be a note: %v", notes)
+	}
+	var out strings.Builder
+	if reportUpstream(&out, 1, findings, notes) {
+		t.Error("notes alone must not be drift — a permanently external source would otherwise fail every run")
+	}
+	if !strings.Contains(out.String(), "? partner-tool") {
+		t.Errorf("note must still be printed:\n%s", out.String())
+	}
+}
+
+func TestCommitsAPIErrorPropagates(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "rate limited", http.StatusForbidden)
+	}))
+	defer srv.Close()
+	records := []promotedRecord{{id: "alpha-one", lastVerified: "2026-07-03"}}
+	paths := map[string]string{"alpha-one": "plugins/alpha-one"}
+	if _, _, err := checkUpstream(&http.Client{Timeout: 5 * time.Second}, srv.URL, "", records, paths); err == nil {
+		t.Error("a commits API failure must be an error (exit 2), never a silent all-clear")
+	}
+}
+
+func TestLatestCommitDateNoCommitsIsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`[]`))
+	}))
+	defer srv.Close()
+	if _, err := latestCommitDate(&http.Client{Timeout: 5 * time.Second}, srv.URL, "", "plugins/gone"); err == nil {
+		t.Error("an empty commit list means the path is wrong — must be an error, not a stale-free verdict")
+	}
+}
+
+func TestLatestCommitDateSendsToken(t *testing.T) {
+	var sawAuth string
+	srv := commitsServer(t, "2026-07-01T00:00:00Z", &sawAuth)
+	defer srv.Close()
+	date, err := latestCommitDate(&http.Client{Timeout: 5 * time.Second}, srv.URL, "tok-123", "plugins/alpha-one")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if date != "2026-07-01" {
+		t.Errorf("date = %q, want 2026-07-01 (UTC date only)", date)
+	}
+	if sawAuth != "Bearer tok-123" {
+		t.Errorf("Authorization = %q, want Bearer tok-123", sawAuth)
+	}
+}
+
+func TestPromotedRecordsParsesLastVerified(t *testing.T) {
+	repo := t.TempDir()
+	tools := filepath.Join(repo, "skills", "mentor", "approaches", "tools")
+	if err := os.MkdirAll(tools, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(name, content string) {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(tools, name), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("alpha-one.md", "---\nkind: plugin\nlast_verified: 2026-07-03\n---\n")
+	write("no-date.md", "---\nkind: plugin\n---\n")
+	write("some-doc.md", "---\nkind: doc\nlast_verified: 2026-07-03\n---\n")
+
+	records := promotedRecords(repo)
+	if len(records) != 2 {
+		t.Fatalf("want 2 plugin records (doc records excluded), got %v", records)
+	}
+	if records[0].id != "alpha-one" || records[0].lastVerified != "2026-07-03" {
+		t.Errorf("alpha-one parsed wrong: %+v", records[0])
+	}
+	if records[1].id != "no-date" || records[1].lastVerified != "" {
+		t.Errorf("missing last_verified must parse as empty: %+v", records[1])
 	}
 }

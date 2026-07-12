@@ -82,8 +82,16 @@ jobs:
           new_digests=$(comm -23 \
             <(printf '%s\n' "$index_slugs") \
             <(grep -oE '20[0-9]{2}-w[0-9]+' skills/mentor/processed-changelogs.md | sort -u))
+          # Upstream drift on a promoted record is step 3 work (re-verify the
+          # record), which the routine 4,5 run never performs — without step 3
+          # the flag would re-fire every week without ever being fixed.
+          gate_steps="4,5"
+          if grep -q "Upstream changed AFTER last verification" catalog-drift.txt; then
+            gate_steps="3,4,5"
+          fi
+          echo "steps=$gate_steps" >> "$GITHUB_OUTPUT"
           if [ "$drift" -eq 1 ] || [ -n "$new_digests" ]; then
-            echo "Work found — catalog drift: $([ "$drift" -eq 1 ] && echo yes || echo no); new digests: $(tr '\n' ' ' <<< "$new_digests")"
+            echo "Work found — catalog drift: $([ "$drift" -eq 1 ] && echo yes || echo no); new digests: $(tr '\n' ' ' <<< "$new_digests"); steps: $gate_steps"
             echo "work=true" >> "$GITHUB_OUTPUT"
           else
             echo "No catalog drift and no unprocessed digests — skipping the paid maintenance run."
@@ -103,7 +111,9 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.work == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          STEPS: ${{ github.event.inputs.steps || '4,5' }}
+          # catalog-drift's commits API calls authenticate with this when set.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STEPS: ${{ github.event.inputs.steps || steps.gate.outputs.steps || '4,5' }}
           FILES: ${{ github.event.inputs.files || '5' }}
         run: |
           set -o pipefail
@@ -112,7 +122,8 @@ jobs:
             --allowedTools "WebSearch" "WebFetch" "Read" "Edit" "Write" "Glob" "Grep" \
               "Bash(date *)" "Bash(python3 *)" "Bash(git diff *)" "Bash(git status *)" \
               "Bash(curl -s https://code.claude.com/*)" "Bash(curl -s https://raw.githubusercontent.com/anthropics/*)" \
-              "Bash(go -C tools/structural-audit run .)" \
+              "Bash(go -C tools/structural-audit run .)" "Bash(go -C tools/catalog-drift run .)" \
+              "Bash(go -C tools/approaches-index run .)" \
             --max-turns 150 \
             | tee maintenance-report.md
 

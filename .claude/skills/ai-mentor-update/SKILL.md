@@ -24,14 +24,14 @@ All paths below are relative to the repo root.
 **Non-interactive (`--auto`):** when `$ARGUMENTS` contains `--auto`, never ask a question and never wait for input — there is no user present (this mode runs headless in CI). Parse from the arguments:
 
 - `--auto <steps>` — comma-separated step numbers to run, using the Step headings below (2 = structural audit, 3 = content verification, 4 = process new changelogs, 5 = plugin catalog sync), e.g. `--auto 4,5`
-- `--files N` — Step 3 scope: process the N oldest-verified files (default: 5)
+- `--files N` — Step 3 scope: process the N oldest-verified files (default: 5). Promoted records flagged by `go -C tools/catalog-drift run .` as upstream-changed (its `!` lines) are ALWAYS in scope, in addition to the N oldest — they are why step 3 was triggered
 
 The routine weekly run is `--auto 4,5`: process new changelogs and sync the plugin catalog. Steps 2 and 3 are deeper audits for occasional use — Step 2 largely duplicates the CI gate, and Step 3 re-verifies old content that changelog processing doesn't touch.
 
 Auto-mode overrides, in addition to skipping every question below:
 
 - **Step 2**: apply only unambiguous structural fixes (broken separator, wrong field order); report anything requiring judgment instead of fixing it. Note: CI also runs the structural audit (`go -C tools/structural-audit run .`) as a deterministic gate — prefer reporting over creative fixing.
-- **Step 3**: process the N oldest-verified files with no per-file pause. Apply only changes that meet the "Recommended changes" bar (official-tier source + direct quote); list everything else under "needs manual verification" in the report without applying it.
+- **Step 3**: process the N oldest-verified files — plus every promoted record `catalog-drift` flags as upstream-changed — with no per-file pause. Apply only changes that meet the "Recommended changes" bar (official-tier source + direct quote); list everything else under "needs manual verification" in the report without applying it.
 - **Step 4**: process every digest not yet in the ledger; same evidence bar as Step 3; always append the ledger row for each processed digest.
 - **Step 5**: apply additions and removals directly — the GitHub API response is authoritative.
 - **Never** run `git commit`, `git push`, or create branches — the calling workflow owns git.
@@ -152,9 +152,11 @@ Ask the user:
 > - **All files** — check every goal and approach file (oldest-reviewed first)
 > - **Specific file** — enter a path, e.g. `approaches/plan-mode.md`, or `playbooks/<goal>.md` for one goal's rankings
 
-Wait for the user's response. *(Auto mode: skip the question — process the `--files` N oldest-verified files.)*
+Wait for the user's response. *(Auto mode: skip the question — process the `--files` N oldest-verified files, plus every promoted record `go -C tools/catalog-drift run .` flags as upstream-changed.)*
 
 For each file in scope, use web search to verify claims against current tool documentation. Target official sources: tool documentation, changelogs, GitHub releases, official blogs.
+
+For promoted `kind: plugin` records, run `go -C tools/catalog-drift run .` first: its upstream check compares each record's `last_verified` against the last commit to the plugin's path in the marketplace repo. An unflagged record has had no upstream change since its hands-on evaluation — the evidence stands, and only the manifest description needs a glance. A flagged (`!`) record's hands-on claims predate upstream changes: re-check its facts and pitfalls against the plugin's current components before moving its date.
 
 ### For approach files, check:
 
@@ -238,13 +240,13 @@ Fetch the current plugin list from the marketplace manifest — the manifest is 
 curl -s https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/.claude-plugin/marketplace.json | python3 -c "import json,sys; [print(p['name']) for p in json.load(sys.stdin)['plugins']]"
 ```
 
-Extract the plugin names currently documented in TWO places: `skills/mentor/marketplace.md` (backtick-wrapped names in its tables) and the promoted `kind: plugin` records in `skills/mentor/approaches/` (their filenames). The documented set is the union — `tools/catalog-drift` computes exactly this.
+Extract the plugin names currently documented in TWO places: `skills/mentor/marketplace.md` (backtick-wrapped names in its tables) and the promoted `kind: plugin` records in `skills/mentor/approaches/` (their filenames). The documented set is the union — `tools/catalog-drift` computes exactly this, and additionally flags promoted records whose upstream plugin changed after their `last_verified` date (exit 1 on either kind of drift). Those upstream flags are Step 3 work — report them, never resolve them inside Step 5.
 
 Compare against the manifest:
 
 - **New plugins** — in the manifest but documented in neither place → add a `marketplace.md` row (new plugins always enter through the directory; promotion to `approaches/` is a separate, human editorial decision per the promotion rule in `marketplace.md`'s header)
 - **Removed plugins** — documented (directory row or promoted record) but no longer in the manifest. A directory row is removed outright. A **promoted record** leaving the marketplace is NEVER auto-deleted: flag it for a human decision (demote, delete, or keep with a delisted note) — profile rows may point at it
-- **Changed metadata on promoted plugins** — if the manifest description of a promoted plugin materially changed, flag its `approaches/tools/<id>.md` for re-verification (its facts are hands-on claims; Step 3 re-verifies them like any other solution file)
+- **Changed metadata on promoted plugins** — if the manifest description of a promoted plugin materially changed, flag its `approaches/tools/<id>.md` for re-verification (its facts are hands-on claims; Step 3 re-verifies them like any other solution file). Upstream *content* changes are caught deterministically by `catalog-drift`'s commit-date check — its `!` flags route to Step 3 the same way
 
 For each new plugin, take its `description` (and `author`, to label Anthropic-built vs external) from the same manifest JSON — no per-plugin fetch needed. If a batch of new plugins is very large (e.g. a marketplace expansion), still list every name in the report, but it is acceptable to add table rows in slices across runs, oldest-known first, noting the remaining backlog count in the report.
 
