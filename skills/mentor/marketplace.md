@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-07-09 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest · Evaluation passes: 2026-07-03 (52 desk-checked; 15 exercised hands-on), 2026-07-08 (204 desk-checked)*
+*Last synced: 2026-07-12 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -12,7 +12,7 @@ Verdicts are produced by the repeatable protocol in `evals/plugin-evaluation.md`
 **Verdict legend** — every plugin carries one:
 
 - ✅ **hands-on (date)** — installed, exercised against its mapped goal, and it worked; caveats noted verbatim
-- ☑️ **desk-checked** — manifest, components, freshness, and provenance reviewed (2026-07-03); not exercised. For MCP integrations this usually means hands-on needs an external account or infrastructure we don't have — an honest label, not a defect
+- ☑️ **desk-checked** — manifest, components, freshness, and provenance reviewed; not exercised. For MCP integrations this usually means hands-on needs an external account or infrastructure we don't have — an honest label, not a defect
 - ⚠️ **caution** — works, but overlaps a built-in feature or has a sharp edge; lead with the alternative named
 
 The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands-on evaluated" label, and never presents a ⚠️ without its caveat.

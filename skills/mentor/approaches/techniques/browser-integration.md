@@ -3,7 +3,7 @@
 
 ## What It Is
 
-Browser Integration connects Claude Code to your real Chrome or Edge browser through the Claude in Chrome extension — navigating pages, clicking buttons, filling forms, reading the DOM, and watching the console, in a visible window that shares your existing login state. Start a session with `claude --chrome` (or run `/chrome` mid-session) and describe browser tasks in plain language. A separate, heavier capability — computer use — extends the same idea beyond the browser to native macOS apps.
+Browser Integration connects Claude Code to your real Chrome or Edge browser through the Claude in Chrome extension — navigating pages, clicking buttons, filling forms, reading the DOM, and watching the console, in a visible window that shares your existing login state. Start a session with `claude --chrome` (or run `/chrome` mid-session) and describe browser tasks in plain language. On the Claude Code desktop app, a built-in sandboxed browser covers the same ground without the extension — Claude pulls up docs, designs, or any external site and reads, clicks through, and interacts with pages the same way it does with local dev-server previews. A separate, heavier capability — computer use — extends the same idea beyond the browser to native macOS apps.
 
 ## Why It Works
 
@@ -55,6 +55,7 @@ Code and its visual output are two different things, and bugs hide in the gap be
 
 - [Use Claude Code with Chrome](https://code.claude.com/docs/en/chrome) — Official docs: extension setup, `--chrome` and `/chrome`, capabilities, plan-mode permission behavior, troubleshooting
 - [Let Claude use your computer from the CLI](https://code.claude.com/docs/en/computer-use) — Official docs for the built-in `computer-use` MCP server: enablement, platform and plan gates, safety model
+- [Browse external sites](https://code.claude.com/docs/en/desktop#browse-external-sites) — Official docs for the desktop app's built-in sandboxed browser: persistence settings and safety classifiers
 
 ## Signals
 

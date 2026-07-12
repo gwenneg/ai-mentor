@@ -3,7 +3,7 @@
 
 ## What It Is
 
-Model & Effort Selection lets you match the model and the reasoning depth to what each task needs, instead of running everything at one setting. Claude Code ships multiple models (Fable — the Claude 5 flagship — for the hardest, longest-running tasks, Opus for deep reasoning, Sonnet for balanced everyday coding, Haiku for fast, cheap work; availability varies by plan) plus an adjustable effort level that controls how much thinking the model spends per response. You choose per task, per session, or per agent — and switching takes seconds.
+Model & Effort Selection lets you match the model and the reasoning depth to what each task needs, instead of running everything at one setting. Claude Code ships multiple models (Fable — the Claude 5 flagship — for the hardest, longest-running tasks, Opus for deep reasoning, Sonnet for everyday coding, Haiku for fast, cheap work; availability varies by plan) plus an adjustable effort level that controls how much thinking the model spends per response. You choose per task, per session, or per agent — and switching takes seconds. Since Sonnet 5, the everyday tier delivers top-tier coding and tool use at Sonnet pricing — escalate for reasoning depth, not code quality.
 
 ## Why It Works
 
