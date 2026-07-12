@@ -1,5 +1,5 @@
 # Official Plugins
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -46,8 +46,8 @@ Installing beats building on three axes at once: zero development time, someone 
 
 ## Common Pitfalls
 
-- **Installing without reading**: plugins add hooks and skills that run automatically. A poorly written plugin can slow down your workflow or make unwanted changes. Read the plugin's documentation and review its hooks before installing.
-- **Plugin sprawl**: many plugins with overlapping functionality lead to conflicts — two plugins formatting the same file, competing commit hooks. Audit your installed plugins periodically and remove redundancies.
+- **Installing without reading**: plugins add hooks and skills that run automatically. A poorly written plugin can slow down your workflow or make unwanted changes. The `/plugin` details pane makes this concrete: a **Context cost** estimate (v2.1.143+) and a **Will install** inventory of commands, agents, skills, hooks, and MCP/LSP servers (v2.1.145+) — review both before confirming.
+- **Plugin sprawl**: many plugins with overlapping functionality lead to conflicts — two plugins formatting the same file, competing commit hooks. Audit your installed plugins periodically and remove redundancies — the `/plugin` Installed tab gathers ones you haven't used in two weeks across 10+ sessions under a **Not used recently** header (v2.1.187+).
 - **Assuming plugins are maintained**: partner-maintained plugins evolve on the partner's schedule. Disable marketplace auto-update where stability matters, and test updates before adopting them across your team.
 - **Expecting un-namespaced commands**: installing `commit-commands` gives you `/commit-commands:commit`, not `/commit`. Plugin skills always carry the plugin prefix — factor that into your muscle memory and docs.
 

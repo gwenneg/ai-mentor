@@ -1,5 +1,5 @@
 # Session & Context Management
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -29,7 +29,7 @@ The model pays attention to everything in context, including the noise — curat
 1. Run `/context` to see where the window is going — it renders usage as a colored grid and flags context-heavy tools, memory bloat, and capacity issues.
 2. When the conversation gets long, run `/compact` to summarize it down. Pass focus instructions to control what survives: `/compact keep the migration plan and open bugs`.
 3. Ask side questions with `/btw <question>` — you get an answer without the exchange being added to the conversation history.
-4. Starting an unrelated task? `/clear` gives you an empty context; the previous conversation stays available in `/resume` — and, on v2.1.191+, as a `previous session` entry at the top of the `/rewind` menu until you exit Claude Code. Pass a name (`/clear payments-work`) to label the old one for easy retrieval.
+4. Starting an unrelated task? `/clear` gives you an empty context; the previous conversation stays available in `/resume` — and, on v2.1.191+, as a `previous session` entry at the top of the `/rewind` menu until you exit Claude Code or resume a different session. Pass a name (`/clear payments-work`) to label the old one for easy retrieval.
 5. Use `/rewind` to step the conversation and/or code back to an earlier point when a direction didn't pan out.
 
 ### Composing with Other Approaches (Intermediate)
@@ -42,7 +42,7 @@ The model pays attention to everything in context, including the noise — curat
 
 - **Named session workflows**: `/rename` sessions as you go and resume any of them by name with `/resume <name>` — turning sessions into durable, addressable workstreams rather than one anonymous scrollback.
 - **Extended 1M-token context**: for sessions that legitimately need huge context — sprawling monorepos, massive migration diffs — append `[1m]` to the model: `/model opus[1m]` or `/model sonnet[1m]` (Sonnet 5 runs the 1M window natively on the Anthropic API; Opus availability varies by plan). A bigger window is not a substitute for curation — noise degrades quality at any size — but it raises the ceiling when the working set is genuinely large.
-- **Periodic setup checkups**: `/doctor` (alias `/checkup`, v2.1.205+) audits your whole setup and offers to fix what it finds — flagging unused skills, MCP servers, and plugins against their context cost, deduplicating local CLAUDE.md files against checked-in ones, proposing CLAUDE.md trims Claude could derive from the codebase, and calling out slow hooks. It reports findings first and asks before changing anything — run it when `/context` shows overhead you can't account for.
+- **Periodic setup checkups**: `/doctor` (alias `/checkup`, v2.1.205+) audits your whole setup and offers to fix what it finds — flagging unused skills, MCP servers, and plugins against their context cost, deduplicating local CLAUDE.md files against checked-in ones, migrating always-loaded guidance into skills and nested CLAUDE.md files that load on demand, and calling out slow hooks. It reports findings first and asks before changing anything — run it when `/context` shows overhead you can't account for.
 - **Cache-aware session habits**: the prompt cache is keyed on your model, effort level, and the conversation prefix — so `/model` and `/effort` switches make the *next* turn reprocess the whole history uncached (one slow, expensive turn), while `/compact` deliberately rebuilds the conversation layer. Pick model and effort at the top of a session, save `/compact` for natural breaks between tasks, and when abandoning a bad path prefer `/rewind` over compaction: rewinding truncates back to a prefix that's already cached.
 
 ## Common Pitfalls

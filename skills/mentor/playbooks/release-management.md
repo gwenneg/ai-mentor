@@ -1,5 +1,5 @@
 # release-management
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Headless Mode — a headless pre-tag validation step catches the version mismatches and forgotten migrations humans miss on Friday afternoons.
 

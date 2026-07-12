@@ -1,6 +1,6 @@
 ---
 kind: plugin
-last_verified: 2026-07-03
+last_verified: 2026-07-12
 composes_with:
   - model-effort-selection
 install: /plugin install session-report@claude-plugins-official

@@ -1,5 +1,5 @@
 # dependency-management
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Worktree Isolation — trying the upgrade in a throwaway copy gives you a real damage report before you commit to anything.
 

@@ -1,5 +1,5 @@
 # Scheduled & Recurring Agents
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -26,7 +26,7 @@ Work that runs automatically happens every time; work that requires initiative h
 
 ### Basic (Beginner)
 
-1. From any session, run `/schedule` with a natural-language description: `/schedule daily PR review at 9am` or a one-off like `/schedule in 2 weeks, open a cleanup PR that removes the feature flag`. Claude walks through the setup and saves the routine to your account. (Research preview; requires a claude.ai subscription login, and runs count against a daily per-account allowance. Also manageable at claude.ai/code/routines.)
+1. From any session, run `/schedule` with a natural-language description: `/schedule daily PR review at 9am` or a one-off like `/schedule in 2 weeks, open a cleanup PR that removes the feature flag`. Claude walks through the setup and saves the routine to your account. (Research preview; requires a claude.ai subscription login. Recurring runs count against a daily per-account allowance; one-off runs are exempt and draw down regular subscription usage instead. Also manageable at claude.ai/code/routines.)
 2. Write the prompt as if briefing someone who can't ask questions: what to do, where, and what success looks like. The routine runs with no permission prompts, so the prompt is the whole specification.
 3. Each run clones the selected repositories from the default branch and pushes changes only to `claude/`-prefixed branches unless you explicitly allow unrestricted pushes.
 4. Review runs at claude.ai/code/routines — each run is a full session you can open, read, and continue. Manage from the CLI with `/schedule list`, `/schedule update`, and `/schedule run`.
@@ -36,7 +36,7 @@ Work that runs automatically happens every time; work that requires initiative h
 
 - **Routines plus MCP connectors**: a triage routine reads new Slack reports and files Linear issues — your claude.ai connectors are available during runs (all included by default; remove the ones a routine doesn't need).
 - **Routines plus headless CI**: they overlap but split cleanly — GitHub Actions for checks tied to your pipeline and secrets, routines for account-level work spanning repos and external services with no CI config at all.
-- **API trigger plus Cloud Sessions**: wire your monitoring tool to the routine's `/fire` endpoint with the alert body as `text` — the run correlates the stack trace with recent commits and opens a draft PR as a full cloud session on-call can open and continue, instead of starting from a blank terminal.
+- **API trigger plus Cloud Sessions**: wire your monitoring tool to the routine's `/fire` endpoint with the alert body as `text` (the endpoint requires the `anthropic-beta: experimental-cc-routine-2026-04-01` header, and the generated token is shown only once) — the run correlates the stack trace with recent commits and opens a draft PR as a full cloud session on-call can open and continue, instead of starting from a blank terminal.
 
 ### Advanced Patterns
 

@@ -1,5 +1,5 @@
 # documentation
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Custom Skills — a `/gen-api-doc` command makes regenerating docs cheaper than letting them drift.
 

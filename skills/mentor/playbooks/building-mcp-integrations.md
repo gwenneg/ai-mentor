@@ -1,5 +1,5 @@
 # building-mcp-integrations
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Headless Mode — a shell script of `claude -p` calls against your server is an MCP integration test suite: repeatable, CI-friendly, and it tests the thing that actually matters (can a model use your tools correctly?).
 

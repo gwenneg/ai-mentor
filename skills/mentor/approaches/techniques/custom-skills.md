@@ -1,5 +1,5 @@
 # Custom Skills (Slash Commands)
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -29,7 +29,7 @@ Skills capture the judgment calls, file conventions, and sequencing a senior eng
 2. Write a `SKILL.md` file with a one-line `description:` in YAML frontmatter (Claude uses it to decide when to load the skill automatically), followed by the steps to follow and what inputs it expects
 3. Use `$ARGUMENTS` in the skill file to accept user input (e.g., `/create-migration add-user-roles-table`)
 4. Optionally add bundled scripts (shell, Python, etc.) in the same directory that the skill references for deterministic steps
-5. Invoke the skill with `/<skill-name>` — Claude reads the SKILL.md, follows the instructions, and executes the workflow
+5. Invoke the skill with `/<skill-name>` — Claude reads the SKILL.md, follows the instructions, and executes the workflow. Several skills can be stacked at the start of one message (v2.1.199+): `/code-review /fix-issue 123` loads both — the first plus up to five more — passing the trailing text as `$ARGUMENTS` to each
 
 Example SKILL.md for a migration generator:
 ```markdown
@@ -56,7 +56,7 @@ Steps:
 
 - **Forked context with `context: fork`**: Run a skill in an isolated subagent context so it does not pollute your main session's context window. The forked skill does not see your conversation history, so its instructions must be self-contained; it executes, returns a summary, and your main session stays clean. Useful for skills that read many files.
 - **Skills with reference docs**: Bundle project-specific reference material (API schemas, style guides, architecture docs) in the skill directory. The skill instructions tell Claude to read these before generating code, ensuring output matches your conventions without relying on the main context.
-- **Argument parsing patterns**: Use structured argument formats in your SKILL.md to handle multiple parameters: `/create-endpoint POST /api/users CreateUserRequest`. Use positional substitutions — `$0` for the method, `$1` for the path, `$2` for the request type — instead of asking Claude to parse the raw `$ARGUMENTS` string.
+- **Argument parsing patterns**: Use structured argument formats in your SKILL.md to handle multiple parameters: `/create-endpoint POST /api/users CreateUserRequest`. Use positional substitutions — `$0` for the method, `$1` for the path, `$2` for the request type — instead of asking Claude to parse the raw `$ARGUMENTS` string. Better still, name them: an `arguments: [method, path, request]` frontmatter field maps names to positions so the skill body can say `$method` and `$path`.
 
 ## Common Pitfalls
 

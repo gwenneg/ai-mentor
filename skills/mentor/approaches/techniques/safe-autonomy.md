@@ -1,5 +1,5 @@
 # Permissions & Safe Autonomy
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -40,7 +40,7 @@ An agent that prompts for every `npm test` trains you to approve without reading
 ### Advanced Patterns
 
 - **Parameter-scoped rules**: deny/ask rules can match tool parameters — `Agent(isolation:worktree)`, `Bash(run_in_background:true)` — for policies on *how* tools are used, not just which.
-- **Mode ceilings for real autonomy**: `bypassPermissions` skips prompts (keep it for containers/VMs — root/home `rm -rf` still trips a circuit breaker); `auto` mode auto-approves with background safety checks (research preview). Organizations can disable both via `disableBypassPermissionsMode` / `disableAutoMode` in managed settings.
+- **Mode ceilings for real autonomy**: `bypassPermissions` skips prompts except those forced by explicit `ask` rules (keep it for containers/VMs — root/home `rm -rf` still trips a circuit breaker); `auto` mode auto-approves with background safety checks (all plans; on Team and Enterprise an Owner must enable it); `dontAsk` mode inverts the default — auto-denying anything not pre-approved by allow rules, for CI and restricted environments. Organizations can disable the first two via `disableBypassPermissionsMode` / `disableAutoMode` in managed settings.
 - **Team guardrails via settings precedence**: managed settings > CLI flags > local project > shared project > user — a deny at any level cannot be re-allowed at any other level, so checked-in project denies become team-wide invariants.
 
 ## Common Pitfalls

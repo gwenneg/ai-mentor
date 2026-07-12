@@ -1,5 +1,5 @@
 # greenfield
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Custom Skills — encoding your conventions as a scaffold command before writing feature #2 pays off for every feature after it.
 

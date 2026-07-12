@@ -1,5 +1,5 @@
 # Worktree Isolation
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -31,7 +31,7 @@ A physically separate working directory on its own branch lets aggressive, specu
 2. Claude creates the working directory `.claude/worktrees/<name>/` on a new branch named `worktree-<name>`
 3. Work normally — all edits happen in the isolated copy, your original branch is untouched
 4. When done, review changes with `git diff` in the worktree; merge the branch if they look good, or discard the worktree if they don't
-5. Exit the session: if the worktree has changes, Claude prompts you to keep or remove it; a clean worktree is removed automatically
+5. Exit the session: if the worktree has changes, Claude prompts you to keep or remove it; a clean worktree is removed automatically (unless the session has a name — then Claude prompts even when clean, so you can keep it for later)
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -43,7 +43,8 @@ A physically separate working directory on its own branch lets aggressive, specu
 
 - **`.worktreeinclude` for environment parity**: Create a `.worktreeinclude` file listing gitignored files your project needs (`.env`, `.env.local`, vendored binaries). These get copied into each new worktree automatically, so the isolated environment actually works.
 - **Subagent fan-out with worktree isolation**: In a fan-out workflow, each subagent gets `isolation: "worktree"`. This lets you run 5-10 parallel agents that all edit code without any coordination — each produces a branch you can review and merge independently.
-- **Long-lived worktrees for feature branches**: Keep a worktree alive across sessions for a multi-day feature. Ask Claude to switch back into it — the `EnterWorktree` tool enters an existing worktree under `.claude/worktrees/` by path — and pick up the file state where you left off. This is particularly useful for multi-day migrations where you want to checkpoint progress without merging incomplete work.
+- **Long-lived worktrees for feature branches**: Keep a worktree alive across sessions for a multi-day feature. Ask Claude to switch back into it — the `EnterWorktree` tool enters an existing worktree under `.claude/worktrees/` by path (entering one outside that directory asks for confirmation, v2.1.206+) — and pick up the file state where you left off. This is particularly useful for multi-day migrations where you want to checkpoint progress without merging incomplete work.
+- **PR-based worktrees**: `claude --worktree "#1234"` (or a full PR URL) fetches `pull/1234/head` from `origin` and creates the worktree at `.claude/worktrees/pr-1234` — a teammate's PR checked out for review or fixes without touching your branch.
 
 ## Common Pitfalls
 

@@ -1,5 +1,5 @@
 # migration
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Worktree Isolation — running the upgrade in a disposable copy first turns "should we migrate?" from changelog speculation into a concrete damage report.
 

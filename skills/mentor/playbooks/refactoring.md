@@ -1,5 +1,5 @@
 # refactoring
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Checkpoints & Rewind — knowing any restructuring is instantly reversible changes which refactors you dare to attempt.
 

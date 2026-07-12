@@ -1,9 +1,9 @@
 # Deep Research
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
-Deep Research lets you ask a complex question and get back a thoroughly sourced report instead of a single-perspective answer. The tool fans out multiple web searches in parallel, fetches and reads the actual source pages, has independent agents try to disprove each claim, and then synthesizes everything into a cited report with confidence levels. It is the difference between asking a colleague for a quick opinion and commissioning a proper investigation.
+Deep Research lets you ask a complex question and get back a thoroughly sourced report instead of a single-perspective answer. The tool fans out multiple web searches in parallel, fetches and reads the actual source pages, has independent agents try to disprove each claim, and then synthesizes everything into a cited report. It is the difference between asking a colleague for a quick opinion and commissioning a proper investigation.
 
 ## Why It Works
 
@@ -27,11 +27,11 @@ Deep Research applies the same adversarial verification that good journalism and
 
 ### Basic (Beginner)
 
-1. First, check whether your question is specific enough. If it is too broad, Claude will ask clarifying questions before starting the research.
+1. First, sharpen the question yourself — add the constraints that matter (stack, versions, workload, deadline) before launching. A broad question produces a generic survey; the workflow runs with no mid-run user input, so scoping happens before the run, not during it.
 2. Type: `/deep-research Why does React 19 drop support for defaultProps on function components, and what is the recommended migration path?` and approve the run when Claude Code asks. Deep Research is a bundled dynamic workflow — available on all paid plans (on Pro, turn on Dynamic workflows in `/config`) — and it needs the WebSearch tool available
 3. The run continues in the background while your session stays free: Claude fans out multiple parallel web searches with different query variations, then fetches and reads the actual content of the most relevant pages — not just snippet previews. Check progress anytime with `/workflows`
-4. Independent verification agents adversarially cross-check each claim, and claims that do not survive verification are filtered out of the report
-5. Claude synthesizes a cited report with confidence levels and source URLs for each finding, so you can verify any claim that matters to your decision
+4. Independent verification agents adversarially cross-check each claim; claims that do not survive verification are filtered out of the report, and claims that could not be checked at all (a rate limit, an API error) are listed as unverified rather than counted as refuted (v2.1.196+)
+5. Claude synthesizes a cited report with the source URLs behind each finding, so you can verify any claim that matters to your decision
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -49,7 +49,7 @@ Deep Research applies the same adversarial verification that good journalism and
 
 - **It is a bundled dynamic workflow on paid plans** (on Pro, enable Dynamic workflows in /config); it runs in the background — check progress with /workflows.
 - **Underspecified questions**: "What database should I use?" is too broad. The tool will produce a generic survey. Add constraints: "What database should I use for a read-heavy analytics workload with 500M rows, deployed on AWS, team familiar with SQL?" Constraints produce actionable answers.
-- **Treating the report as gospel**: Deep Research is thorough, but it is still synthesizing web sources that may themselves be outdated or wrong. Treat confidence levels seriously — "high confidence" with three agreeing sources is more reliable than "moderate confidence" with one source.
+- **Treating the report as gospel**: Deep Research is thorough, but it is still synthesizing web sources that may themselves be outdated or wrong. Weigh each claim by its citations and verification status — three agreeing sources beat one, and anything listed as unverified deserves your own check before you act on it.
 - **Using it for speed-sensitive decisions**: Deep Research takes longer than a simple prompt because it runs multiple searches, fetches pages, and verifies claims. If you need a quick answer in 10 seconds, use a regular prompt. Deep Research is for decisions that are worth spending a minute or two to get right.
 - **Asking multiple unrelated questions in one prompt**: Each Deep Research session works best with a single focused question. If you need to research both "best ORM for our stack" and "CI provider comparison," run them as separate sessions. A combined prompt dilutes the search queries and produces a shallower report on both topics.
 

@@ -1,5 +1,5 @@
 # code-understanding
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** LSP Self-Correction — compiler-backed go-to-definition and find-references beat text search for tracing how components actually connect.
 
@@ -14,3 +14,4 @@
 | 5 | [Project Memory & Context Docs](../approaches/techniques/project-memory.md) | Want the map you built to persist across sessions | Exploration output is knowledge — storing it where every session reads converts one-off investigation into permanent capability |
 | 6 | [Session & Context Management](../approaches/techniques/session-context-management.md) | Long exploration is saturating the context window | Exploration quality degrades silently as context fills; curating the window keeps reasoning over conclusions, not noise |
 | 7 | [context7](../approaches/tools/context7.md) | Working against a library version your training data predates | Version-pinned docs on demand beat guessing from stale memory — evaluation returned real Express v5 docs |
+| 8 | [Visual Artifacts](../approaches/techniques/visual-artifacts.md) | The exploration's output deserves a diagram, not a wall of text | An architecture summary rendered with a dependency diagram turns one session's investigation into the team's onboarding page |

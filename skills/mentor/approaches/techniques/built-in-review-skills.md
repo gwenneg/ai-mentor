@@ -1,5 +1,5 @@
 # Built-in Review Skills
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -14,8 +14,8 @@ A reviewer following a defined methodology catches more than one who "just reads
 ## When to Use It
 
 - Self-reviewing your own changes before pushing — catch bugs your eyes skipped after hours of writing the code
-- Reviewing a teammate's PR when you want a structured first pass before doing your own read-through
-- Post-refactoring cleanup — run `/simplify` after a large restructuring to catch missed deduplication
+- Reviewing a teammate's PR when you want a structured first pass before doing your own read-through — `/review <PR>` runs a fast single-pass, read-only review by number (with no argument it lists open PRs to pick from)
+- Post-refactoring cleanup — run `/simplify` after a large restructuring to find and apply missed deduplication (it applies its fixes; since v2.1.154 it deliberately doesn't hunt for bugs — that's `/code-review`'s job)
 - Confirming a nontrivial change actually works before committing — `/verify` drives the affected flow end-to-end instead of trusting typecheck and unit tests alone
 - CI integration — run reviews automatically on every PR via GitHub Actions
 
@@ -30,7 +30,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 ### Basic (Beginner)
 
 1. Make your code changes and stage them (or leave them unstaged — both work)
-2. Run `/code-review` in your Claude Code session — optionally pass an effort level and a target such as a path or PR number (`/code-review high src/api/`). Effort levels:
+2. Run `/code-review` in your Claude Code session — optionally pass an effort level and a target — a path, PR number, branch name, or ref range like `main...my-feature` (`/code-review high src/api/`). Effort levels:
    - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
    - High: broader coverage, may surface uncertain findings — good for thorough review
    - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
@@ -46,9 +46,9 @@ A reviewer following a defined methodology catches more than one who "just reads
 
 ### Advanced Patterns
 
-- **CI pipeline integration**: Run reviews on every PR without a manual step: use the `claude-code-action` GitHub Action with a review skill as the prompt, so findings post as inline comments alongside the diff. From any CI script, `claude ultrareview` runs the deep cloud review non-interactively.
+- **CI pipeline integration**: For automatic reviews on every PR with inline comments and no CI step at all, the managed **Code Review** product (research preview, Team/Enterprise) integrates via the Claude GitHub App and responds to `@claude review`. To run reviews in your own CI infrastructure instead, use the `claude-code-action` GitHub Action with a review skill as the prompt. From any CI script, `claude ultrareview` runs the deep cloud review non-interactively.
 - **Targeted review with context**: Before running the review, tell Claude about specific concerns: "This change modifies our rate limiter. Run /security-review with extra attention to bypass vectors." The skill uses your context to focus its analysis.
-- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits — see the ultrareview docs for current pricing. Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively.
+- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits — see the ultrareview docs for current pricing. Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively, and `/code-review ultra --fix` applies the verified findings to your working tree when they arrive back.
 
 ## Common Pitfalls
 

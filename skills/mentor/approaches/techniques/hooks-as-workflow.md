@@ -1,5 +1,5 @@
 # Hooks as Workflow
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -28,7 +28,7 @@ Hooks shift feedback left to the earliest possible moment — the instant Claude
 ### Basic (Beginner)
 
 1. Identify the trigger event: `PreToolUse` (before an action), `PostToolUse` (after an action), `Stop` (when Claude finishes responding), `SessionStart`, or `Notification` — among others; see the hooks reference for the full event list
-2. Write the hook action: a shell `command`, a `prompt` fed to the model, or an `agent`
+2. Write the hook action: a shell `command`, a `prompt` fed to the model, an `agent` (experimental), an `http` POST to a URL, or an `mcp_tool` call on a connected MCP server
 3. Add it to `.claude/settings.json` under the `hooks` key
 4. The hook fires automatically — no manual invocation needed
 
@@ -53,7 +53,7 @@ Example — auto-format after every file edit:
 
 - **Hooks plus autonomous loops**: Add a PostToolUse hook that runs tests after every edit. Combined with `/goal "all tests pass"`, Claude gets instant test feedback on each iteration — tightening the autonomous loop.
 - **Hooks plus worktree isolation**: Add a PreToolUse hook that blocks edits outside the worktree directory, preventing agents from accidentally modifying your main working tree.
-- **Hooks plus subagent delegation**: Use `SubagentStop` hooks to log each subagent's result as it finishes, and a Stop hook to post a summary once the main agent completes the turn.
+- **Hooks plus subagent delegation**: Use `SubagentStop` hooks to log each subagent's result as it finishes, and a Stop hook to post a summary once the main agent completes the turn. Since v2.1.195, a hyphenated matcher like `code-reviewer` exact-matches instead of substring-matching — on earlier versions anchor it as `^code-reviewer$` so it doesn't also fire for `senior-code-reviewer`.
 
 ### Advanced Patterns
 
