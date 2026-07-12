@@ -16,7 +16,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A06 | `I just joined this team and the codebase is huge` | code-understanding or onboarding | Either accepted; at most one CLARIFYING (information-gathering/calibration) question. The move's "Do it now" offer and the surprise's "want me to show it" offer are mandated output shape, not questions — never count them against this cap |
 | A07 | `should we use Prisma or Drizzle?` | research or dependency-management | Either accepted |
 | A08 | `add tests before I dare touch this legacy module` | testing | "Before refactoring" phrasing must not misroute to refactoring |
-| A09 | `production error rates spiked 20 minutes ago` | incident-response | Must not route to debugging |
+| A09 | `production error rates spiked 20 minutes ago` | incident-response | Must not route to debugging: the fenced move must be triage/mitigation-shaped (correlate with what changed, contain, roll back, or establish the missing telemetry/deploy-history source), never "inspect this file for bugs" however it is framed. The fixture has no telemetry or git history, so a setup-shaped move (e.g. connecting an observability MCP) is expected — its fence needs the concrete setup command and the service/suspect surface named, not a fixture file path |
 | A10 | `run a code review automatically on every PR` | ci-automation | |
 | A11 | `our screen reader users can't complete signup` | accessibility | |
 | A12 | `what approaches do you know?` | (catalog browse) | Must list approaches directly, no classification |
