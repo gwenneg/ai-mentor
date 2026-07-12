@@ -648,7 +648,12 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
 	b.WriteString(strings.Join(r.ground.plugins, ", ") + "\n")
-	b.WriteString("Of the plugins above, these are PROMOTED first-class approaches (hands-on validated, ranked in the playbooks): " + strings.Join(r.ground.promoted, ", ") + ". They carry NO tier label — expecting a label on them is an error. Tier-label rules apply only to the remaining (directory) plugins.\n")
+	// Bulleted, not comma-joined: a judge scanning a 15-name comma run has
+	// missed entries and failed cases on plugins that ARE in this list.
+	b.WriteString("Of the plugins above, these are PROMOTED first-class approaches (hands-on validated, ranked in the playbooks). They carry NO tier label — expecting a label on them is an error; their record facts count as hands-on validated. Tier-label rules apply only to the remaining (directory) plugins. Check this list name by name before calling a plugin unpromoted:\n")
+	for _, p := range r.ground.promoted {
+		b.WriteString("- " + p + "\n")
+	}
 	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
 	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
 
