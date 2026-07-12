@@ -1,5 +1,5 @@
 # devops
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Worktree Isolation — rendering `terraform plan` or `helm template` in a disposable copy lets you evaluate risky infra changes with zero blast radius.
 

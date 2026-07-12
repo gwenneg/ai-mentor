@@ -65,6 +65,7 @@ Reply with STRICT JSON only: {\"pass\": bool, \"reason\": string}" --model claud
 
 - [Define success criteria and build evaluations](https://platform.claude.com/docs/en/test-and-evaluate/develop-tests) — official guide: criteria design (specific/measurable), eval methods from exact-match to LLM-graded, grading code examples
 - [A statistical approach to model evaluations](https://www.anthropic.com/research/statistical-approach-to-model-evals) — Anthropic research: SEM/confidence intervals on eval scores, resampling nondeterministic evals, paired-difference comparisons
+- [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic engineering: pass@k vs pass^k for consistency claims, structured rubrics for grading each dimension of a task
 
 ## Signals
 

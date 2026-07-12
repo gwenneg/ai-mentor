@@ -30,7 +30,7 @@ Deep Research applies the same adversarial verification that good journalism and
 1. First, check whether your question is specific enough. If it is too broad, Claude will ask clarifying questions before starting the research.
 2. Type: `/deep-research Why does React 19 drop support for defaultProps on function components, and what is the recommended migration path?` and approve the run when Claude Code asks. Deep Research is a bundled dynamic workflow — available on all paid plans (on Pro, turn on Dynamic workflows in `/config`) — and it needs the WebSearch tool available
 3. The run continues in the background while your session stays free: Claude fans out multiple parallel web searches with different query variations, then fetches and reads the actual content of the most relevant pages — not just snippet previews. Check progress anytime with `/workflows`
-4. Independent verification agents adversarially cross-check each claim, and claims that do not survive verification are filtered out of the report
+4. Independent verification agents adversarially cross-check each claim; claims that do not survive verification are filtered out of the report, and claims that could not be checked at all (a rate limit, an API error) are listed as unverified rather than counted as refuted (v2.1.196+)
 5. Claude synthesizes a cited report with confidence levels and source URLs for each finding, so you can verify any claim that matters to your decision
 
 ### Composing with Other Approaches (Intermediate)

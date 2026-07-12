@@ -1,5 +1,5 @@
 # Cloud Sessions & Remote Work
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -18,7 +18,7 @@ Cloud sessions decouple the work from the workstation: you keep the judgment-hea
 
 ## When NOT to Use It
 
-- Work depending on local state: uncommitted changes (the cloud clones from GitHub, not your disk), local databases, devices, or credentials that don't belong in a cloud environment
+- Work depending on local state: local databases, devices, or credentials that don't belong in a cloud environment. (Uncommitted changes are only a blocker for GitHub-connected repos, which clone from GitHub; a repo without a GitHub connection is bundled and uploaded from disk, uncommitted tracked changes included — `CCR_FORCE_BUNDLE=1` forces this — with caveats: untracked files excluded, 100 MB limit, no push-back without GitHub auth)
 - Tight interactive loops where you steer every step — the value is autonomy; constant intervention negates it
 - Repositories your organization hasn't cleared for cloud execution (Owners can disable web sessions org-wide), or setups authenticated by API key or Bedrock/Foundry — cloud sessions and `--teleport` require claude.ai subscription sign-in
 
@@ -44,11 +44,11 @@ Cloud sessions decouple the work from the workstation: you keep the judgment-hea
 - **Tuned environments**: configure cloud environments with setup scripts (cached between runs), environment variables, and network access levels — the default "Trusted" allowlist covers package registries and common dev domains; use Custom to add your own hosts or Full for unrestricted access.
 - **Mobile-first supervision**: dispatch from the terminal before a commute, answer the one clarifying question from your phone, review the finished PR when you arrive.
 - **Remote Control — the local-machine counterpart**: when the task needs your local environment (filesystem, MCP servers, local credentials), run `/remote-control` in a running session or `claude remote-control` in server mode, then continue that session from claude.ai/code or the Claude mobile app. The session keeps executing on your machine — the phone is a window into it, and nothing moves to the cloud. Enable mobile push notifications in `/config` ("Push when Claude decides" / "Push when actions required") to get pinged when it finishes or needs a decision.
-- **Slack dispatch**: with the Claude app installed in your workspace and a repo connected at claude.ai/code, mentioning `@Claude` with a coding task in a channel creates a cloud session that gathers context from the thread, posts progress updates, and offers "View Session" and "Create PR" buttons when done — delegation without leaving the conversation where the bug was reported.
+- **Slack dispatch**: with the Claude app installed in your workspace and a repo connected at claude.ai/code, mentioning `@Claude` with a coding task in a channel creates a cloud session that gathers context from the thread, posts progress updates, and offers "View Session" and "Create PR" buttons when done — delegation without leaving the conversation where the bug was reported. (On Team and Enterprise workspaces this is transitioning to Claude Tag: `@Claude` runs as the organization's shared identity under the same Slack app, so existing setups keep working during the transition.)
 
 ## Common Pitfalls
 
-- **Forgetting to push first**: the most common failure — the cloud VM clones from GitHub, so a handoff referencing local-only commits starts from stale code.
+- **Forgetting to push first**: the most common failure on GitHub-connected repos — the cloud VM clones from GitHub, so a handoff referencing local-only commits starts from stale code. (Repos without a GitHub connection upload a local bundle instead and don't have this problem.)
 - **Auto-fix in automation-heavy repos**: Claude replies to review threads under your GitHub account (labeled as Claude Code). If PR comments trigger automation like Atlantis or Terraform Cloud, a reply can run privileged workflows — review your repo's comment triggers before enabling auto-fix.
 - **Expecting conflict resolution**: GitHub emits no webhook when the base branch advances into conflict, so auto-fix can't react to merge conflicts — open the session and ask for a rebase.
 - **Under-provisioned environments**: a session without your setup script or required env vars fails in ways that look like model failure. If the task needs dependencies installed, configure the environment before dispatching.

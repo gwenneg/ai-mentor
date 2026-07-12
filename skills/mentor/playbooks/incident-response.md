@@ -1,5 +1,5 @@
 # incident-response
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Deep Research — two minutes checking whether it's a known upstream outage can save an hour of debugging code that was never the problem.
 

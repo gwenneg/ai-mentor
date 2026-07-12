@@ -1,5 +1,5 @@
 # onboarding
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Custom Skills — a `/setup-dev` skill is executable documentation: it can't silently go stale the way a wiki page does.
 

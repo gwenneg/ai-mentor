@@ -1,6 +1,6 @@
 ---
 kind: plugin
-last_verified: 2026-07-03
+last_verified: 2026-07-12
 composes_with:
   - plan-mode
   - worktree-isolation

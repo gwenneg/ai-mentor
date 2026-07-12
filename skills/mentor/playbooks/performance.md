@@ -1,5 +1,5 @@
 # performance
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Hooks — benchmarking after every single edit turns optimization from guesswork into a measured experiment per change.
 

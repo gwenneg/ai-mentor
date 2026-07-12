@@ -1,5 +1,5 @@
 # Headless Mode
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 

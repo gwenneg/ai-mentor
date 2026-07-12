@@ -1,5 +1,5 @@
 # research
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Plan Mode — defining evaluation criteria before gathering evidence is the only reliable defense against confirmation bias, and nobody thinks of plan mode for research.
 

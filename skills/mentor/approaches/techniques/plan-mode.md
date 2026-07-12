@@ -1,5 +1,5 @@
 # Plan Mode
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -31,7 +31,7 @@ Separating analysis from execution catches flawed assumptions at the outline sta
 2. Or switch mid-session: press `Shift+Tab` to cycle into Plan Mode, or prefix a single prompt with `/plan`
 3. Describe your task: "The user login flow is broken when SSO tokens expire. Find the root cause and propose a fix."
 4. Claude reads relevant files, traces the logic, and presents a structured plan
-5. Review the plan. Approve it — picking whether Claude executes in auto, accept-edits, or manual mode — or refine: "Good analysis, but let's handle the token refresh in the middleware instead."
+5. Review the plan — `Ctrl+G` opens it in your editor to edit directly before Claude proceeds. Approve it — picking whether Claude executes in auto, accept-edits, or manual mode (the menu also offers refining with Ultraplan in a browser-based review view) — or refine in conversation: "Good analysis, but let's handle the token refresh in the middleware instead."
 
 ### Composing with Other Approaches (Intermediate)
 

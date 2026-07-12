@@ -1,5 +1,5 @@
 # MCP Context (Model Context Protocol)
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -27,7 +27,7 @@ Most coding mistakes happen not because the AI cannot write code, but because it
 ### Basic (Beginner)
 
 1. Identify the external context your task needs. For example: "I need to implement the feature described in PROJ-1234."
-2. Ensure the relevant MCP server is configured in your `.mcp.json` (project-scoped) or `~/.claude.json` (user-scoped) — your project may already have this set up. If not, add it once with `claude mcp add --transport http <name> <server-url>`, or ask Claude: "Help me set up the Jira MCP server so I can pull ticket details directly." Check connection status anytime with `/mcp`, which also handles OAuth sign-in for remote servers.
+2. Ensure the relevant MCP server is configured in your `.mcp.json` (project-scoped) or `~/.claude.json` (user-scoped) — your project may already have this set up. If not, add it once with `claude mcp add --transport http <name> <server-url>`, or ask Claude: "Help me set up the Jira MCP server so I can pull ticket details directly." Check connection status anytime with `/mcp`, which also handles OAuth sign-in for remote servers — or run the OAuth flow from your shell with `claude mcp login <name>` (v2.1.186+; `claude mcp logout <name>` clears the stored credentials).
 3. Ask Claude to pull the context: "Read the requirements from PROJ-1234 and summarize what needs to change."
 4. Claude calls the server's issue-lookup tool, retrieves the ticket, and now has the acceptance criteria in its context window.
 5. Continue your task with the AI grounded in real requirements: "Now implement the changes described in that ticket."

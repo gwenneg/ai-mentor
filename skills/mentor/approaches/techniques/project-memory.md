@@ -1,9 +1,9 @@
 # Project Memory & Context Docs
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
-Project Memory gives Claude persistent knowledge that survives across sessions. Two mechanisms work together: `CLAUDE.md` files hold instructions you write — build commands, conventions, architecture facts — and auto memory holds notes Claude writes for itself as it learns your project. Both load at the start of every conversation, so each session begins already knowing what previous sessions had to be told.
+Project Memory gives Claude persistent knowledge that survives across sessions. Two mechanisms work together: `CLAUDE.md` files hold instructions you write — build commands, conventions, architecture facts — and auto memory holds notes Claude writes for itself as it learns your project. Both load at the start of every conversation — CLAUDE.md in full, auto memory as its `MEMORY.md` index (the first 200 lines or 25KB, with topic files read on demand) — so each session begins already knowing what previous sessions had to be told.
 
 ## Why It Works
 
@@ -41,7 +41,7 @@ Writing knowledge down once converts a per-session cost into a one-time cost —
 
 ### Advanced Patterns
 
-- **Path-scoped rules**: split instructions into `.claude/rules/*.md` files with `paths:` frontmatter (glob patterns like `src/api/**/*.ts`). The rule loads only when Claude works on matching files — modular for teams, cheaper on context.
+- **Path-scoped rules**: split instructions into `.claude/rules/*.md` files with `paths:` frontmatter (glob patterns like `src/api/**/*.ts`). The rule loads only when Claude works on matching files — modular for teams, cheaper on context. Personal rules in `~/.claude/rules/` apply across every project on your machine.
 - **Imports**: `@path/to/file` syntax pulls other files into CLAUDE.md at launch (up to four hops). Use `@AGENTS.md` to share one instruction file with other coding agents, plus Claude-specific lines below the import.
 - **Scope layering**: `~/.claude/CLAUDE.md` for personal preferences everywhere, `./CLAUDE.md` for team-shared project facts, gitignored `./CLAUDE.local.md` for personal project-specific notes, and `claudeMdExcludes` to skip other teams' files in a monorepo.
 

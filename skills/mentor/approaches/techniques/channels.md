@@ -1,5 +1,5 @@
 # Channels
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -40,7 +40,7 @@ The event arrives in the session that already has your files open and remembers 
 
 ### Advanced Patterns
 
-- **Webhook receiver**: build a small channel server that accepts webhooks from CI, deploy pipelines, or monitoring, and forwards them as channel events — the channels reference documents the contract (capability declaration, notification events, reply tools, sender gating).
+- **Webhook receiver**: build a small channel server that accepts webhooks from CI, deploy pipelines, or monitoring, and forwards them as channel events — the channels reference documents the contract (capability declaration, notification events, reply tools, sender gating). During the research preview, `--channels` only accepts allowlisted plugins, so load your custom channel with `claude --dangerously-load-development-channels` (or have an admin add it to the org's `allowedChannelPlugins`).
 - **Sender gating as security boundary**: every approved channel maintains a sender allowlist; unknown senders are silently dropped. Anyone on the allowlist of a permission-relaying channel can approve tool use in your session — only allowlist people you'd trust at your keyboard.
 - **Organization rollout**: on Team/Enterprise plans channels are blocked until an Owner enables `channelsEnabled`; `allowedChannelPlugins` in managed settings restricts which plugins may register, including internal ones from a private marketplace.
 

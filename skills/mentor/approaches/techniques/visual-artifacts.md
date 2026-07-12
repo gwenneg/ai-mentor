@@ -1,5 +1,5 @@
 # Visual Artifacts
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -21,7 +21,7 @@ Some information is spatial, not linear: layout carries meaning terminal text ca
 
 - Quick answers and small results — a page for three findings is ceremony, not clarity
 - Content that must live in the repo — commit the Markdown; publish the artifact as a *view* of it, not the source of truth
-- Sessions that can't publish — headless and CI contexts where nobody clicks links, and setups on Amazon Bedrock, Google Cloud's Agent Platform, or Microsoft Foundry; artifacts require a paid claude.ai plan (Pro, Max, Team, or Enterprise) signed in with `/login`, and Claude writes a local HTML file instead
+- Sessions that can't publish — headless and CI contexts where nobody clicks links, and setups on Amazon Bedrock, Google Cloud's Agent Platform, or Microsoft Foundry; artifacts require a paid claude.ai plan (Pro, Max, Team, or Enterprise) signed in with `/login` — on Enterprise an Owner must enable them first, and org data policies (CMEK, HIPAA, Zero Data Retention) disable them entirely — and Claude writes a local HTML file instead
 
 ## How It Works
 
@@ -41,7 +41,7 @@ Some information is spatial, not linear: layout carries meaning terminal text ca
 
 ### Advanced Patterns
 
-- **Living status pages**: Keep one artifact current across sessions — asking to "refresh the artifact" re-gathers live state and redeploys to the same URL, so the team's bookmark stays valid while the content tracks reality. The official `project-artifact` plugin packages this pattern, remembering the project's sources and published URL between sessions.
+- **Living status pages**: Keep one artifact current across sessions — asking to "refresh the artifact" re-gathers live state and redeploys to the same URL, so the team's bookmark stays valid while the content tracks reality. A *new* session needs the artifact's URL to update it — without the URL it mints a new page. The official `project-artifact` plugin packages this pattern, remembering the project's sources and published URL between sessions.
 - **Interactive deliverables**: Artifacts execute inline JavaScript, so a comparison can have sortable columns and a dependency map can have clickable nodes. Ask for interactivity when the data is bigger than one screen.
 - **Design iteration on mockups**: For greenfield UI work, generate two or three visual directions as separate artifacts and A/B them with stakeholders before writing any application code.
 

@@ -1,5 +1,5 @@
 # Custom Plugins
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -27,9 +27,9 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 ### Basic (Beginner)
 
 1. Build and iterate the components standalone first — skills in `.claude/skills/`, hooks in settings — until they work reliably.
-2. Create the plugin directory with a manifest: `.claude-plugin/plugin.json` holding `name` and `description` (only `plugin.json` goes inside `.claude-plugin/`).
+2. Create the plugin directory, optionally with a manifest: `.claude-plugin/plugin.json` — if present, `name` is its only required field; without one, Claude Code auto-discovers components and derives the plugin name from the directory (only `plugin.json` ever goes inside `.claude-plugin/`).
 3. Move components to the plugin root: `skills/`, `hooks/hooks.json`, `agents/`, `.mcp.json` — each at the top level of the plugin directory.
-4. Test locally: `claude --plugin-dir ./my-plugin`, then `/reload-plugins` as you iterate. Remember your skills are now namespaced: `/my-plugin:release-notes`.
+4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
 5. Run `claude plugin validate .` and fix what it flags before sharing anything.
 
 ### Composing with Other Approaches (Intermediate)

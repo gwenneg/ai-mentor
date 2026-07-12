@@ -1,5 +1,5 @@
 # Autonomous Loops
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
@@ -28,7 +28,7 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 ### Basic (Beginner)
 
 1. Let turns run unattended (optional — `/goal` works in any permission mode, but you would otherwise approve each tool call): press Shift+Tab to cycle to "auto" mode if your account supports it, or set `"defaultMode": "auto"` in `~/.claude/settings.json`
-2. Start a goal: `/goal all tests in tests/payment/ pass`
+2. Start a goal: `/goal all tests in tests/payment/ pass` (requires v2.1.139+)
 3. Claude reads the first failing test output, edits code, runs `pytest tests/payment/`, reads the new failures, and edits again
 4. After each turn, a fast model evaluates the test output against your condition
 5. When all tests pass, the goal clears automatically and Claude stops — check progress anytime with `/goal`, or stop early with `/goal clear`

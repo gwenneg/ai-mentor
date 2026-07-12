@@ -1,9 +1,9 @@
 # Browser Integration
-*Last verified: 2026-07-06*
+*Last verified: 2026-07-12*
 
 ## What It Is
 
-Browser Integration connects Claude Code to your real Chrome or Edge browser through the Claude in Chrome extension — navigating pages, clicking buttons, filling forms, reading the DOM, and watching the console, in a visible window that shares your existing login state. Start a session with `claude --chrome` (or run `/chrome` mid-session) and describe browser tasks in plain language. On the Claude Code desktop app, a built-in sandboxed browser covers the same ground without the extension — Claude pulls up docs, designs, or any external site and reads, clicks through, and interacts with pages the same way it does with local dev-server previews. A separate, heavier capability — computer use — extends the same idea beyond the browser to native macOS apps.
+Browser Integration connects Claude Code to your real Chrome or Edge browser through the Claude in Chrome extension — navigating pages, clicking buttons, filling forms, reading the DOM, and watching the console, in a visible window that shares your existing login state. Start a session with `claude --chrome` (or run `/chrome` mid-session) and describe browser tasks in plain language. On the Claude Code desktop app, a built-in sandboxed Browser pane covers docs, designs, and app testing without the extension — but it uses a clean profile with none of your saved logins (you can sign in manually); when Claude should act as you in your logged-in sessions, the extension remains the path. A separate, heavier capability — computer use — extends the same idea beyond the browser to native macOS apps.
 
 ## Why It Works
 

@@ -1,5 +1,5 @@
 # api-design
-*Last verified: 2026-07-03*
+*Last verified: 2026-07-12*
 
 **Hidden gem:** Built-In Review Skills — pointing `/code-review` at only the API surface catches breaking changes and naming drift that no test suite will.
 
