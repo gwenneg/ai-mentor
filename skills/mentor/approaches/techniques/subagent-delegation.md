@@ -19,7 +19,7 @@ Context windows are finite and degrade as they fill; delegating subtasks to fres
 ## When NOT to Use It
 
 - Small, focused tasks where the overhead of spawning and summarizing outweighs the benefit
-- Tightly coupled changes where Agent B needs to see exactly what Agent A wrote — the summary may lose critical details
+- Tightly coupled changes where Agent B needs to see exactly what Agent A wrote — the summary may lose critical details (a *fork* subagent, which inherits the whole conversation, covers some of these cases — see Advanced Patterns)
 - When you need the agent to interact with you iteratively — subagents run autonomously and return results, they do not ask follow-up questions
 
 ## How It Works
@@ -50,6 +50,7 @@ Claude can spawn one subagent for correctness review and another for security re
 
 - **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` to be enabled): Multiple Claude instances share a task list and message each other directly via `SendMessage`. Unlike simple subagents (which report to a parent), team members are peers: tasks can declare dependencies, and teammates self-claim the next unblocked task when they finish one. Best for work requiring discussion — competing debugging hypotheses, multi-lens reviews — at a significantly higher token cost than subagents.
 - **Scaling beyond one session**: Subagents live inside your session and do not appear in agent view (`claude agents`) — that board tracks background sessions. When you want many parallel workers you can monitor and steer from one screen, dispatch separate background sessions instead (see Background Agents).
+- **Resume, fork, nest**: Subagents are resumable — ask Claude to resume one and it retains its full conversation history, picking up where it stopped (the built-in Explore and Plan types are one-shot and can't be). A *fork* inherits the entire parent conversation instead of starting fresh — the tool for tasks that need everything, not a summary. And subagents can spawn their own subagents (v2.1.172+, depth capped at five levels), so a reviewer can dispatch a verifier per finding without the intermediate output ever reaching your session.
 - **Typed subagents**: Choose agent types based on the task — `Explore` for read-only code search (fast, cannot edit) or general-purpose for tasks that require both reading and writing. The built-in `Plan` type is mainly Claude's own: it spawns it for read-only codebase research while in Plan Mode.
 
 ## Common Pitfalls

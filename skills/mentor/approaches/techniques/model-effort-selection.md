@@ -35,7 +35,7 @@ No single model configuration is best at everything; matching the model and effo
 ### Composing with Other Approaches (Intermediate)
 
 - **Model selection plus subagent delegation**: Run the main session on a strong model and delegate volume work to Haiku subagents — summarizing files, checking conventions, scanning for patterns. The orchestrator keeps the judgment; the cheap agents do the reading.
-- **Effort plus Plan Mode**: Plan a risky migration at `xhigh` effort where reasoning quality matters most, then execute the approved plan at normal effort — the thinking-intensive phase is the plan, not the edits.
+- **Effort plus Plan Mode**: Plan a risky migration at `xhigh` effort where reasoning quality matters most, then execute the approved plan at normal effort — the thinking-intensive phase is the plan, not the edits. The `opusplan` model alias packages the same idea at the model level: `opus` during plan mode, then `sonnet` for execution.
 - **Model tiers plus custom agents**: Define the same reviewer agent twice in `.claude/agents/` — a `quick-review` on Haiku for draft PRs and a `deep-review` on Opus for release candidates — and pick by stakes.
 
 ### Advanced Patterns
