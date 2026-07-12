@@ -70,7 +70,7 @@ func fetchLiveNames(client *http.Client, url string) ([]string, error) {
 // goal slugs and command names backticked in prose or description cells are
 // never mistaken for plugins. Two sources: the first backticked token of each
 // table row, and every backticked token in the prose-list sections (Language
-// servers, Specialty). Keep in sync with the copy in tools/structural-audit/main.go.
+// servers, Specialty). Keep in sync with the copy in tools/catalog-lint/main.go.
 func pluginNames(text string) []string {
 	var names []string
 	proseList := false
@@ -139,7 +139,7 @@ func report(w io.Writer, live, documented []string) bool {
 // findRoot walks upward from dir to the first directory containing
 // skills/mentor, so the check works from anywhere in the repo — including
 // tools/catalog-drift itself, where `go -C tools/catalog-drift run .` lands.
-// Keep in sync with the copy in tools/structural-audit/main.go.
+// Keep in sync with the copy in tools/catalog-lint/main.go.
 func findRoot(dir string) (string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {

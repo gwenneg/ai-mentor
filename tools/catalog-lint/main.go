@@ -1,4 +1,4 @@
-// Deterministic structural audit for the ai-mentor catalog.
+// Deterministic structural lint for the ai-mentor catalog.
 //
 // Checks the playbooks tables, approach files (technique deep-dives and flat
 // records), cross-references, the changelog ledger, and SKILL.md consistency.
@@ -9,11 +9,12 @@
 // tools/approaches-index generates it from the same sources and its -check
 // mode is the freshness gate in CI.
 //
-// Usage: go -C tools/structural-audit run . [repo-root]
+// Usage: go -C tools/catalog-lint run . [repo-root]
 package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -24,7 +25,7 @@ import (
 )
 
 const (
-	datePat          = `\d{4}-\d{2}-\d{2}`
+	refPat           = `approaches/(techniques|tools)/[a-z0-9-]+\.md`
 	minGoalRows      = 3
 	minApproachLines = 40
 )
@@ -32,18 +33,13 @@ const (
 var (
 	reRow         = regexp.MustCompile(`^\| (\d+) \| \[([^\]]+)\]`)
 	reGem         = regexp.MustCompile(`^\*\*Hidden gem:\*\* ([^—\n]+)`)
-	rePlugLine    = regexp.MustCompile(`^\*\*Plugins:\*\* `)
 	rePlugTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 	reRowName     = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
-	reDocRef      = regexp.MustCompile(`playbooks/[a-z0-9-]+\.md|approaches/(techniques|tools)/[a-z0-9-]+\.md|approaches/index\.md|\b(marketplace|profile-schema|processed-changelogs)\.md`)
-	reRef         = regexp.MustCompile(`approaches/(techniques|tools)/[a-z0-9-]+\.md`)
-	reLastVer     = regexp.MustCompile(`^last_verified: (` + datePat + `)$`)
+	reDocRef      = regexp.MustCompile(`playbooks/[a-z0-9-]+\.md|` + refPat + `|approaches/index\.md|\b(marketplace|profile-schema|processed-changelogs)\.md`)
+	reRef         = regexp.MustCompile(refPat)
 	reSource      = regexp.MustCompile(`^- \[[^\]]+\]\(https?://`)
 	reLedger      = regexp.MustCompile(`^\| *\[([^\]]+)\]`)
 	reWeek        = regexp.MustCompile(`^\d{4}-w\d{2}$`)
-	reDateTail    = regexp.MustCompile(`^` + datePat + `\*`)
-	reBuiltinL    = regexp.MustCompile(`^\*\*Built-ins:\*\* `)
-	reIntegL      = regexp.MustCompile(`^\*\*Integrations:\*\* `)
 	reRegKind     = regexp.MustCompile(`^kind: ([a-z-]+)$`)
 	reClassifyRow = regexp.MustCompile("^\\| `([a-z0-9-]+)` \\|")
 	reCount       = regexp.MustCompile(`(\d+) goal categories`)
@@ -87,6 +83,11 @@ func lines(path string) []string {
 	return strings.Split(string(b), "\n")
 }
 
+// slug returns an approach file's id: its base name without .md.
+func slug(path string) string {
+	return strings.TrimSuffix(filepath.Base(path), ".md")
+}
+
 // cells splits a Markdown table row on '|' and trims each cell.
 func cells(l string) []string {
 	cs := strings.Split(l, "|")
@@ -96,8 +97,8 @@ func cells(l string) []string {
 	return cs
 }
 
-// validDate reports whether s is a real calendar date (rejects 2026-99-99,
-// which the format regex alone would accept).
+// validDate reports whether s is exactly a real YYYY-MM-DD calendar date —
+// time.Parse enforces zero-padding and rejects any surrounding text.
 func validDate(s string) bool {
 	_, err := time.Parse("2006-01-02", s)
 	return err == nil
@@ -107,7 +108,7 @@ func validDate(s string) bool {
 // backticked token of each table row plus the backticked tokens in the prose
 // sections (Language servers, Specialty). Nothing else — so goal slugs and
 // backticked command names are never mistaken for plugins. Keep in sync with
-// the copy in tools/catalog-drift/main.go.
+// the copies in tools/catalog-drift/main.go and tools/eval-runner/main.go.
 func pluginNames(text string) []string {
 	var names []string
 	proseList := false
@@ -130,17 +131,23 @@ func pluginNames(text string) []string {
 	return names
 }
 
+// checkRefs stats every catalog path re finds in text, reporting broken ones
+// against at.
+func (a *auditor) checkRefs(at, text string, re *regexp.Regexp) {
+	for _, ref := range dedup(re.FindAllString(text, -1)) {
+		if _, err := os.Stat(filepath.Join(a.skill, ref)); err != nil {
+			a.issue(at, "broken reference %s", ref)
+		}
+	}
+}
+
 // checkDocRefs verifies that catalog paths named in SKILL.md and the mode
 // files resolve — the load-bearing references (profile-schema, registries,
 // routing, approaches) that nothing else in the audit reads.
 func (a *auditor) checkDocRefs(files ...string) {
 	for _, f := range files {
-		text := strings.Join(lines(f), "\n")
-		for _, ref := range dedup(reDocRef.FindAllString(text, -1)) {
-			if _, err := os.Stat(filepath.Join(a.skill, ref)); err != nil {
-				a.issue(f, "broken reference %s", ref)
-			}
-		}
+		b, _ := os.ReadFile(f)
+		a.checkRefs(f, string(b), reDocRef)
 	}
 }
 
@@ -150,8 +157,8 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 	ok := false
 	if len(ls) >= 2 {
 		if rest, found := strings.CutPrefix(ls[1], "*"+label+": "); found {
-			if m := reDateTail.FindString(rest); m != "" {
-				ok = validDate(strings.TrimSuffix(m, "*"))
+			if date, _, closed := strings.Cut(rest, "*"); closed {
+				ok = validDate(date)
 			}
 		}
 	}
@@ -164,8 +171,7 @@ func (a *auditor) dateLine(path, label string, ls []string) {
 // date line, hidden gem, at least minGoalRows sequentially numbered rows,
 // cross-references, and orphans. ranked maps every approach id — technique
 // or record — to its file path; each must appear in at least one ranked row:
-// the ranking is the only routing surface (Plugins/Built-ins/Integrations
-// lines are forbidden relics).
+// the ranking is the only routing surface.
 func (a *auditor) checkRouting(dir string, ranked map[string]string) []string {
 	files, _ := filepath.Glob(filepath.Join(dir, "*.md"))
 	if len(files) == 0 {
@@ -175,16 +181,14 @@ func (a *auditor) checkRouting(dir string, ranked map[string]string) []string {
 	var goals []string
 	var all strings.Builder
 	for _, f := range files {
-		ls := lines(f)
-		goals = append(goals, strings.TrimSuffix(filepath.Base(f), ".md"))
+		b, _ := os.ReadFile(f)
+		ls := strings.Split(string(b), "\n")
+		goals = append(goals, slug(f))
 		a.dateLine(f, "Last verified", ls)
 		rows, gem := []string{}, ""
 		for _, l := range ls {
 			if m := reGem.FindStringSubmatch(l); m != nil {
-				gem = m[1]
-			}
-			if rePlugLine.MatchString(l) || reBuiltinL.MatchString(l) || reIntegL.MatchString(l) {
-				a.issue(f, "capability line found — every approach is a ranked row; Plugins/Built-ins/Integrations lines are forbidden")
+				gem = strings.TrimSpace(m[1])
 			}
 			if m := reRow.FindStringSubmatch(l); m != nil {
 				if n, _ := strconv.Atoi(m[1]); n != len(rows)+1 {
@@ -199,28 +203,24 @@ func (a *auditor) checkRouting(dir string, ranked map[string]string) []string {
 		if gem == "" {
 			a.issue(f, "missing Hidden gem line")
 		} else {
-			g := strings.ToLower(strings.TrimSpace(gem))
+			g := strings.ToLower(gem)
 			ok := slices.ContainsFunc(rows, func(r string) bool {
 				rl := strings.ToLower(r)
 				return strings.Contains(g, rl) || strings.Contains(rl, g)
 			})
 			if !ok {
-				a.issue(f, "Hidden gem '%s' does not match any ranked row", strings.TrimSpace(gem))
+				a.issue(f, "Hidden gem '%s' does not match any ranked row", gem)
 			}
 		}
-		all.WriteString(strings.Join(ls, "\n"))
-		all.WriteString("\n")
+		all.Write(b)
+		all.WriteByte('\n')
 	}
 
 	text := all.String()
-	for _, ref := range dedup(reRef.FindAllString(text, -1)) {
-		if _, err := os.Stat(filepath.Join(a.skill, ref)); err != nil {
-			a.issue(dir, "broken reference %s", ref)
-		}
-	}
-	for name, path := range ranked {
+	a.checkRefs(dir, text, reRef)
+	for _, name := range slices.Sorted(maps.Keys(ranked)) {
 		if !strings.Contains(text, "/"+name+".md") {
-			a.issue(path, "orphan: not ranked by any playbooks file")
+			a.issue(ranked[name], "orphan: not ranked by any playbooks file")
 		}
 	}
 	return goals
@@ -230,9 +230,12 @@ func (a *auditor) checkApproach(path string) {
 	ls := lines(path)
 	a.dateLine(path, "Last verified", ls)
 
+	find := func(s string) int {
+		return slices.IndexFunc(ls, func(l string) bool { return strings.Contains(l, s) })
+	}
 	pos := 0
 	for _, s := range approachSections {
-		ln := slices.IndexFunc(ls, func(l string) bool { return strings.Contains(l, s) }) + 1
+		ln := find(s) + 1
 		switch {
 		case ln == 0:
 			a.issue(path, "missing section '%s'", s)
@@ -243,9 +246,6 @@ func (a *auditor) checkApproach(path string) {
 		}
 	}
 
-	find := func(s string) int {
-		return slices.IndexFunc(ls, func(l string) bool { return strings.Contains(l, s) })
-	}
 	if ex := find("## Real-World Example"); ex >= 0 {
 		if src := find("## Sources"); ex < find("## Common Pitfalls") || (src >= 0 && ex > src) {
 			a.issue(path, "section '## Real-World Example' out of order")
@@ -268,11 +268,12 @@ func (a *auditor) checkApproach(path string) {
 	}
 }
 
-func (a *auditor) checkLedger(path string) {
+// checkLedger returns the number of ledger rows for the summary line.
+func (a *auditor) checkLedger(path string) (weeks int) {
 	ls := lines(path)
 	if ls == nil {
 		a.issue(path, "missing processed-changelog ledger")
-		return
+		return 0
 	}
 	a.dateLine(path, "Updated", ls)
 
@@ -282,27 +283,28 @@ func (a *auditor) checkLedger(path string) {
 		if m == nil {
 			continue
 		}
-		a.weeks++
-		slug := m[1]
-		if !reWeek.MatchString(slug) {
-			a.issue(path, "row '%s' is not a week slug like 2026-w26", slug)
+		weeks++
+		week := m[1]
+		if !reWeek.MatchString(week) {
+			a.issue(path, "row '%s' is not a week slug like 2026-w26", week)
 		}
-		if seen[slug] {
-			a.issue(path, "duplicate ledger row for '%s'", slug)
+		if seen[week] {
+			a.issue(path, "duplicate ledger row for '%s'", week)
 		}
-		seen[slug] = true
+		seen[week] = true
 		cs := cells(l)
 		if len(cs) < 5 {
-			a.issue(path, "row '%s' is malformed (need | Week | Processed | Outcome |)", slug)
+			a.issue(path, "row '%s' is malformed (need | Week | Processed | Outcome |)", week)
 			continue
 		}
 		if !validDate(cs[2]) {
-			a.issue(path, "row '%s' has invalid processed date '%s'", slug, cs[2])
+			a.issue(path, "row '%s' has invalid processed date '%s'", week, cs[2])
 		}
 		if cs[3] == "" {
-			a.issue(path, "row '%s' has an empty outcome", slug)
+			a.issue(path, "row '%s' has an empty outcome", week)
 		}
 	}
+	return weeks
 }
 
 func (a *auditor) checkProblemMode(path string, goals []string) {
@@ -313,7 +315,7 @@ func (a *auditor) checkProblemMode(path string, goals []string) {
 			table = append(table, m[1])
 		}
 	}
-	missing, stale := diff(goals, table)
+	missing, stale := subtract(goals, table), subtract(dedup(table), goals)
 	for _, x := range missing {
 		a.issue(path, "routing goal %s missing from the problem-mode classification table", x)
 	}
@@ -349,20 +351,6 @@ func (a *auditor) run() error {
 	}
 	recFiles, _ := filepath.Glob(filepath.Join(recDir, "*.md"))
 
-	// ranked maps every approach id to its file path — the orphan check and
-	// per-kind checks report against the real subfolder location.
-	ranked := map[string]string{}
-	recordKind := map[string]string{} // id -> kind
-	for _, f := range techFiles {
-		ranked[strings.TrimSuffix(filepath.Base(f), ".md")] = f
-	}
-	for _, f := range recFiles {
-		id := strings.TrimSuffix(filepath.Base(f), ".md")
-		ranked[id] = f
-		recordKind[id] = fileKind(f) // "" (missing kind) is the generator's error
-	}
-	a.approaches = len(ranked)
-
 	catalog := map[string]bool{}
 	catPath := filepath.Join(a.skill, "marketplace.md")
 	catText, catErr := os.ReadFile(catPath)
@@ -372,30 +360,40 @@ func (a *auditor) run() error {
 	for _, n := range pluginNames(string(catText)) {
 		catalog[n] = true
 	}
-	// Every approach — technique or record — must be a ranked row; kind is a
-	// semantic label, not a routing tier. Promoted plugins additionally must
-	// not retain a marketplace.md directory row.
-	for id, kind := range recordKind {
-		switch kind {
+
+	// ranked maps every approach id to its file path — the orphan check
+	// reports against the real subfolder location. Every approach — technique
+	// or record — must be a ranked row; kind is a semantic label, not a
+	// routing tier. Promoted plugins additionally must not retain a
+	// marketplace.md directory row.
+	ranked := map[string]string{}
+	for _, f := range techFiles {
+		ranked[slug(f)] = f
+	}
+	for _, f := range recFiles {
+		id := slug(f)
+		ranked[id] = f
+		switch kind := fileKind(f); kind { // "" (missing kind) is the generator's error
 		case "plugin":
 			if catalog[id] {
-				a.issue(ranked[id], "promoted plugin still has a marketplace.md row — remove the directory row")
+				a.issue(f, "promoted plugin still has a marketplace.md row — remove the directory row")
 			}
 		case "integration", "doc", "":
 		default:
-			a.issue(ranked[id], "unknown kind '%s'", kind)
+			a.issue(f, "unknown kind '%s'", kind)
 		}
 	}
+	a.approaches = len(ranked)
 
 	goals := a.checkRouting(filepath.Join(a.skill, "playbooks"), ranked)
 	a.goals = len(goals)
 	for _, f := range recFiles {
-		a.checkRecord(f, goals)
+		a.checkRecord(f)
 	}
 	for _, f := range techFiles {
 		a.checkApproach(f)
 	}
-	a.checkLedger(filepath.Join(a.skill, "processed-changelogs.md"))
+	a.weeks = a.checkLedger(filepath.Join(a.skill, "processed-changelogs.md"))
 	a.checkProblemMode(filepath.Join(a.skill, "problem-mode.md"), goals)
 	a.checkDocRefs(
 		filepath.Join(a.skill, "SKILL.md"),
@@ -417,26 +415,22 @@ func dedup(xs []string) []string {
 	return out
 }
 
-// diff returns (in a but not b, in b but not a), preserving order.
-func diff(a, b []string) (onlyA, onlyB []string) {
-	for _, x := range a {
-		if !slices.Contains(b, x) {
-			onlyA = append(onlyA, x)
+// subtract returns the elements of xs not in ys, preserving order.
+func subtract(xs, ys []string) []string {
+	var out []string
+	for _, x := range xs {
+		if !slices.Contains(ys, x) {
+			out = append(out, x)
 		}
 	}
-	for _, x := range dedup(b) {
-		if !slices.Contains(a, x) {
-			onlyB = append(onlyB, x)
-		}
-	}
-	return
+	return out
 }
 
 // checkRecord audits one flat record under approaches/tools/: it must be a
 // pure ----delimited YAML frontmatter file with a valid last_verified date.
 // Content completeness (kind, session_signal, no inline goals/best_when) is
 // the generator's job.
-func (a *auditor) checkRecord(path string, _ []string) {
+func (a *auditor) checkRecord(path string) {
 	ls := lines(path)
 	if len(ls) < 3 || ls[0] != "---" {
 		a.issue(path, "record must be a pure YAML frontmatter file starting with ---")
@@ -448,7 +442,7 @@ func (a *auditor) checkRecord(path string, _ []string) {
 			closed = true
 			break
 		}
-		if m := reLastVer.FindStringSubmatch(l); m != nil && validDate(m[1]) {
+		if v, found := strings.CutPrefix(l, "last_verified: "); found && validDate(v) {
 			dated = true
 		}
 	}
@@ -462,8 +456,9 @@ func (a *auditor) checkRecord(path string, _ []string) {
 
 // findRoot walks upward from dir to the first directory containing
 // skills/mentor, so the audit works from anywhere in the repo — including
-// tools/structural-audit itself, where `go -C tools/structural-audit run .` lands.
-// Keep in sync with the copy in tools/catalog-drift/main.go.
+// tools/catalog-lint itself, where `go -C tools/catalog-lint run .` lands.
+// Keep in sync with the copies in tools/catalog-drift, tools/approaches-index,
+// and tools/eval-runner.
 func findRoot(dir string) (string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
@@ -506,5 +501,5 @@ func main() {
 		fmt.Printf("\n%d issue(s) found (listed above).\n", len(a.issues))
 		os.Exit(1)
 	}
-	fmt.Println("Structural audit: PASS")
+	fmt.Println("Catalog lint: PASS")
 }

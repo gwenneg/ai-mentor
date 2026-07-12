@@ -235,7 +235,7 @@ func dedup(xs []string) []string {
 }
 
 // findRoot walks upward from dir to the first directory containing
-// skills/mentor. Keep in sync with the copy in tools/structural-audit/main.go.
+// skills/mentor. Keep in sync with the copy in tools/catalog-lint/main.go.
 func findRoot(dir string) (string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {

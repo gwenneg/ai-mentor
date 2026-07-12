@@ -6,22 +6,22 @@ on:
   pull_request:
 
 jobs:
-  structural-audit:
+  catalog-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
-          go-version-file: tools/structural-audit/go.mod
+          go-version-file: tools/catalog-lint/go.mod
           cache: false
       - name: Self-test the Go tools (every audit check must fail the gate)
         run: |
-          go -C tools/structural-audit test ./...
+          go -C tools/catalog-lint test ./...
           go -C tools/catalog-drift test ./...
           go -C tools/eval-runner test ./...
           go -C tools/approaches-index test ./...
-      - name: Structural audit (deterministic, no LLM)
-        run: go -C tools/structural-audit run .
+      - name: Catalog lint (deterministic, no LLM)
+        run: go -C tools/catalog-lint run .
       - name: Capability index freshness (index.md is generated, never hand-edited)
         run: go -C tools/approaches-index run . -check
 
