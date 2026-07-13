@@ -104,6 +104,37 @@ func TestSelectCasesFiltersByID(t *testing.T) {
 	if _, err := selectCases(all, []string{"A"}, []string{"A99"}); err == nil {
 		t.Error("a filter matching nothing should be fatal")
 	}
+	// A partially matching filter must be fatal too, naming the missing ID —
+	// this is what keeps the smoke list loud when cases.md drifts.
+	if _, err := selectCases(all, []string{"A"}, []string{"A01", "A99"}); err == nil {
+		t.Error("an unmatched requested ID should be fatal even when others match")
+	} else if !strings.Contains(err.Error(), "A99") {
+		t.Errorf("error should name the missing ID, got: %v", err)
+	}
+}
+
+// The smoke tier is a hand-curated ID list; every entry must exist in the
+// real cases.md, or a rename silently shrinks the per-change signal.
+func TestSmokeCasesExistInSuite(t *testing.T) {
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, err := os.ReadFile(filepath.Join(root, "evals", "cases.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, _, err := parseCases(string(text))
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel, err := selectCases(all, []string{"A", "B", "C"}, smokeCases)
+	if err != nil {
+		t.Fatalf("smoke tier drifted from cases.md: %v", err)
+	}
+	if len(sel) != len(smokeCases) {
+		t.Errorf("want %d smoke cases, selected %d", len(smokeCases), len(sel))
+	}
 }
 
 func TestParseVerdictLenient(t *testing.T) {
@@ -499,6 +530,110 @@ func TestRunAllOrderAndBound(t *testing.T) {
 	}
 	if peak < 2 {
 		t.Errorf("cases did not actually run concurrently (peak %d)", peak)
+	}
+}
+
+func TestExpandEpochs(t *testing.T) {
+	cases := []evalCase{{ID: "A01"}, {ID: "B01"}}
+	if got := expandEpochs(cases, 1); len(got) != 2 {
+		t.Fatalf("epochs=1 must be a no-op, got %d cases", len(got))
+	}
+	got := expandEpochs(cases, 3)
+	var ids []string
+	for _, c := range got {
+		ids = append(ids, c.ID)
+	}
+	want := []string{"A01", "A01", "A01", "B01", "B01", "B01"}
+	if !slices.Equal(ids, want) {
+		t.Errorf("copies must be adjacent per case: got %v", ids)
+	}
+}
+
+func TestAggregateEpochs(t *testing.T) {
+	mk := func(id, verdict, reason string) result {
+		return result{c: evalCase{Group: "A", ID: id}, verdict: verdict, reason: reason, response: "resp-" + id}
+	}
+	results := []result{
+		mk("A01", vPass, ""), mk("A01", vPass, ""), mk("A01", vPass, ""),
+		mk("A02", vPass, ""), mk("A02", vFail, "bad shape"), mk("A02", vPass, ""),
+		mk("A03", vFail, "wrong goal"), mk("A03", vPass, ""), mk("A03", vFail, "wrong goal"),
+		mk("A04", vError, "boom"), mk("A04", vError, "boom"), mk("A04", vError, "boom"),
+	}
+	if got := aggregateEpochs(results, 1); len(got) != len(results) {
+		t.Fatalf("epochs=1 must be a no-op, got %d results", len(got))
+	}
+	agg := aggregateEpochs(results, 3)
+	if len(agg) != 4 {
+		t.Fatalf("want 4 aggregated results, got %d", len(agg))
+	}
+	if agg[0].verdict != vPass || agg[0].reason != "" {
+		t.Errorf("clean 3/3 must be a PASS with no reason, got %s (%q)", agg[0].verdict, agg[0].reason)
+	}
+	if agg[1].verdict != vPass {
+		t.Errorf("2/3 pass is a strict majority — want PASS, got %s", agg[1].verdict)
+	}
+	if !strings.Contains(agg[1].reason, "FLAKY 2/3") || !strings.Contains(agg[1].reason, "bad shape") {
+		t.Errorf("a flaky pass must stay visible with the failing epoch's reason, got %q", agg[1].reason)
+	}
+	if agg[1].response != "resp-A02" {
+		t.Error("the failing epoch's response must be kept for the report")
+	}
+	if agg[2].verdict != vFail || !strings.Contains(agg[2].reason, "FLAKY 1/3") {
+		t.Errorf("1/3 pass must be a flagged FAIL, got %s (%q)", agg[2].verdict, agg[2].reason)
+	}
+	if agg[3].verdict != vError || !strings.Contains(agg[3].reason, "0/3 epochs passed") {
+		t.Errorf("all-ERROR epochs must aggregate to ERROR, got %s (%q)", agg[3].verdict, agg[3].reason)
+	}
+}
+
+// A broken or missing catalog read must be fatal, never a silently empty
+// fabrication whitelist (the judge fails any plugin absent from it).
+func TestBuildGroundTruth(t *testing.T) {
+	repo, fixture := t.TempDir(), t.TempDir()
+	skill := filepath.Join(repo, "skills", "mentor")
+	if _, err := buildGroundTruth(repo, fixture); err == nil {
+		t.Error("missing marketplace.md must be an error")
+	}
+	if err := os.MkdirAll(skill, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	market := filepath.Join(skill, "marketplace.md")
+	if err := os.WriteFile(market, []byte("# Plugins\n\nno table rows here\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := buildGroundTruth(repo, fixture); err == nil {
+		t.Error("a marketplace.md yielding zero plugin names must be an error")
+	}
+	if err := os.WriteFile(market, []byte("# Plugins\n\n| `security-guidance` | desc |\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := buildGroundTruth(repo, fixture); err == nil {
+		t.Error("zero approach files must be an error")
+	}
+	writeApproach := func(rel, content string) {
+		p := filepath.Join(skill, "approaches", rel)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeApproach("quality/plan-mode.md", "# Plan mode\n")
+	writeApproach("tools/code-modernization.md", "kind: plugin\n")
+	writeApproach("integrations/github-actions.md", "kind: integration\n")
+	gt, err := buildGroundTruth(repo, fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(gt.plugins, "security-guidance") || !slices.Contains(gt.plugins, "code-modernization") {
+		t.Errorf("plugins wrong: %v", gt.plugins)
+	}
+	if !slices.Equal(gt.promoted, []string{"code-modernization"}) {
+		t.Errorf("promoted wrong: %v", gt.promoted)
+	}
+	if !slices.Equal(gt.techniques, []string{"plan-mode"}) || !slices.Equal(gt.integrations, []string{"github-actions"}) {
+		t.Errorf("techniques/integrations wrong: %v / %v", gt.techniques, gt.integrations)
 	}
 }
 

@@ -8,6 +8,10 @@
 // Exits 0 on success, 1 when -gate is set and any case fails or errors,
 // 2 on a fatal setup problem. Stdlib only.
 //
+// -smoke runs the curated per-change tier (see smokeCases); -epochs N runs
+// every selected case N times, passing on a strict majority and flagging
+// mixed results FLAKY.
+//
 // Usage: go -C tools/eval-runner run . -repo ../.. -groups A,B,C -gate
 package main
 
@@ -46,6 +50,15 @@ var (
 	reRowName = regexp.MustCompile("^\\| `([a-z0-9.-]+)`")
 	reTok     = regexp.MustCompile("`([a-z0-9.-]+)`")
 )
+
+// smokeCases is the curated smoke tier (-smoke): one case per behavior class,
+// for cheap per-change runs — the full suite stays the release gate.
+// A01 canonical classified shape · A08 misroute trap · A13 graceful decline ·
+// A19 promoted-plugin displacement pin · A20 stack-match tier label + portable
+// prompt · B01 first meeting + profile creation · B06 saturated ignorance
+// map · C01 adopted-not-retaught · C02 same-HOME double run.
+// selectCases fails loudly if any of these IDs drops out of cases.md.
+var smokeCases = []string{"A01", "A08", "A13", "A19", "A20", "B01", "B06", "C01", "C02"}
 
 // evalCase is one row from a cases.md group table. Statement holds the
 // problem statement for Group A and the fixture/setup description otherwise.
@@ -134,10 +147,12 @@ func parseCases(text string) (map[string][]evalCase, string, error) {
 }
 
 // selectCases returns the requested cases in table order. A requested group
-// that parsed to zero cases is fatal — format drift must be loud, never a
-// silently green run.
+// that parsed to zero cases is fatal, and so is a requested ID that matches
+// nothing — format drift (or a stale smoke list) must be loud, never a
+// silently smaller run.
 func selectCases(all map[string][]evalCase, groups, ids []string) ([]evalCase, error) {
 	var out []evalCase
+	matched := map[string]bool{}
 	for _, g := range groups {
 		gc := all[g]
 		if len(gc) == 0 {
@@ -146,11 +161,14 @@ func selectCases(all map[string][]evalCase, groups, ids []string) ([]evalCase, e
 		for _, c := range gc {
 			if len(ids) == 0 || slices.Contains(ids, c.ID) {
 				out = append(out, c)
+				matched[c.ID] = true
 			}
 		}
 	}
-	if len(out) == 0 {
-		return nil, fmt.Errorf("no cases match -cases %s in the requested groups", strings.Join(ids, ","))
+	for _, id := range ids {
+		if !matched[id] {
+			return nil, fmt.Errorf("case %s not found in the requested groups — typo or cases.md drift?", id)
+		}
 	}
 	return out, nil
 }
@@ -172,7 +190,7 @@ func statementsByID(as []evalCase) map[string]string {
 func approachNames(repo string) ([]string, error) {
 	files, err := filepath.Glob(filepath.Join(repo, "skills", "mentor", "approaches", "*", "*.md"))
 	if err != nil || len(files) == 0 {
-		return nil, fmt.Errorf("no approach files under %s/skills/mentor/solutions", repo)
+		return nil, fmt.Errorf("no approach files under %s/skills/mentor/approaches", repo)
 	}
 	var names []string
 	for _, f := range files {
@@ -195,14 +213,25 @@ type groundTruth struct {
 }
 
 // buildGroundTruth reads the catalog and fixture once so every judge call can
-// check recommendations against them.
-func buildGroundTruth(repo, fixture string) groundTruth {
+// check recommendations against them. Any failure here must be fatal to the
+// caller: the judge prompt frames the plugin list as COMPLETE and fails
+// anything absent as a fabrication, so a silently empty or truncated list
+// would mass-fail every plugin recommendation.
+func buildGroundTruth(repo, fixture string) (groundTruth, error) {
 	skill := filepath.Join(repo, "skills", "mentor")
 	gt := groundTruth{fixture: fixtureFiles(fixture)}
-	if b, err := os.ReadFile(filepath.Join(skill, "marketplace.md")); err == nil {
-		gt.plugins = pluginNames(string(b))
+	b, err := os.ReadFile(filepath.Join(skill, "marketplace.md"))
+	if err != nil {
+		return gt, fmt.Errorf("judge ground truth: %w", err)
 	}
-	files, _ := filepath.Glob(filepath.Join(skill, "approaches", "*", "*.md"))
+	gt.plugins = pluginNames(string(b))
+	if len(gt.plugins) == 0 {
+		return gt, fmt.Errorf("judge ground truth: zero plugin names parsed from marketplace.md — format drift?")
+	}
+	files, err := filepath.Glob(filepath.Join(skill, "approaches", "*", "*.md"))
+	if err != nil || len(files) == 0 {
+		return gt, fmt.Errorf("judge ground truth: no approach files under %s: %v", filepath.Join(skill, "approaches"), err)
+	}
 	for _, f := range files {
 		id := strings.TrimSuffix(filepath.Base(f), ".md")
 		if id == "index" {
@@ -220,7 +249,7 @@ func buildGroundTruth(repo, fixture string) groundTruth {
 			gt.techniques = append(gt.techniques, id)
 		}
 	}
-	return gt
+	return gt, nil
 }
 
 // fixtureFiles lists the fixture repo's files as repo-relative paths.
@@ -702,6 +731,75 @@ func failReason(v verdict) string {
 	return "judge returned pass=false without a failing check"
 }
 
+// expandEpochs repeats each case n times as adjacent copies, so epoch
+// results come back as consecutive chunks that aggregateEpochs can fold
+// per case. Copies are fully independent runs: each gets its own HOME and
+// fixture copy in runCase.
+func expandEpochs(cases []evalCase, n int) []evalCase {
+	if n <= 1 {
+		return cases
+	}
+	out := make([]evalCase, 0, len(cases)*n)
+	for _, c := range cases {
+		for range n {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// aggregateEpochs folds each case's n consecutive epoch results into one
+// verdict: PASS on a strict majority of passing epochs, ERROR when every
+// epoch errored, FAIL otherwise. Mixed results are flagged FLAKY in the
+// reason so they stay visible in the report even when the majority passes.
+// Relies on expandEpochs's adjacency invariant.
+func aggregateEpochs(results []result, n int) []result {
+	if n <= 1 {
+		return results
+	}
+	out := make([]result, 0, len(results)/n)
+	for i := 0; i+n <= len(results); i += n {
+		out = append(out, foldEpochs(results[i:i+n]))
+	}
+	return out
+}
+
+func foldEpochs(chunk []result) result {
+	agg := result{c: chunk[0].c}
+	pass, fail, bad := 0, 0, -1
+	for i, r := range chunk {
+		switch r.verdict {
+		case vPass:
+			pass++
+		case vFail:
+			fail++
+		}
+		if r.verdict != vPass && bad < 0 {
+			bad = i
+		}
+	}
+	n := len(chunk)
+	switch {
+	case pass*2 > n:
+		agg.verdict = vPass
+	case pass == 0 && fail == 0:
+		agg.verdict = vError
+	default:
+		agg.verdict = vFail
+	}
+	if bad >= 0 {
+		agg.reason = fmt.Sprintf("epoch %d: %s", bad+1, chunk[bad].reason)
+		agg.response = chunk[bad].response
+	}
+	switch {
+	case pass > 0 && pass < n:
+		agg.reason = fmt.Sprintf("FLAKY %d/%d epochs passed — %s", pass, n, agg.reason)
+	case agg.verdict != vPass:
+		agg.reason = fmt.Sprintf("%d/%d epochs passed — %s", pass, n, agg.reason)
+	}
+	return agg
+}
+
 // groupsIn returns the group letters in first-seen order — order-preserving
 // on purpose, so the report follows the case order.
 func groupsIn(results []result) []string {
@@ -818,11 +916,24 @@ func main() {
 	fixture := flag.String("fixture", "", "fixture project dir (default <repo>/evals/fixture)")
 	out := flag.String("out", "eval-report.md", "markdown report path")
 	gate := flag.Bool("gate", false, "exit 1 when any case fails or errors")
+	smoke := flag.Bool("smoke", false, "run the curated smoke tier (one case per behavior class) — the cheap per-change signal; the full suite stays the release gate")
+	epochs := flag.Int("epochs", 1, "independent runs per case; with N>1 a case passes on a strict majority of epochs and mixed results are flagged FLAKY")
 	jobs := flag.Int("j", 3, "cases to run concurrently (keep modest: every case is a subject run plus a judge run against the same account)")
 	judge := flag.String("model-judge", "claude-sonnet-5", "judge model for scoring")
 	modelSubject := flag.String("model-subject", "claude-sonnet-5", "model the mentor under test runs on (pinned so a gate red is a regression, not CLI-default drift)")
 	timeout := flag.Int("timeout", 300, "per-case timeout in seconds")
 	flag.Parse()
+
+	if *epochs < 1 {
+		fatal(fmt.Errorf("-epochs must be >= 1"))
+	}
+	idList := splitList(*ids)
+	if *smoke {
+		if len(idList) > 0 {
+			fatal(fmt.Errorf("-smoke and -cases are mutually exclusive"))
+		}
+		idList = smokeCases
+	}
 
 	repoAbs, err := filepath.Abs(*repo)
 	if *repo == "" {
@@ -850,11 +961,16 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
-	selected, err := selectCases(all, splitList(*groups), splitList(*ids))
+	selected, err := selectCases(all, splitList(*groups), idList)
 	if err != nil {
 		fatal(err)
 	}
 	approaches, err := approachNames(repoAbs)
+	if err != nil {
+		fatal(err)
+	}
+
+	ground, err := buildGroundTruth(repoAbs, fix)
 	if err != nil {
 		fatal(err)
 	}
@@ -866,13 +982,13 @@ func main() {
 		shape:        shape,
 		statements:   statementsByID(all["A"]),
 		approaches:   approaches,
-		ground:       buildGroundTruth(repoAbs, fix),
+		ground:       ground,
 		today:        time.Now().Format("2006-01-02"),
 	}
 	if err := preflight(r); err != nil {
 		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))
 	}
-	results := r.runAll(selected, *jobs)
+	results := r.runAll(expandEpochs(selected, *epochs), *jobs)
 	// One bounded retry for ERROR verdicts: transient API failures
 	// (connection drops, judge hiccups) must not fail a gating run.
 	var errored []int
@@ -892,6 +1008,7 @@ func main() {
 			results[i] = rerun[k]
 		}
 	}
+	results = aggregateEpochs(results, *epochs)
 
 	if err := os.WriteFile(*out, []byte(renderReport(results)), 0o644); err != nil {
 		fatal(err)
