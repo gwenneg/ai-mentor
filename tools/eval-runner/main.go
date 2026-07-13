@@ -385,15 +385,16 @@ func (r *runner) runCase(c evalCase) result {
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
-// the isolated temp dir. When no ANTHROPIC_API_KEY is present (local runs),
-// the developer's credential is copied in so auth still works; in CI the
-// API key env var passing through is the whole auth story.
+// the isolated temp dir. When neither ANTHROPIC_API_KEY nor
+// CLAUDE_CODE_OAUTH_TOKEN is present (local runs), the developer's credential
+// is copied in so auth still works; in CI either env var passing through is
+// the whole auth story — the CLI honors both.
 func caseEnv(home string) ([]string, error) {
 	env := slices.DeleteFunc(os.Environ(), func(kv string) bool {
 		return strings.HasPrefix(kv, "HOME=")
 	})
 	env = append(env, "HOME="+home)
-	if os.Getenv("ANTHROPIC_API_KEY") != "" {
+	if os.Getenv("ANTHROPIC_API_KEY") != "" || os.Getenv("CLAUDE_CODE_OAUTH_TOKEN") != "" {
 		return env, nil
 	}
 	creds, err := localCredentials()
@@ -426,7 +427,7 @@ func localCredentials() ([]byte, error) {
 			return bytes.TrimSpace(out), nil
 		}
 	}
-	return nil, fmt.Errorf("no ANTHROPIC_API_KEY, no credentials file, no macOS keychain entry: %w", err)
+	return nil, fmt.Errorf("no ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN, no credentials file, no macOS keychain entry: %w", err)
 }
 
 // caseFixture copies the fixture project to a temp dir, so concurrent cases

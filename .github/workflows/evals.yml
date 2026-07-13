@@ -31,6 +31,13 @@ on:
       cases:
         description: 'Optional case filter (e.g. A01,A19,B03)'
         default: ''
+      smoke:
+        description: 'Run the curated smoke tier (ignores the cases filter)'
+        type: boolean
+        default: false
+      epochs:
+        description: 'Independent runs per case (N>1 gates on a strict majority and flags flaky cases)'
+        default: '1'
       gate:
         description: 'Fail the job on eval failures'
         type: boolean
@@ -65,13 +72,27 @@ jobs:
 
       - name: Run eval suite
         env:
+          # Auth: either secret works (the runner and the claude CLI honor
+          # both). When both are set, the OAuth token wins — enforced below so
+          # a stale or out-of-credit ANTHROPIC_API_KEY secret can never shadow
+          # a freshly added subscription token. Subscription runs draw from
+          # the account's shared usage pool: keep -j at its modest default.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GROUPS: ${{ github.event.inputs.groups || 'A,B,C' }}
           CASES: ${{ github.event.inputs.cases || '' }}
+          SMOKE: ${{ github.event.inputs.smoke || 'false' }}
+          EPOCHS: ${{ github.event.inputs.epochs || '1' }}
           GATE: ${{ github.event.inputs.gate || 'true' }}
         run: |
-          ARGS="-groups $GROUPS -out $GITHUB_WORKSPACE/eval-report.md"
-          if [ -n "$CASES" ]; then ARGS="$ARGS -cases $CASES"; fi
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
+          ARGS="-epochs $EPOCHS -out $GITHUB_WORKSPACE/eval-report.md"
+          if [ "$SMOKE" = "true" ]; then
+            ARGS="$ARGS -smoke"
+          else
+            ARGS="$ARGS -groups $GROUPS"
+            if [ -n "$CASES" ]; then ARGS="$ARGS -cases $CASES"; fi
+          fi
           if [ "$GATE" = "true" ]; then ARGS="$ARGS -gate"; fi
           go -C tools/eval-runner run . $ARGS
         working-directory: ${{ github.workspace }}

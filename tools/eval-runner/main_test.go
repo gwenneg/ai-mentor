@@ -533,6 +533,28 @@ func TestRunAllOrderAndBound(t *testing.T) {
 	}
 }
 
+// Either CI credential must short-circuit the local-credentials copy: with a
+// token (or API key) in the env, caseEnv passes the env through untouched and
+// never writes a .credentials.json into the temp HOME.
+func TestCaseEnvHonorsOAuthToken(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	t.Setenv("CLAUDE_CODE_OAUTH_TOKEN", "test-token")
+	home := t.TempDir()
+	env, err := caseEnv(home)
+	if err != nil {
+		t.Fatalf("a CLAUDE_CODE_OAUTH_TOKEN alone must satisfy caseEnv: %v", err)
+	}
+	if !slices.Contains(env, "HOME="+home) {
+		t.Error("HOME not pointed at the isolated temp dir")
+	}
+	if !slices.Contains(env, "CLAUDE_CODE_OAUTH_TOKEN=test-token") {
+		t.Error("the token must pass through to the child env")
+	}
+	if _, err := os.Stat(filepath.Join(home, ".claude", ".credentials.json")); err == nil {
+		t.Error("no credentials file should be written when a CI credential is present")
+	}
+}
+
 func TestExpandEpochs(t *testing.T) {
 	cases := []evalCase{{ID: "A01"}, {ID: "B01"}}
 	if got := expandEpochs(cases, 1); len(got) != 2 {
