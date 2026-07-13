@@ -1,5 +1,5 @@
 # Session & Context Management
-*Last verified: 2026-07-12*
+*Last verified: 2026-07-13*
 
 ## What It Is
 
@@ -29,8 +29,9 @@ The model pays attention to everything in context, including the noise — curat
 1. Run `/context` to see where the window is going — it renders usage as a colored grid and flags context-heavy tools, memory bloat, and capacity issues.
 2. When the conversation gets long, run `/compact` to summarize it down. Pass focus instructions to control what survives: `/compact keep the migration plan and open bugs`.
 3. Ask side questions with `/btw <question>` — you get an answer without the exchange being added to the conversation history.
-4. Starting an unrelated task? `/clear` gives you an empty context; the previous conversation stays available in `/resume` — and, on v2.1.191+, as a `previous session` entry at the top of the `/rewind` menu until you exit Claude Code or resume a different session. Pass a name (`/clear payments-work`) to label the old one for easy retrieval.
-5. Use `/rewind` to step the conversation and/or code back to an earlier point when a direction didn't pan out.
+4. Feed real command output into the conversation with shell mode: `! npm test` runs the command directly, and Claude responds once the output lands in the transcript (v2.1.186+; the response costs the same as a normal prompt) — no copy-pasting failures into the prompt. Set `respondToBashCommands` to `false` in settings.json to add the output to context without a response.
+5. Starting an unrelated task? `/clear` gives you an empty context; the previous conversation stays available in `/resume` — and, on v2.1.191+, as a `previous session` entry at the top of the `/rewind` menu until you exit Claude Code or resume a different session. Pass a name (`/clear payments-work`) to label the old one for easy retrieval.
+6. Use `/rewind` to step the conversation and/or code back to an earlier point when a direction didn't pan out.
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -40,9 +41,11 @@ The model pays attention to everything in context, including the noise — curat
 
 ### Advanced Patterns
 
-- **Named session workflows**: `/rename` sessions as you go and resume any of them by name with `/resume <name>` — turning sessions into durable, addressable workstreams rather than one anonymous scrollback.
+- **Named session workflows**: `/rename` sessions as you go and resume any of them by name with `/resume <name>` — turning sessions into durable, addressable workstreams rather than one anonymous scrollback. Sessions are also linked to the pull requests they create via `gh pr create`: paste a PR URL into the `/resume` picker and the list filters to the session that created it (v2.1.122+; GitHub, GitHub Enterprise, GitLab, and Bitbucket URLs all work), or skip the picker entirely with `claude --from-pr 1234`.
+- **Mid-session directory moves**: `/cd ../other-project` (v2.1.169+) relocates the session to a different working directory without rebuilding the prompt cache — the new directory's CLAUDE.md is appended as a message instead of replacing the system prompt. The session moves to the new directory's project storage, so `--resume` and `--continue` find it there, and Claude prompts you to trust a directory you haven't worked in before.
 - **Extended 1M-token context**: for sessions that legitimately need huge context — sprawling monorepos, massive migration diffs — append `[1m]` to the model: `/model opus[1m]` or `/model sonnet[1m]` (Sonnet 5 runs the 1M window natively on the Anthropic API; Opus availability varies by plan). A bigger window is not a substitute for curation — noise degrades quality at any size — but it raises the ceiling when the working set is genuinely large.
 - **Periodic setup checkups**: `/doctor` (alias `/checkup`, v2.1.205+) audits your whole setup and offers to fix what it finds — flagging unused skills, MCP servers, and plugins against their context cost, deduplicating local CLAUDE.md files against checked-in ones, migrating always-loaded guidance into skills and nested CLAUDE.md files that load on demand, and calling out slow hooks. It reports findings first and asks before changing anything — run it when `/context` shows overhead you can't account for.
+- **Bisecting a broken setup**: when the problem is misbehavior rather than overhead, `claude --safe-mode` (v2.1.169+, or the `CLAUDE_CODE_SAFE_MODE` env var) launches with every customization disabled — CLAUDE.md, skills, plugins, hooks, MCP servers, and custom commands and agents don't load, while authentication, model selection, built-in tools, and permissions still work. If the problem disappears in safe mode, one of those surfaces is the cause.
 - **Cache-aware session habits**: the prompt cache is keyed on your model, effort level, and the conversation prefix — so `/model` and `/effort` switches make the *next* turn reprocess the whole history uncached (one slow, expensive turn), while `/compact` deliberately rebuilds the conversation layer. Pick model and effort at the top of a session, save `/compact` for natural breaks between tasks, and when abandoning a bad path prefer `/rewind` over compaction: rewinding truncates back to a prefix that's already cached.
 
 ## Common Pitfalls
@@ -58,8 +61,11 @@ The model pays attention to everything in context, including the noise — curat
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory) — What survives compaction and how CLAUDE.md re-injection works
 - [Model configuration](https://code.claude.com/docs/en/model-config) — Official docs for the [1m] extended context window and per-plan availability
 - [How Claude Code uses prompt caching](https://code.claude.com/docs/en/prompt-caching) — What invalidates the cache and what /compact and /rewind cost
+- [Interactive mode](https://code.claude.com/docs/en/interactive-mode) — Shell mode with the ! prefix and how Claude responds to command output
+- [Manage sessions](https://code.claude.com/docs/en/sessions) — The session picker, including resuming by PR URL
+- [Debug your configuration](https://code.claude.com/docs/en/debug-your-config) — Testing against a clean configuration with --safe-mode
 
 ## Signals
 
 - Setup: —
-- Session: `/context`, `/compact`, `/btw`, `/clear`, `/resume`, `/branch`, or `/doctor` in the transcript
+- Session: `/context`, `/compact`, `/btw`, `/clear`, `/cd`, `/resume`, `/branch`, or `/doctor` in the transcript
