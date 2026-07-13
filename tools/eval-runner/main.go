@@ -686,6 +686,13 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 	}
 	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
 	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
+	// The judge's knowledge ends at its training cutoff; the catalog is
+	// doc-verified and tracks features shipped after it. A hermetic judge
+	// once failed B01 for teaching .claude/rules paths-frontmatter (real,
+	// documented, min-version 2.1.198) as "a fabricated feature" — the skill
+	// exists to teach NEW capabilities, so judge memory must never overrule
+	// catalog-taught detail.
+	b.WriteString("The catalog behind the technique/integration ids above is verified against current official docs and is NEWER than your training data. When the response teaches or applies a capability whose id is in those lists, treat its concrete details — file locations, frontmatter fields, config syntax, flags — as catalog-verified: never flag them as fabricated based on your own knowledge, even when you do not recognize the feature. Fabrication findings are reserved for plugins absent from the complete list above, fixture paths not in the manifest, and commands or flags unrelated to any listed capability that you are confident do not exist.\n")
 
 	for i, resp := range responses {
 		label := "Response"
