@@ -16,6 +16,7 @@ Most coding mistakes happen not because the AI cannot write code, but because it
 - Correlating a code change with production behavior by querying metrics, logs, or error tracking
 - Writing database migrations by inspecting the live schema rather than relying on outdated documentation
 - Pulling Slack thread context into a debugging session so the AI understands the reported symptoms
+- Detecting known CVEs in dependencies through a security scanner's MCP server (Snyk, Trivy, and Socket all publish one) — Claude Code has no built-in advisory-database scanning, so the scanner supplies detection and Claude remediates the findings
 
 ## When NOT to Use It
 
