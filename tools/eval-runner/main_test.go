@@ -443,6 +443,7 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 		"COMPLETE list",     // plugin list framed as exhaustive
 		"is a fabrication",  // fabrication instruction present
 		"/verify",           // commands named in the not-exhaustive caveat
+		"NEWER than your training data", // catalog outranks judge memory on technique detail
 	} {
 		if !strings.Contains(jp, want) {
 			t.Errorf("judge prompt missing %q", want)
