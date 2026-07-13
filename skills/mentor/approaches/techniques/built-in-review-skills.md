@@ -56,6 +56,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 - **Treating AI review as authoritative**: These skills catch real bugs, but they also produce false positives. A finding that says "possible null pointer" might be guarded by an upstream check the AI did not trace. Always evaluate findings with your domain knowledge.
 - **Ignoring effort levels**: Running high-effort review on every trivial change wastes time. Use low/medium for routine work, save high effort for complex or risky changes (`--fix` applies findings to the working tree, `--comment` posts them as inline PR comments — say which one the situation wants).
 - **Running `/security-review` after merging**: it reviews the pending changes on the current branch — run it before merging. A clean pass is one lens, not a security audit; critical paths still need a human pass.
+- **Expecting `/security-review` to find known CVEs in dependencies**: its prompt hard-excludes vulnerabilities in outdated third-party libraries, and no built-in command does advisory-database (SCA) scanning — Anthropic's docs position dependency scanners as a separate CI stage. Use a dedicated scanner (Dependabot, Snyk, Trivy) for detection; Claude's role is remediating what the scanner finds.
 - **Running `/verify` or `/run` on diffs with no runtime surface**: docs-only or test-only changes have no behavior to observe, and a library with no runnable surface gives `/run` nothing to drive.
 - **Not using `--comment` in team workflows**: If you review locally but do not post comments, your teammates do not benefit. Use `--comment` to make findings visible on the PR.
 
@@ -64,6 +65,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for skills including built-in /code-review and /security-review
 - [Commands](https://code.claude.com/docs/en/commands) — Reference for /code-review effort levels and --fix/--comment flags, plus /simplify, /security-review, /verify, and /run
 - [Find bugs with ultrareview](https://code.claude.com/docs/en/ultrareview) — Official docs for /code-review ultra: cloud fleet review, pricing, and the CI subcommand
+- [claude-code-security-review](https://github.com/anthropics/claude-code-security-review) — Source of the /security-review prompt, including its exclusion of outdated third-party-library findings
 
 ## Signals
 
