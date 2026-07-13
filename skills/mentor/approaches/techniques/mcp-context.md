@@ -16,7 +16,7 @@ Most coding mistakes happen not because the AI cannot write code, but because it
 - Correlating a code change with production behavior by querying metrics, logs, or error tracking
 - Writing database migrations by inspecting the live schema rather than relying on outdated documentation
 - Pulling Slack thread context into a debugging session so the AI understands the reported symptoms
-- Detecting known CVEs in dependencies through a security scanner's MCP server (Snyk, Trivy, and Socket all publish one) — Claude Code has no built-in advisory-database scanning, so the scanner supplies detection and Claude remediates the findings
+- Detecting known CVEs in dependencies through a security scanner's MCP server — Claude Code has no built-in advisory-database scanning, so the scanner supplies detection and Claude remediates the findings. The wiring is near-universal: GitHub's official MCP server exposes Dependabot alerts (`list_dependabot_alerts`), the open-source Trivy and OSV-Scanner ship servers of their own (OSV-Scanner as a built-in `mcp` subcommand since v2.4.0), and Snyk, Socket, Mend, Checkmarx, JFrog, and Endor Labs all publish one
 
 ## When NOT to Use It
 
@@ -57,6 +57,8 @@ Most coding mistakes happen not because the AI cannot write code, but because it
 - [Claude Code MCP](https://code.claude.com/docs/en/mcp) — Official docs for connecting Claude Code to external tools via MCP
 - [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro) — General MCP protocol overview and architecture
 - [MCP Reference Servers](https://github.com/modelcontextprotocol/servers) — Official repository of MCP server implementations
+- [GitHub MCP Server](https://github.com/github/github-mcp-server) — GitHub's official MCP server; its Dependabot toolset exposes dependency alerts and security advisories
+- [OSV-Scanner MCP](https://github.com/google/osv-scanner/tree/main/cmd/osv-scanner/mcp) — Google's OSV-Scanner ships an MCP server as a built-in subcommand (v2.4.0+)
 
 ## Signals
 
