@@ -365,7 +365,8 @@ func (r *runner) runCase(c evalCase) result {
 		return errResult(c, err)
 	}
 	defer os.RemoveAll(workdir)
-	if err := r.setupProfile(c, home); err != nil {
+	seeded, err := r.setupProfile(c, home)
+	if err != nil {
 		return errResult(c, err)
 	}
 	prompts, err := r.prompts(c)
@@ -381,7 +382,8 @@ func (r *runner) runCase(c evalCase) result {
 		responses = append(responses, resp)
 	}
 	profile := readFile(filepath.Join(home, profileRel))
-	return r.judgeCase(c, responses, profile)
+	sources := r.catalogSources(taughtIDs(profile, seeded))
+	return r.judgeCase(c, responses, profile, sources)
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
@@ -480,17 +482,24 @@ func profileRow(name, status, date, note string) string {
 	return "| " + name + " | " + status + " | " + date + " | " + note + " |"
 }
 
-// setupProfile writes the per-case ~/.ai-mentor/profile.md fixture. Cases
-// without an entry here (B01, all of Group A, C02, C03) start profile-less.
-func (r *runner) setupProfile(c evalCase, home string) error {
+// setupProfile writes the per-case ~/.ai-mentor/profile.md fixture and
+// returns the capability ids it seeded, so the after-run profile can be
+// diffed for what the run actually taught. Cases without an entry here
+// (B01, all of Group A, C02, C03) start profile-less.
+func (r *runner) setupProfile(c evalCase, home string) ([]string, error) {
 	past := time.Now().AddDate(0, 0, -21).Format("2006-01-02")
 	week := currentWeek()
+	var seeded []string
+	row := func(name, status, note string) string {
+		seeded = append(seeded, name)
+		return profileRow(name, status, past, note)
+	}
 	var content string
 	switch c.ID {
 	case "B02":
-		content = r.profileMD(week, profileRow("autonomous-loops", "shown", past, "Demoed /loop on a flaky retry test"))
+		content = r.profileMD(week, row("autonomous-loops", "shown", "Demoed /loop on a flaky retry test"))
 	case "B03":
-		content = r.profileMD(week, profileRow("fan-out-workflows", "declined", past, `"too token-heavy"`))
+		content = r.profileMD(week, row("fan-out-workflows", "declined", `"too token-heavy"`))
 	case "B04":
 		content = r.profileMD(week) // empty profile; the hooks live in the fixture copy
 	case "B05":
@@ -498,25 +507,89 @@ func (r *runner) setupProfile(c evalCase, home string) error {
 	case "B06":
 		rows := make([]string, len(r.approaches))
 		for i, a := range r.approaches {
-			rows[i] = profileRow(a, "adopted", past, "eval fixture")
+			rows[i] = row(a, "adopted", "eval fixture")
 		}
 		content = r.profileMD(week, rows...)
 	case "C01":
-		content = r.profileMD(week, profileRow("plan-mode", "adopted", past, "uses plan mode daily"))
+		content = r.profileMD(week, row("plan-mode", "adopted", "uses plan mode daily"))
 	case "C04":
 		content = r.profileMD(week,
-			profileRow("background-agents", "declined", past, `"prefer local runs"`),
-			profileRow("plan-mode", "shown", past, "tried it once"))
+			row("background-agents", "declined", `"prefer local runs"`),
+			row("plan-mode", "shown", "tried it once"))
 	case "C05":
-		content = r.profileMD(week, profileRow("plan-mode", "declined", past, `"too slow for me"`))
+		content = r.profileMD(week, row("plan-mode", "declined", `"too slow for me"`))
 	default:
-		return nil
+		return nil, nil
 	}
 	path := filepath.Join(home, profileRel)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
+		return nil, err
 	}
-	return os.WriteFile(path, []byte(content), 0o644)
+	return seeded, os.WriteFile(path, []byte(content), 0o644)
+}
+
+// profileIDs extracts the capability ids (first column) from a profile's
+// table rows, skipping the header and separator.
+func profileIDs(profile string) []string {
+	var ids []string
+	for _, l := range strings.Split(profile, "\n") {
+		if !strings.HasPrefix(l, "|") {
+			continue
+		}
+		cs := cells(l)
+		if len(cs) < 3 || cs[1] == "" || cs[1] == "Capability" || strings.HasPrefix(cs[1], "-") {
+			continue
+		}
+		ids = append(ids, cs[1])
+	}
+	return ids
+}
+
+// capSource is one catalog file inlined into the judge prompt as ground
+// truth for a capability the run taught.
+type capSource struct{ id, content string }
+
+// Bounds on inlined catalog sources: a run records a move plus a surprise
+// (plus C04's refreshed row), so 4 files is headroom, and the byte cap keeps
+// a pathological profile from exploding the judge prompt.
+const (
+	maxSources     = 4
+	maxSourceBytes = 40_000
+)
+
+// catalogSources loads the approach files behind the taught capability ids,
+// so the judge checks taught mechanisms against the doc-verified catalog
+// instead of its own (older) training data. Ids with no approach file
+// (marketplace directory plugins) are skipped: the plugin whitelist already
+// covers those.
+func (r *runner) catalogSources(taught []string) []capSource {
+	var out []capSource
+	total := 0
+	for _, id := range taught {
+		if len(out) == maxSources || total > maxSourceBytes {
+			break
+		}
+		matches, err := filepath.Glob(filepath.Join(r.repo, "skills", "mentor", "approaches", "*", id+".md"))
+		if err != nil || len(matches) == 0 {
+			continue
+		}
+		if content := readFile(matches[0]); content != "" {
+			out = append(out, capSource{id: id, content: content})
+			total += len(content)
+		}
+	}
+	return out
+}
+
+// taughtIDs returns the profile ids the run added beyond the seeded fixture.
+func taughtIDs(profile string, seeded []string) []string {
+	var out []string
+	for _, id := range profileIDs(profile) {
+		if !slices.Contains(seeded, id) {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // prompts returns the mentor invocations for a case, in order. Group B is
@@ -604,7 +677,7 @@ func assistantText(out string) (string, error) {
 // hermetically — isolated HOME and an empty working directory — so no
 // CLAUDE.md, auto memory, or repo context can leak into verdicts. (--bare
 // would be simpler but silently breaks macOS keychain auth.)
-func (r *runner) judgeCase(c evalCase, responses []string, profile string) result {
+func (r *runner) judgeCase(c evalCase, responses []string, profile string, sources []capSource) result {
 	res := result{c: c, response: strings.Join(responses, "\n\n--- second run ---\n\n")}
 	home, err := os.MkdirTemp("", "judge-home-")
 	if err != nil {
@@ -628,7 +701,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string) resul
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, workdir, env,
-		"-p", r.judgePrompt(c, responses, profile), "--model", r.judge, "--max-turns", "5")
+		"-p", r.judgePrompt(c, responses, profile, sources), "--model", r.judge, "--max-turns", "5")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
@@ -647,9 +720,10 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string) resul
 }
 
 // judgePrompt builds the strict scoring prompt: the case expectation, the
-// response(s), the after-run profile, and (for Group A) the output-shape
-// expectations from cases.md verbatim.
-func (r *runner) judgePrompt(c evalCase, responses []string, profile string) string {
+// response(s), the after-run profile, the catalog sources behind the taught
+// capabilities, and (for Group A) the output-shape expectations from
+// cases.md verbatim.
+func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sources []capSource) string {
 	var b strings.Builder
 	b.WriteString("You are a strict evaluator for the ai-mentor Claude Code skill. Do not use any tools — judge only the material in this prompt and reply immediately. ")
 	b.WriteString("You cannot see the run's tool calls: never infer from the text whether checks actually ran, and a missing profile file does not mean reads were skipped. ")
@@ -685,14 +759,22 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string) str
 		b.WriteString("- " + p + "\n")
 	}
 	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
-	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real) — judge those against your knowledge of current Claude Code, flagging only commands or flags you are confident do not exist. The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
+	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real). The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
 	// The judge's knowledge ends at its training cutoff; the catalog is
 	// doc-verified and tracks features shipped after it. A hermetic judge
-	// once failed B01 for teaching .claude/rules paths-frontmatter (real,
-	// documented, min-version 2.1.198) as "a fabricated feature" — the skill
-	// exists to teach NEW capabilities, so judge memory must never overrule
-	// catalog-taught detail.
-	b.WriteString("The catalog behind the technique/integration ids above is verified against current official docs and is NEWER than your training data. When the response teaches or applies a capability whose id is in those lists, treat its concrete details — file locations, frontmatter fields, config syntax, flags — as catalog-verified: never flag them as fabricated based on your own knowledge, even when you do not recognize the feature. Fabrication findings are reserved for plugins absent from the complete list above, fixture paths not in the manifest, and commands or flags unrelated to any listed capability that you are confident do not exist.\n")
+	// failed B01 for teaching .claude/rules paths-frontmatter (real,
+	// documented, min-version 2.1.198) as "a fabricated feature" — and a
+	// names-only trust rule did not stop it: the judge ruled the mechanism
+	// "not part of project-memory" from that same stale memory. Only
+	// inlining the catalog files themselves closes that hole, so the judge
+	// checks taught mechanisms against verified text, not recollection.
+	b.WriteString("Your knowledge of Claude Code features ends at your training cutoff; this repo's catalog is verified against current official docs and tracks features shipped after your cutoff — it is NEWER than your training data. A mechanism described in a catalog source below is real, whatever your memory says. A taught mechanism or command you find in NEITHER the catalog sources NOR the lists above must be recorded as a check named 'unverifiable' with pass=true and the detail in its reason — never fail the case from your own memory of what Claude Code supports. Fabrication FAILs are reserved for ground you actually hold: a recommended plugin absent from the complete plugin list, or a fenced path not in the fixture file list.\n")
+	if len(sources) > 0 {
+		b.WriteString("\n--- Catalog sources for the capabilities this run recorded in the profile (the doc-verified files the lesson was drawn from) ---\n")
+		for _, s := range sources {
+			fmt.Fprintf(&b, "Source for %s:\n<<<\n%s\n>>>\n", s.id, s.content)
+		}
+	}
 
 	for i, resp := range responses {
 		label := "Response"

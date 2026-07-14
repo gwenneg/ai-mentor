@@ -398,37 +398,76 @@ func TestMentorOutputMustBeJSONWithResult(t *testing.T) {
 
 func TestSetupProfileFixtures(t *testing.T) {
 	r := newTestRunner(t)
-	read := func(t *testing.T, id string) string {
+	read := func(t *testing.T, id string) (string, []string) {
 		t.Helper()
 		home := t.TempDir()
-		if err := r.setupProfile(evalCase{ID: id}, home); err != nil {
+		seeded, err := r.setupProfile(evalCase{ID: id}, home)
+		if err != nil {
 			t.Fatal(err)
 		}
-		return readFile(filepath.Join(home, ".ai-mentor", "profile.md"))
+		return readFile(filepath.Join(home, ".ai-mentor", "profile.md")), seeded
 	}
-	if p := read(t, "B01"); p != "" {
-		t.Errorf("B01 must start with no profile, got:\n%s", p)
+	if p, seeded := read(t, "B01"); p != "" || seeded != nil {
+		t.Errorf("B01 must start with no profile and no seeded ids, got %v:\n%s", seeded, p)
 	}
-	if p := read(t, "B02"); !strings.Contains(p, "| autonomous-loops | shown |") {
-		t.Errorf("B02 needs a past shown row:\n%s", p)
+	if p, seeded := read(t, "B02"); !strings.Contains(p, "| autonomous-loops | shown |") || !slices.Equal(seeded, []string{"autonomous-loops"}) {
+		t.Errorf("B02 needs a past shown row and its seeded id (%v):\n%s", seeded, p)
 	}
-	if p := read(t, "B05"); !strings.Contains(p, "Last new-capability check: 2026-w20") {
+	if p, _ := read(t, "B05"); !strings.Contains(p, "Last new-capability check: 2026-w20") {
 		t.Errorf("B05 needs the stale anchor:\n%s", p)
 	}
-	p := read(t, "B06")
+	p, seeded := read(t, "B06")
 	for _, a := range r.approaches {
 		if !strings.Contains(p, "| "+a+" | adopted |") {
 			t.Errorf("B06 must mark every approach adopted, missing %s:\n%s", a, p)
 		}
 	}
-	if p := read(t, "C01"); !strings.Contains(p, "| plan-mode | adopted |") {
+	if !slices.Equal(seeded, r.approaches) {
+		t.Errorf("B06 must report every approach as seeded, got %v", seeded)
+	}
+	if p, _ := read(t, "C01"); !strings.Contains(p, "| plan-mode | adopted |") {
 		t.Errorf("C01 needs plan-mode adopted:\n%s", p)
 	}
-	if p := read(t, "C04"); !strings.Contains(p, "| background-agents | declined |") || !strings.Contains(p, "| plan-mode | shown |") {
-		t.Errorf("C04 needs a declined and a shown seeded row:\n%s", p)
+	if p, seeded := read(t, "C04"); !strings.Contains(p, "| background-agents | declined |") || !strings.Contains(p, "| plan-mode | shown |") || len(seeded) != 2 {
+		t.Errorf("C04 needs a declined and a shown seeded row (%v):\n%s", seeded, p)
 	}
-	if p := read(t, "C05"); !strings.Contains(p, "| plan-mode | declined |") {
+	if p, _ := read(t, "C05"); !strings.Contains(p, "| plan-mode | declined |") {
 		t.Errorf("C05 needs plan-mode declined:\n%s", p)
+	}
+}
+
+// The taught-capability diff feeds the judge's catalog sources: ids parse
+// from the after-run profile, seeded fixture rows are excluded, and only ids
+// with a real approach file produce sources.
+func TestTaughtIDsAndCatalogSources(t *testing.T) {
+	r := newTestRunner(t)
+	profile := r.profileMD("2026-w28",
+		profileRow("plan-mode", "shown", "2026-07-01", "seeded"),
+		profileRow("project-memory", "shown", "2026-07-14", "taught today"),
+		profileRow("security-guidance", "shown", "2026-07-14", "a plugin id with no approach file"))
+	if ids := profileIDs(profile); !slices.Equal(ids, []string{"plan-mode", "project-memory", "security-guidance"}) {
+		t.Fatalf("profileIDs wrong: %v", ids)
+	}
+	taught := taughtIDs(profile, []string{"plan-mode"})
+	if !slices.Equal(taught, []string{"project-memory", "security-guidance"}) {
+		t.Fatalf("taughtIDs must exclude seeded rows, got %v", taught)
+	}
+	dir := filepath.Join(r.repo, "skills", "mentor", "approaches", "techniques")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "project-memory.md"), []byte("path-scoped rules in .claude/rules/*.md\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sources := r.catalogSources(taught)
+	if len(sources) != 1 || sources[0].id != "project-memory" {
+		t.Fatalf("want one source for project-memory (no file for the plugin id), got %+v", sources)
+	}
+	if !strings.Contains(sources[0].content, ".claude/rules") {
+		t.Errorf("source content not loaded: %+v", sources[0])
+	}
+	if got := taughtIDs("", nil); got != nil {
+		t.Errorf("a missing profile must teach nothing, got %v", got)
 	}
 }
 
@@ -436,7 +475,7 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 	r := newTestRunner(t)
 	jp := r.judgePrompt(
 		evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"},
-		[]string{"resp"}, "")
+		[]string{"resp"}, "", nil)
 	for _, want := range []string{
 		"src/orders.js",     // fixture manifest inlined (grounding — #8)
 		"security-guidance", // authoritative plugin list inlined (fabrication — #6)
@@ -444,9 +483,27 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 		"is a fabrication",  // fabrication instruction present
 		"/verify",           // commands named in the not-exhaustive caveat
 		"NEWER than your training data", // catalog outranks judge memory on technique detail
+		"'unverifiable'",    // unknown-mechanism escape hatch, never a memory-based FAIL
 	} {
 		if !strings.Contains(jp, want) {
 			t.Errorf("judge prompt missing %q", want)
+		}
+	}
+	if strings.Contains(jp, "Catalog sources") {
+		t.Error("no sources given, so the catalog-sources block must be absent")
+	}
+
+	jp = r.judgePrompt(
+		evalCase{Group: "B", ID: "B01", Statement: "no profile", Expected: "teaches one capability"},
+		[]string{"resp"}, "profile",
+		[]capSource{{id: "project-memory", content: "path-scoped rules in .claude/rules/*.md"}})
+	for _, want := range []string{
+		"Catalog sources",
+		"Source for project-memory",
+		".claude/rules/*.md", // the verified text the judge must defer to
+	} {
+		if !strings.Contains(jp, want) {
+			t.Errorf("judge prompt with sources missing %q", want)
 		}
 	}
 }
