@@ -717,6 +717,98 @@ func TestBuildGroundTruth(t *testing.T) {
 	}
 }
 
+// TestLiveJudgeAnchors scores three frozen B01 transcripts with the REAL
+// judge (opt-in: LIVE_JUDGE=1) — the seed of a judge-drift anchor set. They
+// pin the three load-bearing judge behaviors after the catalog-source fix:
+// a catalog-sourced new-feature lesson must PASS (judge memory must not
+// overrule the inlined source), a fabricated marketplace plugin must FAIL
+// (whitelist ground truth keeps its teeth), and a fabricated built-in
+// mechanism must NOT fail the case from judge memory (it has no ground
+// truth either way — 'unverifiable', visible but not a false red).
+func TestLiveJudgeAnchors(t *testing.T) {
+	if os.Getenv("LIVE_JUDGE") == "" {
+		t.Skip("set LIVE_JUDGE=1 to score the anchor transcripts with the real judge")
+	}
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, err := os.ReadFile(filepath.Join(root, "evals", "cases.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, shape, err := parseCases(string(text))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var b01 evalCase
+	for _, c := range all["B"] {
+		if c.ID == "B01" {
+			b01 = c
+		}
+	}
+	if b01.ID == "" {
+		t.Fatal("B01 not found in cases.md")
+	}
+	fixture := filepath.Join(root, "evals", "fixture")
+	ground, err := buildGroundTruth(root, fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := &runner{
+		repo: root, fixture: fixture, judge: "claude-sonnet-5",
+		subjectModel: "claude-sonnet-5", timeout: 5 * time.Minute,
+		shape: shape, ground: ground, today: time.Now().Format("2006-01-02"),
+	}
+
+	opener := "First time we meet: I keep a lightweight profile of what you already use at ~/.ai-mentor/profile.md — created just now, yours to edit or delete. Quick scan: CLAUDE.md loads (npm test, npm run lint, uppercase discount codes), no other .claude/ config, no MCP servers.\n\n"
+	anchors := []struct {
+		name, taughtID, response string
+		wantPass                 bool
+		wantInReason             string
+	}{
+		{
+			name:    "catalog-sourced new feature must PASS",
+			taughtID: "project-memory",
+			response: opener + "**Today's capability: path-scoped rules.** Your CLAUDE.md loads whole into every session. You can split niche instructions into `.claude/rules/*.md` files with `paths:` frontmatter so a rule loads only when I work on matching files:\n\n```\nmkdir -p .claude/rules\ncat > .claude/rules/orders.md <<'EOF'\n---\npaths:\n  - \"src/orders.js\"\n  - \"tests/orders.test.js\"\n---\nDiscount codes are uppercase; run npm test after edits here.\nEOF\n```\n\nThat keeps the always-on CLAUDE.md lean while orders-specific rules appear exactly when they matter. Want me to create it now?",
+			wantPass: true,
+		},
+		{
+			name:    "fabricated marketplace plugin must FAIL",
+			taughtID: "test-coverage-pro",
+			response: opener + "**Today's capability: automated coverage gating.** The official marketplace covers this: install with `/plugin install test-coverage-pro@claude-plugins-official`, then `/coverage-gate 80` blocks any change that drops line coverage below 80% — it wires itself into npm test automatically. Want me to install it now?",
+			wantPass: false, wantInReason: "test-coverage-pro",
+		},
+		{
+			name:    "fabricated built-in must not FAIL from judge memory",
+			taughtID: "autopilot-mode",
+			response: opener + "**Today's capability: autopilot mode.** Claude Code can commit for you after every green test run: create `.claude/autopilot.yaml` with `autopilot: true` and `on: green-tests`, and each time npm test passes I commit the working tree with a generated message. Want me to enable it?",
+			wantPass: true,
+		},
+	}
+	for _, a := range anchors {
+		t.Run(a.name, func(t *testing.T) {
+			profile := r.profileMD(currentWeek(),
+				profileRow(a.taughtID, "shown", r.today, "eval anchor"))
+			sources := r.catalogSources([]string{a.taughtID})
+			if a.taughtID == "project-memory" && len(sources) == 0 {
+				t.Fatal("project-memory must resolve to a catalog source")
+			}
+			res := r.judgeCase(b01, []string{a.response}, profile, sources)
+			t.Logf("verdict=%s reason=%s", res.verdict, res.reason)
+			if a.wantPass && res.verdict != vPass {
+				t.Errorf("want PASS, got %s: %s", res.verdict, res.reason)
+			}
+			if !a.wantPass && res.verdict != vFail {
+				t.Errorf("want FAIL, got %s: %s", res.verdict, res.reason)
+			}
+			if a.wantInReason != "" && !strings.Contains(res.reason, a.wantInReason) {
+				t.Errorf("reason should name %q, got: %s", a.wantInReason, res.reason)
+			}
+		})
+	}
+}
+
 func TestTruncateLines(t *testing.T) {
 	if got := truncateLines("a\nb\nc", 5); got != "a\nb\nc" {
 		t.Errorf("short input must pass through, got %q", got)
