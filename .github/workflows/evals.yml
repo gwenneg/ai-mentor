@@ -42,6 +42,9 @@ on:
         description: 'Fail the job on eval failures'
         type: boolean
         default: true
+      jobs:
+        description: 'Concurrent cases (-j). Subscription limits are a usage pool, not a concurrency cap — parallelism only compresses wall clock. Lower if ERROR results survive the retry pass.'
+        default: '9'
 
 concurrency:
   group: evals-${{ github.event.pull_request.number || github.ref }}
@@ -86,10 +89,11 @@ jobs:
           # majority per case, so a single flaky flip can't block or fake a
           # release verdict. Dispatch runs keep their chosen epochs (default 1).
           EPOCHS: ${{ github.event.inputs.epochs || '3' }}
+          JOBS: ${{ github.event.inputs.jobs || '9' }}
           GATE: ${{ github.event.inputs.gate || 'true' }}
         run: |
           if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
-          ARGS="-epochs $EPOCHS -out $GITHUB_WORKSPACE/eval-report.md"
+          ARGS="-epochs $EPOCHS -j $JOBS -out $GITHUB_WORKSPACE/eval-report.md"
           if [ "$SMOKE" = "true" ]; then
             ARGS="$ARGS -smoke"
           else
