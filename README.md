@@ -15,6 +15,23 @@ Learn the Claude Code capabilities you didn't know existed. ai-mentor is a disco
 
 The mentor keeps one small markdown file at `~/.ai-mentor/profile.md`: one line per capability (shown / adopted / declined). It's machine-local, never committed, never uploaded, and yours to edit or delete — a hand edit always wins over anything the mentor inferred. It requires no setup and no permission prompts. Machine-local is a deliberate trade-off: on a second machine the mentor starts from scratch (it will re-learn quickly from your setup signals, but it will re-offer things you declined elsewhere). If that bothers you, the file is plain markdown — copy it over.
 
+## Security & privacy
+
+Reading your setup is the product: the mentor finds the gap between what Claude Code offers and what you already use, and it can only do that by looking at your configuration. Everything it touches is declared up front in the skill's `allowed-tools` frontmatter — the pre-authorized surface is exactly this list, and nothing more:
+
+**Reads (local, read-only):**
+
+- Its own plugin files — the approach catalog and mode playbooks
+- Your mentor profile at `~/.ai-mentor/profile.md`
+- User-level setup signals: `~/.claude/settings.json`, `~/.claude/agents/`, `~/.claude/skills/`, and the installed-plugin cache under `~/.claude/plugins/` — used solely to detect which capabilities you already use, so nothing is taught twice
+- The current repo (its `.claude/`, `.mcp.json`, CI workflows) through Claude Code's read-only tools, to ground recommendations in your real paths and commands
+
+**Writes:**
+
+- Exactly one file: `~/.ai-mentor/profile.md` (see [The profile](#the-profile)). It never writes under `~/.claude` and never modifies your repo.
+
+**Not pre-authorized:** no shell commands and no network tools — the skill's instructions use local read-only tools exclusively, and anything beyond the list above goes through Claude Code's normal permission prompts. It never opens stored session transcripts under `~/.claude/projects/`; session signals come only from the current conversation. The profile is machine-local and nothing the mentor collects is uploaded anywhere.
+
 ## Install
 
 ai-mentor is distributed through a Claude Code [plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces) — no cloning or file editing. In Claude Code:
@@ -32,7 +49,7 @@ Prefer not to add a marketplace? Two supported alternatives. Both load the plugi
 **From a release zip** — nothing to clone; pinned to the release you pick (find the latest tag on the [releases page](https://github.com/gwenneg/ai-mentor/releases)):
 
 ```
-claude --plugin-url https://github.com/gwenneg/ai-mentor/archive/refs/tags/v0.9.1.zip
+claude --plugin-url https://github.com/gwenneg/ai-mentor/archive/refs/tags/v1.0.0.zip
 ```
 
 **From a clone** — update whenever you like with `git pull`:
