@@ -84,7 +84,7 @@ Every recommendation ends with a concrete next action. On acceptance, do the wor
 
 - **Hooks** — show the hook JSON, then write it into `.claude/settings.json`
 - **Custom agents** — create the `.claude/agents/<name>.md` file
-- **Custom skills** — create `.claude/skills/<name>/SKILL.md`, remind them to run `/reload-skills`
+- **Custom skills** — create `.claude/skills/<name>/SKILL.md`; Claude Code watches skill directories, so it takes effect in the current session — unless `.claude/skills/` itself didn't exist when the session started, in which case a fresh session is needed to watch the new directory. There is no reload command for project skills — never cite one
 - **MCP context** — add the server entry to `.mcp.json` (show it first)
 - **Headless mode / CI** — write the workflow YAML or the exact `claude -p` command into their pipeline
 - **Built-in review skills** — offer to run `/code-review`, `/security-review`, or `/verify` on their diff right now

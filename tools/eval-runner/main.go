@@ -732,7 +732,14 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 	b.WriteString("Judge whether the response(s) below meet the case expectation. ")
 	b.WriteString("Reply with STRICT JSON only — no prose, no markdown fences: ")
 	b.WriteString(`{"pass": bool, "checks": [{"name": string, "pass": bool, "reason": string}]}`)
-	fmt.Fprintf(&b, "\n\nToday's date: %s\nCase %s (Group %s).\n", r.today, c.ID, c.Group)
+	// A run started before midnight can be judged after it: the model stamps
+	// profile rows with the real date at write time, so when the dates differ
+	// the judge must accept either day as "today".
+	if now := time.Now().Format("2006-01-02"); now != r.today {
+		fmt.Fprintf(&b, "\n\nToday's date: %s or %s — this run crossed midnight, so a profile row dated either day counts as dated today.\nCase %s (Group %s).\n", r.today, now, c.ID, c.Group)
+	} else {
+		fmt.Fprintf(&b, "\n\nToday's date: %s\nCase %s (Group %s).\n", r.today, c.ID, c.Group)
+	}
 	if c.Group == "A" {
 		fmt.Fprintf(&b, "Problem statement: %s\nExpected goal classification: %s\n", c.Statement, c.Expected)
 		if c.Notes != "" {
