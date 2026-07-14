@@ -82,7 +82,10 @@ jobs:
           GROUPS: ${{ github.event.inputs.groups || 'A,B,C' }}
           CASES: ${{ github.event.inputs.cases || '' }}
           SMOKE: ${{ github.event.inputs.smoke || 'false' }}
-          EPOCHS: ${{ github.event.inputs.epochs || '1' }}
+          # Release-PR runs (no dispatch inputs) gate at 3 epochs: strict
+          # majority per case, so a single flaky flip can't block or fake a
+          # release verdict. Dispatch runs keep their chosen epochs (default 1).
+          EPOCHS: ${{ github.event.inputs.epochs || '3' }}
           GATE: ${{ github.event.inputs.gate || 'true' }}
         run: |
           if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
