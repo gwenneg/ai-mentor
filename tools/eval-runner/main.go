@@ -776,6 +776,16 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 	// inlining the catalog files themselves closes that hole, so the judge
 	// checks taught mechanisms against verified text, not recollection.
 	b.WriteString("Your knowledge of Claude Code features ends at your training cutoff; this repo's catalog is verified against current official docs and tracks features shipped after your cutoff — it is NEWER than your training data. A mechanism described in a catalog source below is real, whatever your memory says. A taught mechanism or command you find in NEITHER the catalog sources NOR the lists above must be recorded as a check named 'unverifiable' with pass=true and the detail in its reason — never fail the case from your own memory of what Claude Code supports. Fabrication FAILs are reserved for ground you actually hold: a recommended plugin absent from the complete plugin list, or a fenced path not in the fixture file list.\n")
+	// What's-new behavior (B05) is judged against the ACTUAL ledger, not the
+	// expectation's description of it: maintenance appends rows weekly, so any
+	// prose snapshot of the ledger's state goes stale. Inline the file whenever
+	// the case expectation defers to it.
+	if strings.Contains(c.Expected, "ledger") || strings.Contains(c.Notes, "ledger") {
+		if ledger := readFile(filepath.Join(r.repo, "skills", "mentor", "processed-changelogs.md")); ledger != "" {
+			b.WriteString("\n--- Ledger ground truth (skills/mentor/processed-changelogs.md, verbatim). Judge what's-new claims against THESE rows only: a row whose action column records real catalog updates is real news; 'Initial bootstrap' and no-action rows are not. Never assume the ledger's state from the expectation text. ---\n")
+			b.WriteString(ledger + "\n")
+		}
+	}
 	if len(sources) > 0 {
 		b.WriteString("\n--- Catalog sources for the capabilities this run recorded in the profile (the doc-verified files the lesson was drawn from) ---\n")
 		for _, s := range sources {
