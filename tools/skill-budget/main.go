@@ -4,15 +4,15 @@
 // fixes tend to grow them a sentence at a time — growth must be a reviewed
 // number, not a feeling. This tool counts each file with the API's free
 // /v1/messages/count_tokens endpoint (exact, model-specific — never a
-// tiktoken-style estimate) and renders a markdown budget table. With
-// -base <git-ref> it also counts the same files at that ref and reports
-// deltas; the CI workflow posts the result as a PR comment so every change
-// to the skill definition carries a visible price tag.
+// tiktoken-style estimate) and prints a markdown budget table to stdout.
+// With -base <git-ref> it also counts the same files at that ref and
+// reports deltas; the CI workflow posts the result as a PR comment so every
+// change to the skill definition carries a visible price tag.
 //
-// Auth: CLAUDE_CODE_OAUTH_TOKEN (Bearer + the oauth beta header) or
-// ANTHROPIC_API_KEY (x-api-key). When both are set the OAuth token wins —
-// the same precedence evals.yml enforces — and any non-200 falls back to
-// the other credential once.
+// Auth: CLAUDE_CODE_OAUTH_TOKEN (Bearer + the oauth beta header) wins when
+// set, else ANTHROPIC_API_KEY (x-api-key) — the same precedence evals.yml
+// enforces. One credential, one code path: a rejected credential fails
+// loudly rather than silently switching.
 package main
 
 import (
@@ -32,6 +32,12 @@ import (
 
 const endpoint = "https://api.anthropic.com/v1/messages/count_tokens"
 
+// countModel is fixed on purpose: budget deltas are only meaningful when
+// every measurement uses the same tokenizer. When this model deprecates,
+// change the constant — the first run after the change re-baselines, which
+// is visible in that PR's comment.
+const countModel = "claude-opus-4-8"
+
 // The always-loaded skill surface. SKILL.md loads on every invocation; the
 // two mode files are the fork — exactly one of them is read per run, which
 // is why the report prices the two invocation paths separately.
@@ -48,16 +54,21 @@ type row struct {
 }
 
 func main() {
-	model := flag.String("model", "claude-opus-4-8", "model whose tokenizer counts (token counts are model-specific)")
 	baseRef := flag.String("base", "", "git ref to diff against; omit for absolute counts only")
-	out := flag.String("out", "", "write the markdown here instead of stdout")
 	flag.Parse()
 
 	root, err := findRoot()
 	if err != nil {
 		fatal(err)
 	}
-	c, err := newCounter(*model)
+	if *baseRef != "" {
+		// A typo'd ref must fail loudly here — gitShow treats per-file errors
+		// as "file absent at base", which would silently zero every baseline.
+		if err := verifyRef(root, *baseRef); err != nil {
+			fatal(err)
+		}
+	}
+	c, err := newCounter()
 	if err != nil {
 		fatal(err)
 	}
@@ -74,7 +85,7 @@ func main() {
 		}
 		base := -1
 		if *baseRef != "" {
-			base = 0 // file absent at base counts as new
+			base = 0 // ref verified above, so absence means the file is new
 			if old := gitShow(root, *baseRef, f); old != "" {
 				if base, err = c.count(old); err != nil {
 					fatal(fmt.Errorf("counting %s at %s: %w", f, *baseRef, err))
@@ -84,14 +95,7 @@ func main() {
 		rows = append(rows, row{name: f, base: base, head: head})
 	}
 
-	md := render(rows, *model, *baseRef)
-	if *out == "" {
-		fmt.Print(md)
-		return
-	}
-	if err := os.WriteFile(*out, []byte(md), 0o644); err != nil {
-		fatal(err)
-	}
+	fmt.Print(render(rows, countModel, *baseRef))
 }
 
 // render produces the markdown budget report. With no base ref the delta
@@ -151,73 +155,56 @@ func delta(d int) string {
 	}
 }
 
-// counter calls count_tokens with whichever credential works. The OAuth
-// token wins when both are set (same precedence as evals.yml); any non-200
-// switches to the other credential once, permanently.
+// counter holds the one credential chosen at startup (OAuth wins, matching
+// evals.yml) and calls count_tokens with it.
 type counter struct {
-	model    string
 	client   *http.Client
-	apiKey   string
-	oauth    string
+	cred     string
 	useOAuth bool
-	switched bool // one credential switch per run, no ping-pong
 }
 
-func newCounter(model string) (*counter, error) {
-	c := &counter{
-		model:  model,
-		client: &http.Client{Timeout: 60 * time.Second},
-		apiKey: os.Getenv("ANTHROPIC_API_KEY"),
-		oauth:  os.Getenv("CLAUDE_CODE_OAUTH_TOKEN"),
-	}
-	if c.apiKey == "" && c.oauth == "" {
+func newCounter() (*counter, error) {
+	c := &counter{client: &http.Client{Timeout: 60 * time.Second}}
+	if oauth := os.Getenv("CLAUDE_CODE_OAUTH_TOKEN"); oauth != "" {
+		c.cred, c.useOAuth = oauth, true
+	} else if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
+		c.cred = key
+	} else {
 		return nil, errors.New("set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY")
 	}
-	c.useOAuth = c.oauth != ""
 	return c, nil
 }
 
 func (c *counter) count(text string) (int, error) {
 	payload, err := json.Marshal(map[string]any{
-		"model":    c.model,
+		"model":    countModel,
 		"messages": []map[string]string{{"role": "user", "content": text}},
 	})
 	if err != nil {
 		return 0, err
 	}
-	for {
-		req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
-		if err != nil {
-			return 0, err
-		}
-		req.Header.Set("content-type", "application/json")
-		req.Header.Set("anthropic-version", "2023-06-01")
-		if c.useOAuth {
-			req.Header.Set("Authorization", "Bearer "+c.oauth)
-			req.Header.Set("anthropic-beta", "oauth-2025-04-20")
-		} else {
-			req.Header.Set("x-api-key", c.apiKey)
-		}
-		resp, err := c.client.Do(req)
-		if err != nil {
-			return 0, err
-		}
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		resp.Body.Close()
-		if resp.StatusCode == http.StatusOK {
-			return parseCount(body)
-		}
-		other := c.apiKey
-		if !c.useOAuth {
-			other = c.oauth
-		}
-		if !c.switched && other != "" {
-			c.useOAuth = !c.useOAuth // rejected; try the other credential once
-			c.switched = true
-			continue
-		}
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("anthropic-version", "2023-06-01")
+	if c.useOAuth {
+		req.Header.Set("Authorization", "Bearer "+c.cred)
+		req.Header.Set("anthropic-beta", "oauth-2025-04-20")
+	} else {
+		req.Header.Set("x-api-key", c.cred)
+	}
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	if resp.StatusCode != http.StatusOK {
 		return 0, fmt.Errorf("count_tokens: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
+	return parseCount(body)
 }
 
 func parseCount(body []byte) (int, error) {
@@ -233,8 +220,17 @@ func parseCount(body []byte) (int, error) {
 	return r.InputTokens, nil
 }
 
+// verifyRef fails when the ref doesn't resolve to a commit, so a typo'd
+// -base can never silently zero the baseline.
+func verifyRef(root, ref string) error {
+	if err := exec.Command("git", "-C", root, "rev-parse", "--verify", "--quiet", ref+"^{commit}").Run(); err != nil {
+		return fmt.Errorf("base ref %q does not resolve to a commit", ref)
+	}
+	return nil
+}
+
 // gitShow returns the file's content at ref, or "" when it doesn't exist
-// there (a new file has no base to diff against).
+// there — safe to conflate with errors only because main verified the ref.
 func gitShow(root, ref, path string) string {
 	out, err := exec.Command("git", "-C", root, "show", ref+":"+path).Output()
 	if err != nil {

@@ -46,15 +46,14 @@ jobs:
 
       - name: Count tokens
         env:
-          # Same OAuth-wins precedence and secrets as evals.yml; any non-200
-          # falls back to the other credential once.
+          # Same OAuth-wins precedence and secrets as evals.yml.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE: ${{ github.base_ref }}
         run: |
-          ARGS="-out $GITHUB_WORKSPACE/budget.md"
-          if [ -n "$BASE" ]; then ARGS="$ARGS -base origin/$BASE"; fi
-          go -C tools/skill-budget run . $ARGS
+          ARGS=""
+          if [ -n "$BASE" ]; then ARGS="-base origin/$BASE"; fi
+          go -C tools/skill-budget run . $ARGS > "$GITHUB_WORKSPACE/budget.md"
           cat "$GITHUB_WORKSPACE/budget.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment on PR
