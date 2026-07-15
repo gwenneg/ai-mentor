@@ -1,0 +1,67 @@
+# Posts a token-budget comment on PRs that change the always-loaded mentor
+# skill files. The skill definition is paid for on every invocation, and eval
+# fixes tend to grow it a sentence at a time — this makes the growth a
+# reviewed number at the moment the accept/reject decision happens.
+# Comment-only, never a gate: the reviewer decides whether a change earned
+# its tokens.
+
+name: Skill budget
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'skills/mentor/SKILL.md'
+      - 'skills/mentor/problem-mode.md'
+      - 'skills/mentor/growth-mode.md'
+  workflow_dispatch: {}
+
+concurrency:
+  group: skill-budget-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  skill-budget:
+    # release/next aggregates already-reviewed changes and its PR carries the
+    # eval-report comment — `gh pr comment --edit-last` targets the bot's most
+    # recent comment regardless of content, so posting both there would have
+    # the two workflows overwrite each other.
+    if: github.event_name == 'workflow_dispatch' || github.head_ref != 'release/next'
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: tools/skill-budget/go.mod
+          cache: false
+
+      - name: Count tokens
+        env:
+          # count_tokens is free; the tool tries the API key first and falls
+          # back to the OAuth token on any non-200 (same secrets as evals.yml).
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          ARGS="-out $GITHUB_WORKSPACE/budget.md"
+          if [ -n "$BASE" ]; then ARGS="$ARGS -base origin/$BASE"; fi
+          go -C tools/skill-budget run . $ARGS
+          cat "$GITHUB_WORKSPACE/budget.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file "$GITHUB_WORKSPACE/budget.md" \
+            --edit-last --create-if-none
