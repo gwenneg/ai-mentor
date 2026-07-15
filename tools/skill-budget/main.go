@@ -9,10 +9,10 @@
 // deltas; the CI workflow posts the result as a PR comment so every change
 // to the skill definition carries a visible price tag.
 //
-// Auth: ANTHROPIC_API_KEY (x-api-key) or CLAUDE_CODE_OAUTH_TOKEN (Bearer +
-// the oauth beta header). When both are set the API key is tried first —
-// count_tokens is free, so even an out-of-credit key may serve it — and any
-// non-200 falls back to the OAuth token once.
+// Auth: CLAUDE_CODE_OAUTH_TOKEN (Bearer + the oauth beta header) or
+// ANTHROPIC_API_KEY (x-api-key). When both are set the OAuth token wins —
+// the same precedence evals.yml enforces — and any non-200 falls back to
+// the other credential once.
 package main
 
 import (
@@ -151,15 +151,16 @@ func delta(d int) string {
 	}
 }
 
-// counter calls count_tokens with whichever credential works. The API key is
-// tried first (the endpoint is free, so a billing-dead key may still serve
-// it); any non-200 switches to the OAuth token once, permanently.
+// counter calls count_tokens with whichever credential works. The OAuth
+// token wins when both are set (same precedence as evals.yml); any non-200
+// switches to the other credential once, permanently.
 type counter struct {
 	model    string
 	client   *http.Client
 	apiKey   string
 	oauth    string
 	useOAuth bool
+	switched bool // one credential switch per run, no ping-pong
 }
 
 func newCounter(model string) (*counter, error) {
@@ -170,9 +171,9 @@ func newCounter(model string) (*counter, error) {
 		oauth:  os.Getenv("CLAUDE_CODE_OAUTH_TOKEN"),
 	}
 	if c.apiKey == "" && c.oauth == "" {
-		return nil, errors.New("set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN")
+		return nil, errors.New("set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY")
 	}
-	c.useOAuth = c.apiKey == ""
+	c.useOAuth = c.oauth != ""
 	return c, nil
 }
 
@@ -206,8 +207,13 @@ func (c *counter) count(text string) (int, error) {
 		if resp.StatusCode == http.StatusOK {
 			return parseCount(body)
 		}
-		if !c.useOAuth && c.oauth != "" {
-			c.useOAuth = true // API key rejected; fall back to the subscription token
+		other := c.apiKey
+		if !c.useOAuth {
+			other = c.oauth
+		}
+		if !c.switched && other != "" {
+			c.useOAuth = !c.useOAuth // rejected; try the other credential once
+			c.switched = true
 			continue
 		}
 		return 0, fmt.Errorf("count_tokens: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))

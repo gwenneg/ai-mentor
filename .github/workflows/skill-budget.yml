@@ -46,8 +46,8 @@ jobs:
 
       - name: Count tokens
         env:
-          # count_tokens is free; the tool tries the API key first and falls
-          # back to the OAuth token on any non-200 (same secrets as evals.yml).
+          # Same OAuth-wins precedence and secrets as evals.yml; any non-200
+          # falls back to the other credential once.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE: ${{ github.base_ref }}
