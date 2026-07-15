@@ -44,8 +44,12 @@ jobs:
       - name: Count tokens and build the budget table
         env:
           # Same OAuth-wins credential precedence and secrets as evals.yml.
-          # count_tokens is free and exact; the model is fixed on purpose —
-          # deltas are only meaningful when every count uses one tokenizer.
+          # count_tokens is free and exact. MODEL pins the tokenizer: counts
+          # differ up to ~35% across tokenizer generations (Opus 4.7+/Sonnet 5/
+          # Fable 5 vs older models), so changing it rescales every number — a
+          # visible re-baseline, never a broken Δ (base and head are always
+          # counted with the same model within a run). Keep it on the model
+          # users actually run the mentor with.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE: origin/${{ github.base_ref }}
