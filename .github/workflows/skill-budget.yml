@@ -4,6 +4,11 @@
 # reviewed number at the moment the accept/reject decision happens.
 # Comment-only, never a gate: the reviewer decides whether a change earned
 # its tokens.
+#
+# Deliberately plain shell rather than a tools/ Go module: the Go-not-bash
+# convention protects tools whose exit codes gate CI, and this gates nothing.
+# The worst failure is a missing comment on a PR a human is already
+# reviewing, and `set -euo pipefail` + `curl -f` keep failures loud.
 
 name: Skill budget
 
@@ -14,10 +19,9 @@ on:
       - 'skills/mentor/SKILL.md'
       - 'skills/mentor/problem-mode.md'
       - 'skills/mentor/growth-mode.md'
-  workflow_dispatch: {}
 
 concurrency:
-  group: skill-budget-${{ github.event.pull_request.number || github.ref }}
+  group: skill-budget-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -30,37 +34,75 @@ jobs:
     # eval-report comment — `gh pr comment --edit-last` targets the bot's most
     # recent comment regardless of content, so posting both there would have
     # the two workflows overwrite each other.
-    if: github.event_name == 'workflow_dispatch' || github.head_ref != 'release/next'
+    if: github.head_ref != 'release/next'
     runs-on: ubuntu-latest
-    env:
-      GOTOOLCHAIN: local
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-        with:
-          go-version-file: tools/skill-budget/go.mod
-          cache: false
-
-      - name: Count tokens
+      - name: Count tokens and build the budget table
         env:
-          # Same OAuth-wins precedence and secrets as evals.yml.
+          # Same OAuth-wins credential precedence and secrets as evals.yml.
+          # count_tokens is free and exact; the model is fixed on purpose —
+          # deltas are only meaningful when every count uses one tokenizer.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          BASE: ${{ github.base_ref }}
+          BASE: origin/${{ github.base_ref }}
+          MODEL: claude-opus-4-8
         run: |
-          ARGS=""
-          if [ -n "$BASE" ]; then ARGS="-base origin/$BASE"; fi
-          go -C tools/skill-budget run . $ARGS > "$GITHUB_WORKSPACE/budget.md"
-          cat "$GITHUB_WORKSPACE/budget.md" >> "$GITHUB_STEP_SUMMARY"
+          set -euo pipefail
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            AUTH=(-H "Authorization: Bearer $CLAUDE_CODE_OAUTH_TOKEN" -H "anthropic-beta: oauth-2025-04-20")
+          else
+            AUTH=(-H "x-api-key: $ANTHROPIC_API_KEY")
+          fi
 
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
+          count() {  # file content on stdin -> exact token count on stdout
+            jq -Rs --arg model "$MODEL" '{model: $model, messages: [{role: "user", content: .}]}' \
+              | curl -sf https://api.anthropic.com/v1/messages/count_tokens \
+                  -H "anthropic-version: 2023-06-01" -H "content-type: application/json" \
+                  "${AUTH[@]}" --data-binary @- \
+              | jq .input_tokens
+          }
+          sign() { if [ "$1" -gt 0 ]; then echo "+$1"; elif [ "$1" -lt 0 ]; then echo "$1"; else echo "±0"; fi; }
+
+          # A bad base ref must fail here — not silently zero every baseline.
+          git rev-parse --verify --quiet "$BASE^{commit}" > /dev/null
+
+          FILES=(skills/mentor/SKILL.md skills/mentor/problem-mode.md skills/mentor/growth-mode.md)
+          heads=() bases=()
+          {
+            echo "### Skill-def token budget (\`$MODEL\` tokenizer)"
+            echo
+            echo "| File | $BASE | this PR | Δ |"
+            echo "|---|--:|--:|--:|"
+            base_total=0 head_total=0
+            for f in "${FILES[@]}"; do
+              head=$(count < "$f")
+              if git cat-file -e "$BASE:$f" 2>/dev/null; then
+                base=$(git show "$BASE:$f" | count)
+              else
+                base=0  # file is new at base; API failures still abort the job
+              fi
+              heads+=("$head"); bases+=("$base")
+              base_total=$((base_total + base)); head_total=$((head_total + head))
+              echo "| $f | $base | $head | $(sign $((head - base))) |"
+            done
+            echo "| **Total** | **$base_total** | **$head_total** | **$(sign $((head_total - base_total)))** |"
+            echo
+            # A real invocation loads SKILL.md plus exactly ONE mode file.
+            echo "Invocation cost — problem mode (SKILL.md + problem-mode.md): **$((heads[0] + heads[1]))** ($(sign $(((heads[0] + heads[1]) - (bases[0] + bases[1])))))"
+            echo
+            echo "Invocation cost — growth mode (SKILL.md + growth-mode.md): **$((heads[0] + heads[2]))** ($(sign $(((heads[0] + heads[2]) - (bases[0] + bases[2])))))"
+            echo
+            echo "<sub>Counted via \`/v1/messages/count_tokens\` (free, exact); per-file counts include a few tokens of message framing.</sub>"
+          } > budget.md
+          cat budget.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr comment ${{ github.event.pull_request.number }} \
-            --body-file "$GITHUB_WORKSPACE/budget.md" \
-            --edit-last --create-if-none
+            --body-file budget.md --edit-last --create-if-none
