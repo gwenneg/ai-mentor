@@ -86,14 +86,15 @@ jobs:
           CASES: ${{ github.event.inputs.cases || '' }}
           SMOKE: ${{ github.event.inputs.smoke || 'false' }}
           # Release-PR runs (no dispatch inputs) gate at 3 epochs: strict
-          # majority per case, so a single flaky flip can't block or fake a
-          # release verdict. Dispatch runs keep their chosen epochs (default 1).
+          # majority per case — pass^k for [strict] invariants, where one
+          # failed epoch IS the verdict — so ordinary flakes can't block or
+          # fake a verdict. Dispatch runs keep their chosen epochs (default 1).
           EPOCHS: ${{ github.event.inputs.epochs || '3' }}
           JOBS: ${{ github.event.inputs.jobs || '9' }}
           GATE: ${{ github.event.inputs.gate || 'true' }}
         run: |
           if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
-          ARGS="-epochs $EPOCHS -j $JOBS -out $GITHUB_WORKSPACE/eval-report.md"
+          ARGS="-epochs $EPOCHS -j $JOBS -out $GITHUB_WORKSPACE/eval-report.md -records $GITHUB_WORKSPACE/eval-records.jsonl"
           if [ "$SMOKE" = "true" ]; then
             ARGS="$ARGS -smoke"
           else
@@ -103,6 +104,18 @@ jobs:
           if [ "$GATE" = "true" ]; then ARGS="$ARGS -gate"; fi
           go -C tools/eval-runner run . $ARGS
         working-directory: ${{ github.workspace }}
+
+      # Per-epoch verdict records: the raw material for judge calibration
+      # (read a sample, agree/disagree) and per-case flake history. 14-day
+      # retention — calibration reviews happen within days of a run.
+      - name: Upload verdict records
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: eval-records
+          path: eval-records.jsonl
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Publish report
         if: always()

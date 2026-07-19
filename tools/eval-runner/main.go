@@ -9,8 +9,8 @@
 // 2 on a fatal setup problem. Stdlib only.
 //
 // -smoke runs the curated per-change tier (see smokeCases); -epochs N runs
-// every selected case N times, passing on a strict majority and flagging
-// mixed results FLAKY.
+// every selected case N times, passing on a strict majority ([strict]-marked
+// cases need every epoch) and flagging majority-pass mixes FLAKY.
 //
 // Usage: go -C tools/eval-runner run . -repo ../.. -groups A,B,C -gate
 package main
@@ -28,6 +28,7 @@ import (
 	"regexp"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +37,10 @@ import (
 const (
 	mentorCmd   = "/ai-mentor:mentor"
 	maxRawLines = 60
+	// runSeparator joins a case's multiple mentor runs everywhere a single
+	// response string is needed (det checks, records, the report) — one
+	// literal, so the texts can never diverge.
+	runSeparator = "\n\n--- second run ---\n\n"
 
 	vPass  = "PASS"
 	vFail  = "FAIL"
@@ -55,15 +60,145 @@ var (
 // for cheap per-change runs — the full suite stays the release gate.
 // A01 canonical classified shape · A08 misroute trap · A13 graceful decline ·
 // A19 promoted-plugin displacement pin · A20 stack-match tier label + portable
-// prompt · B01 first meeting + profile creation · B06 saturated ignorance
-// map · C01 adopted-not-retaught · C02 same-HOME double run.
+// prompt · A30 fabrication trap (the honesty behavior class needs a cheap
+// per-change signal, not only the release gate) · B01 first meeting + profile
+// creation · B06 saturated ignorance map · C01 adopted-not-retaught ·
+// C02 same-HOME double run.
 // selectCases fails loudly if any of these IDs drops out of cases.md.
-var smokeCases = []string{"A01", "A08", "A13", "A19", "A20", "B01", "B06", "C01", "C02"}
+var smokeCases = []string{"A01", "A08", "A13", "A19", "A20", "A30", "B01", "B06", "C01", "C02"}
+
+// Strictness — hard invariants gated at pass^k (every epoch must pass,
+// never a majority: a promise kept two epochs out of three is a broken
+// promise) — is declared WHERE CASES ARE DEFINED: a cases.md row carrying
+// the exact strictMarker parses into evalCase.Strict, and the marker is
+// stripped before any text reaches the judge. parseCases fatals on
+// near-miss spellings, so a typo cannot silently downgrade an invariant.
+const strictMarker = "[strict]"
+
+var reStrictNearMiss = regexp.MustCompile(`(?i)\[\s*strict\s*\]`)
+
+// Parenthesized Expected values on Group A cases are markers, not goals.
+// unclassifiedSentinels opt a case OUT of the classified-case shape (judged
+// on its notes alone); classifiedMarkers keep full shape enforcement while
+// having no single goal (A18's fallback path is still held to grounding and
+// one-move-one-surprise). Any other parenthesized value is fatal at startup
+// — this convention must never be extended by accident of punctuation.
+var (
+	unclassifiedSentinels = map[string]bool{
+		"(catalog browse)":   true,
+		"(out of scope)":     true,
+		"(fabrication trap)": true,
+	}
+	classifiedMarkers = map[string]bool{"(no dedicated goal)": true}
+)
+
+// Seeded capability ids shared by setupProfile's fixtures and the
+// deterministic checks — one identity const per capability, used at every
+// seed site and every check, so a rename cannot silently desynchronize a
+// check from its fixture (a desynced forbid check would pass everything
+// forever, with no failure to notice).
+const (
+	capFanOut     = "fan-out-workflows"
+	capBackground = "background-agents"
+	capPlanMode   = "plan-mode"
+)
+
+// A deterministic pre-check decides mechanically checkable verdicts before
+// the judge runs: cheaper, unbiased, and a FAIL skips the judge call
+// entirely. Only verdicts plain code can decide belong here (file existence,
+// row survival, forbidden strings); judgment stays with the judge, which
+// still runs on every deterministic pass.
+type detCheck struct {
+	name string
+	fn   func(responses, profile string) string // "" = pass, otherwise the failure reason
+}
+
+var detChecks = map[string][]detCheck{
+	// First meeting must CREATE the profile with the lesson recorded — the
+	// exact regression class of announced-file-empty-table.
+	"B01": {{"profile-created-with-rows", profileHasRows}},
+	// Declined capabilities are invisible: the technique's name or id
+	// anywhere in the response is a violation by definition. The pattern is
+	// derived from the seeded id (hyphen-or-space, word-bounded, case-
+	// insensitive); paraphrases and singular/plural drift stay judge
+	// territory.
+	"B03": {{"declined-" + capFanOut + "-invisible", forbidCapability(capFanOut)}},
+	"C05": {{"declined-" + capPlanMode + "-invisible", forbidCapability(capPlanMode)}},
+	// Seeded rows survive and the declined status never regresses.
+	"C04": {{"seeded-rows-survive", c04RowsSurvive}},
+}
+
+func runDetChecks(id, responses, profile string) string {
+	for _, ch := range detChecks[id] {
+		if reason := ch.fn(responses, profile); reason != "" {
+			return ch.name + ": " + reason
+		}
+	}
+	return ""
+}
+
+// profileHasRows fails when the profile is missing or its capability table
+// carries zero data rows — a first meeting that teaches must record. It
+// delegates to profileIDs, the runner's one profile-table parser, so note
+// text ("---", the word "status") can never confuse the verdict and the
+// check can't drift from how taughtIDs reads the same file.
+func profileHasRows(_, profile string) string {
+	if strings.TrimSpace(profile) == "" {
+		return "no profile file was written"
+	}
+	if len(profileIDs(profile)) == 0 {
+		return "profile exists but its capability table has zero data rows"
+	}
+	return ""
+}
+
+// forbidCapability fails when the response names the capability in any of
+// its natural spellings: hyphens in the id match hyphen or space, matching
+// is case-insensitive, and word boundaries prevent false hits inside longer
+// words ("plan mode" must not match "plan modeled").
+func forbidCapability(id string) func(string, string) string {
+	re := regexp.MustCompile(`(?i)\b` + strings.ReplaceAll(regexp.QuoteMeta(id), "-", "[- ]") + `\b`)
+	return func(responses, _ string) string {
+		if m := re.FindString(responses); m != "" {
+			return fmt.Sprintf("response names the declined capability (%q)", m)
+		}
+		return ""
+	}
+}
+
+// c04RowsSurvive enforces C04's mechanical half over profileRows (the one
+// profile-table iterator): both seeded rows exist exactly once each — the
+// case mandates one row per capability, so a duplicate appended row is a
+// violation wherever it sits — and the declined status never regresses.
+// Note refreshes and shown-row nuances stay with the judge.
+func c04RowsSurvive(_, profile string) string {
+	status := map[string]string{}
+	for _, cs := range profileRows(profile) {
+		id := cs[1]
+		if id != capBackground && id != capPlanMode {
+			continue
+		}
+		if _, dup := status[id]; dup {
+			return "duplicate rows for " + id + " — one row per capability"
+		}
+		status[id] = cs[2]
+	}
+	switch {
+	case status[capBackground] == "":
+		return "seeded declined row (" + capBackground + ") missing from profile"
+	case !strings.EqualFold(status[capBackground], "declined"):
+		return capBackground + " row's status regressed to " + status[capBackground]
+	case status[capPlanMode] == "":
+		return "seeded shown row (" + capPlanMode + ") missing from profile"
+	}
+	return ""
+}
 
 // evalCase is one row from a cases.md group table. Statement holds the
 // problem statement for Group A and the fixture/setup description otherwise.
 type evalCase struct {
 	Group, ID, Statement, Expected, Notes string
+	Strict                                bool // parsed from cases.md's [strict] marker; gates at pass^k
 }
 
 // check is one named judge check; verdict is the judge's full reply.
@@ -84,6 +219,8 @@ type result struct {
 	verdict  string // vPass, vFail, or vError
 	reason   string
 	response string
+	profile  string // after-run profile content, for records
+	judgeRaw string // judge's raw reply, for records / calibration review
 }
 
 func errResult(c evalCase, err error) result {
@@ -140,6 +277,19 @@ func parseCases(text string) (map[string][]evalCase, string, error) {
 			}
 		} else {
 			c.Statement = cs[2]
+		}
+		// Strictness is syntax, not prose: the exact marker sets the field
+		// and is STRIPPED, so gating metadata never reaches the judge. Any
+		// other spelling ([Strict], [ strict]) is fatal — a typo'd marker
+		// must never silently gate a hard invariant at plain majority.
+		for _, f := range []*string{&c.Expected, &c.Notes} {
+			if strings.Contains(*f, strictMarker) {
+				c.Strict = true
+				*f = strings.TrimSpace(strings.ReplaceAll(*f, strictMarker, ""))
+			}
+		}
+		if m := reStrictNearMiss.FindString(c.Expected + " " + c.Notes); m != "" {
+			return nil, "", fmt.Errorf("case %s: malformed strict marker %q — use exactly %q", c.ID, m, strictMarker)
 		}
 		cases[group] = append(cases[group], c)
 	}
@@ -382,8 +532,12 @@ func (r *runner) runCase(c evalCase) result {
 		responses = append(responses, resp)
 	}
 	profile := readFile(filepath.Join(home, profileRel))
+	joined := strings.Join(responses, runSeparator)
+	if reason := runDetChecks(c.ID, joined, profile); reason != "" {
+		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile}
+	}
 	sources := r.catalogSources(taughtIDs(profile, seeded))
-	return r.judgeCase(c, responses, profile, sources)
+	return r.judgeCase(c, responses, joined, profile, sources)
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
@@ -499,7 +653,7 @@ func (r *runner) setupProfile(c evalCase, home string) ([]string, error) {
 	case "B02":
 		content = r.profileMD(week, row("autonomous-loops", "shown", "Demoed /loop on a flaky retry test"))
 	case "B03":
-		content = r.profileMD(week, row("fan-out-workflows", "declined", `"too token-heavy"`))
+		content = r.profileMD(week, row(capFanOut, "declined", `"too token-heavy"`))
 	case "B04":
 		content = r.profileMD(week) // empty profile; the hooks live in the fixture copy
 	case "B05":
@@ -511,13 +665,13 @@ func (r *runner) setupProfile(c evalCase, home string) ([]string, error) {
 		}
 		content = r.profileMD(week, rows...)
 	case "C01":
-		content = r.profileMD(week, row("plan-mode", "adopted", "uses plan mode daily"))
+		content = r.profileMD(week, row(capPlanMode, "adopted", "uses plan mode daily"))
 	case "C04":
 		content = r.profileMD(week,
-			row("background-agents", "declined", `"prefer local runs"`),
-			row("plan-mode", "shown", "tried it once"))
+			row(capBackground, "declined", `"prefer local runs"`),
+			row(capPlanMode, "shown", "tried it once"))
 	case "C05":
-		content = r.profileMD(week, row("plan-mode", "declined", `"too slow for me"`))
+		content = r.profileMD(week, row(capPlanMode, "declined", `"too slow for me"`))
 	default:
 		return nil, nil
 	}
@@ -528,18 +682,32 @@ func (r *runner) setupProfile(c evalCase, home string) ([]string, error) {
 	return seeded, os.WriteFile(path, []byte(content), 0o644)
 }
 
-// profileIDs extracts the capability ids (first column) from a profile's
-// table rows, skipping the header and separator.
-func profileIDs(profile string) []string {
-	var ids []string
+// profileRows yields the data-row cell slices of a profile's capability
+// table, skipping the header and separators (including |:-:| alignment
+// forms). It is THE row iterator for profile files — every consumer
+// (profileIDs/taughtIDs, the B01 and C04 deterministic checks) must go
+// through it, so a format quirk is fixed once, never per-parser.
+func profileRows(profile string) [][]string {
+	var rows [][]string
 	for _, l := range strings.Split(profile, "\n") {
 		if !strings.HasPrefix(l, "|") {
 			continue
 		}
 		cs := cells(l)
-		if len(cs) < 3 || cs[1] == "" || cs[1] == "Capability" || strings.HasPrefix(cs[1], "-") {
+		if len(cs) < 3 || cs[1] == "" || cs[1] == "Capability" ||
+			strings.HasPrefix(cs[1], "-") || strings.HasPrefix(cs[1], ":") {
 			continue
 		}
+		rows = append(rows, cs)
+	}
+	return rows
+}
+
+// profileIDs extracts the capability ids (first column) from a profile's
+// table rows.
+func profileIDs(profile string) []string {
+	var ids []string
+	for _, cs := range profileRows(profile) {
 		ids = append(ids, cs[1])
 	}
 	return ids
@@ -677,8 +845,11 @@ func assistantText(out string) (string, error) {
 // hermetically — isolated HOME and an empty working directory — so no
 // CLAUDE.md, auto memory, or repo context can leak into verdicts. (--bare
 // would be simpler but silently breaks macOS keychain auth.)
-func (r *runner) judgeCase(c evalCase, responses []string, profile string, sources []capSource) result {
-	res := result{c: c, response: strings.Join(responses, "\n\n--- second run ---\n\n")}
+// judgeCase scores the case; joined is the runSeparator-joined response text
+// (computed once in runCase so det checks, records, and the report all see
+// the identical string by construction).
+func (r *runner) judgeCase(c evalCase, responses []string, joined, profile string, sources []capSource) result {
+	res := result{c: c, response: joined, profile: profile}
 	home, err := os.MkdirTemp("", "judge-home-")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
@@ -706,6 +877,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, profile string, sourc
 		res.verdict, res.reason = vError, err.Error()
 		return res
 	}
+	res.judgeRaw = out
 	v, err := parseVerdict(out)
 	if err != nil {
 		res.verdict, res.reason = vError, "judge reply not parseable: "+err.Error()
@@ -741,13 +913,21 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 		fmt.Fprintf(&b, "\n\nToday's date: %s\nCase %s (Group %s).\n", r.today, c.ID, c.Group)
 	}
 	if c.Group == "A" {
-		fmt.Fprintf(&b, "Problem statement: %s\nExpected goal classification: %s\n", c.Statement, c.Expected)
+		// Only ALLOWLISTED sentinels opt out of the classified-case shape.
+		// A18's "(no dedicated goal)" is deliberately NOT one: it has no
+		// goal to name, but grounding, one-move-one-surprise, and the
+		// closing line still bind it — punctuation alone never decides.
+		if unclassifiedSentinels[c.Expected] {
+			fmt.Fprintf(&b, "Problem statement: %s\nThis is NOT a classified case — its Expected column carries the marker %s instead of a goal. Judge it on its case notes alone; the classified-case shape expectations below bind only where the notes don't override them.\n", c.Statement, c.Expected)
+		} else {
+			fmt.Fprintf(&b, "Problem statement: %s\nExpected goal classification: %s\n", c.Statement, c.Expected)
+		}
 		if c.Notes != "" {
 			fmt.Fprintf(&b, "Case notes: %s\n", c.Notes)
 		}
 		b.WriteString("\nGroup A output-shape expectations (verbatim from cases.md; every classified case must satisfy all of them):\n")
 		b.WriteString(r.shape + "\n")
-		b.WriteString("\nThe case notes take precedence over the shape expectations when they conflict: a case whose notes say it is not classified (catalog browse, graceful decline) is judged on its notes, not on the classified-case shape.\n")
+		b.WriteString("\nThe case notes take precedence over the shape expectations when they conflict.\n")
 		b.WriteString("For a problem about the fixture repo itself, a fenced prompt that cites a code path not in the fixture file list below is fabricated grounding — fail it (unless the case notes mark the prompt portable to a different repo).\n")
 	} else {
 		fmt.Fprintf(&b, "Setup / profile fixture: %s\nExpected behavior: %s\n", c.Statement, c.Expected)
@@ -856,12 +1036,21 @@ func expandEpochs(cases []evalCase, n int) []evalCase {
 }
 
 // aggregateEpochs folds each case's n consecutive epoch results into one
-// verdict: PASS on a strict majority of passing epochs, ERROR when every
-// epoch errored, FAIL otherwise. Mixed results are flagged FLAKY in the
-// reason so they stay visible in the report even when the majority passes.
+// verdict: PASS on a strict majority of passing epochs (every epoch for
+// [strict] cases), ERROR when every epoch errored (or a strict shortfall is
+// error-only harness noise), FAIL otherwise. Majority-pass mixes are
+// flagged FLAKY so they stay visible; gate-blocking verdicts carry a plain
+// tally (or the STRICT label) instead — FLAKY never marks a red.
 // Relies on expandEpochs's adjacency invariant.
 func aggregateEpochs(results []result, n int) []result {
 	if n <= 1 {
+		// Single-epoch runs (smoke, default dispatch) keep their verdicts,
+		// but a failed strict invariant still announces itself in the report.
+		for i := range results {
+			if results[i].c.Strict && results[i].verdict == vFail {
+				results[i].reason = "STRICT invariant: " + results[i].reason
+			}
+		}
 		return results
 	}
 	out := make([]result, 0, len(results)/n)
@@ -873,38 +1062,156 @@ func aggregateEpochs(results []result, n int) []result {
 
 func foldEpochs(chunk []result) result {
 	agg := result{c: chunk[0].c}
-	pass, fail, bad := 0, 0, -1
+	pass, fail, firstFail, firstBad := 0, 0, -1, -1
 	for i, r := range chunk {
 		switch r.verdict {
 		case vPass:
 			pass++
 		case vFail:
 			fail++
+			if firstFail < 0 {
+				firstFail = i
+			}
 		}
-		if r.verdict != vPass && bad < 0 {
-			bad = i
+		if r.verdict != vPass && firstBad < 0 {
+			firstBad = i
 		}
 	}
 	n := len(chunk)
+	strict := agg.c.Strict
 	switch {
-	case pass*2 > n:
-		agg.verdict = vPass
 	case pass == 0 && fail == 0:
 		agg.verdict = vError
+	case strict && pass < n:
+		// pass^k: one failed epoch breaks the invariant. But an ERRORED
+		// epoch is harness noise, not a broken promise — with zero actual
+		// FAILs the verdict is ERROR, so triage doesn't blame the model.
+		if fail == 0 {
+			agg.verdict = vError
+		} else {
+			agg.verdict = vFail
+		}
+	case pass*2 > n: // a strict case reaching here has pass == n
+		agg.verdict = vPass
 	default:
 		agg.verdict = vFail
+	}
+	// Cite a FAIL epoch when one exists: an ERROR epoch's transport message
+	// misdirects triage when a real failure is available to quote.
+	bad := firstFail
+	if bad < 0 {
+		bad = firstBad
 	}
 	if bad >= 0 {
 		agg.reason = fmt.Sprintf("epoch %d: %s", bad+1, chunk[bad].reason)
 		agg.response = chunk[bad].response
 	}
+	// FLAKY marks exactly one thing: mixed epochs that still PASSED on
+	// majority. Gate-blocking verdicts never carry it — a strict red is
+	// labeled STRICT whether it failed or error-downgraded.
 	switch {
-	case pass > 0 && pass < n:
+	case strict && agg.verdict != vPass:
+		agg.reason = fmt.Sprintf("STRICT invariant (pass^%d required): %d/%d epochs passed — %s", n, pass, n, agg.reason)
+	case agg.verdict == vPass && pass < n:
 		agg.reason = fmt.Sprintf("FLAKY %d/%d epochs passed — %s", pass, n, agg.reason)
 	case agg.verdict != vPass:
 		agg.reason = fmt.Sprintf("%d/%d epochs passed — %s", pass, n, agg.reason)
 	}
 	return agg
+}
+
+// checkCoverage cross-checks evals/coverage.md against the parsed cases so
+// the matrix can never silently go stale (the failure mode that rotted B05's
+// case spec): every A/B/C ID the matrix references must exist in cases.md,
+// and every runnable case must appear in the matrix — a new case ships with
+// its coverage row, or the run fails loudly. Ranges like "A01–A29" expand.
+func checkCoverage(repo string, known map[string]bool) error {
+	full := readFile(filepath.Join(repo, "evals", "coverage.md"))
+	if full == "" {
+		return fmt.Errorf("evals/coverage.md missing or empty — the rule-coverage matrix is required")
+	}
+	// Only TABLE ROWS are coverage claims: prose (the gap queue, legend,
+	// notes outside tables) is free text, so planning language may name
+	// future cases without bricking every run, and a prose mention can
+	// never satisfy the has-a-row requirement.
+	var tableLines []string
+	for _, l := range strings.Split(full, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(l), "|") {
+			tableLines = append(tableLines, l)
+		}
+	}
+	text := strings.Join(tableLines, "\n")
+	seen := map[string]bool{}
+	// Ranges expand with every interior ID validated — an interior case
+	// deleted from cases.md must fail here, not hide inside "A01–A29".
+	for _, m := range regexp.MustCompile(`([ABC])(\d{2})\s*[–-]\s*([ABC])(\d{2})`).FindAllStringSubmatch(text, -1) {
+		if m[1] != m[3] {
+			return fmt.Errorf("coverage.md range %q mixes groups", m[0])
+		}
+		lo, _ := strconv.Atoi(m[2])
+		hi, _ := strconv.Atoi(m[4])
+		if hi < lo {
+			return fmt.Errorf("coverage.md range %q is reversed or empty", m[0])
+		}
+		for i := lo; i <= hi; i++ {
+			id := fmt.Sprintf("%s%02d", m[1], i)
+			if !known[id] {
+				return fmt.Errorf("coverage.md range %q includes %s, which is not in cases.md — the matrix went stale", m[0], id)
+			}
+			seen[id] = true
+		}
+	}
+	for _, id := range regexp.MustCompile(`\b[ABC]\d{2}\b`).FindAllString(text, -1) {
+		seen[id] = true
+		if !known[id] {
+			return fmt.Errorf("coverage.md references %s, which is not in cases.md — the matrix went stale", id)
+		}
+	}
+	for id := range known {
+		if !seen[id] {
+			return fmt.Errorf("case %s has no row in coverage.md — map it (or record it as a deliberate gap) before it can gate", id)
+		}
+	}
+	return nil
+}
+
+// record is one per-attempt verdict written to the -records JSONL:
+// everything a human needs to independently re-judge the case (calibration)
+// and everything flake analysis needs. Epoch and Attempt make the history
+// self-describing: attempt 1 is the original epoch run, attempt 2 its
+// bounded ERROR retry — without them, a retried record is indistinguishable
+// from an extra epoch.
+type record struct {
+	Case     string `json:"case"`
+	Group    string `json:"group"`
+	Epoch    int    `json:"epoch"`
+	Attempt  int    `json:"attempt"`
+	Verdict  string `json:"verdict"`
+	Reason   string `json:"reason,omitempty"`
+	Judge    string `json:"judge,omitempty"`
+	Response string `json:"response,omitempty"`
+	Profile  string `json:"profile,omitempty"`
+}
+
+func toRecord(r result, epoch, attempt int) record {
+	return record{
+		Case: r.c.ID, Group: r.c.Group, Epoch: epoch, Attempt: attempt,
+		Verdict: r.verdict, Reason: r.reason,
+		Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
+	}
+}
+
+func writeRecords(path string, recs []record) error {
+	var b strings.Builder
+	for _, rec := range recs {
+		line, err := json.Marshal(rec)
+		if err != nil {
+			return err
+		}
+		b.Write(line)
+		b.WriteByte('\n')
+	}
+	return os.WriteFile(path, []byte(b.String()), 0o644)
 }
 
 // groupsIn returns the group letters in first-seen order — order-preserving
@@ -1024,11 +1331,12 @@ func main() {
 	out := flag.String("out", "eval-report.md", "markdown report path")
 	gate := flag.Bool("gate", false, "exit 1 when any case fails or errors")
 	smoke := flag.Bool("smoke", false, "run the curated smoke tier (one case per behavior class) — the cheap per-change signal; the full suite stays the release gate")
-	epochs := flag.Int("epochs", 1, "independent runs per case; with N>1 a case passes on a strict majority of epochs and mixed results are flagged FLAKY")
+	epochs := flag.Int("epochs", 1, "independent runs per case; with N>1 a case passes on a strict majority of epochs ([strict]-marked cases need every epoch) and majority-pass mixes are flagged FLAKY")
 	jobs := flag.Int("j", 3, "cases to run concurrently (keep modest: every case is a subject run plus a judge run against the same account)")
 	judge := flag.String("model-judge", "claude-sonnet-5", "judge model for scoring")
 	modelSubject := flag.String("model-subject", "claude-sonnet-5", "model the mentor under test runs on (pinned so a gate red is a regression, not CLI-default drift)")
 	timeout := flag.Int("timeout", 300, "per-case timeout in seconds")
+	records := flag.String("records", "", "write per-epoch JSONL verdict records (case, verdict, reason, judge reply, response, profile) — the raw material for judge calibration and run history")
 	flag.Parse()
 
 	if *epochs < 1 {
@@ -1072,6 +1380,27 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
+	// The deterministic-check registry is keyed by case ID in Go; a renamed
+	// or deleted case must fail the run loudly, not silently drop its extra
+	// scrutiny. Parenthesized Expected values must be known markers — the
+	// sentinel convention is never extended by accident of punctuation.
+	known := map[string]bool{}
+	for _, cs := range all {
+		for _, c := range cs {
+			known[c.ID] = true
+			if c.Group == "A" && strings.HasPrefix(c.Expected, "(") && !unclassifiedSentinels[c.Expected] && !classifiedMarkers[c.Expected] {
+				fatal(fmt.Errorf("case %s: unknown parenthesized Expected %q — add it to the sentinel allowlists or use a goal name", c.ID, c.Expected))
+			}
+		}
+	}
+	for id := range detChecks {
+		if !known[id] {
+			fatal(fmt.Errorf("detChecks id %s is not in cases.md — update the registry", id))
+		}
+	}
+	if err := checkCoverage(repoAbs, known); err != nil {
+		fatal(err)
+	}
 	approaches, err := approachNames(repoAbs)
 	if err != nil {
 		fatal(err)
@@ -1096,6 +1425,14 @@ func main() {
 		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))
 	}
 	results := r.runAll(expandEpochs(selected, *epochs), *jobs)
+	// First attempts are captured for the records BEFORE the retry splice:
+	// the flake history must contain transient ERRORs, not their retries'
+	// disguises. Each record carries its epoch and attempt number so the
+	// history is reconstructable from the file alone.
+	recs := make([]record, 0, len(results))
+	for i, r := range results {
+		recs = append(recs, toRecord(r, i%*epochs+1, 1))
+	}
 	// One bounded retry for ERROR verdicts: transient API failures
 	// (connection drops, judge hiccups) must not fail a gating run.
 	var errored []int
@@ -1113,6 +1450,15 @@ func main() {
 		rerun := r.runAll(retry, *jobs)
 		for k, i := range errored {
 			results[i] = rerun[k]
+			recs = append(recs, toRecord(rerun[k], i%*epochs+1, 2))
+		}
+	}
+	// Records are optional raw material (calibration, flake history):
+	// written first and warn-only, so neither their failure nor a later
+	// report failure can discard the other artifact of a fully-paid run.
+	if *records != "" {
+		if err := writeRecords(*records, recs); err != nil {
+			fmt.Fprintln(os.Stderr, "warning: writing records:", err)
 		}
 	}
 	results = aggregateEpochs(results, *epochs)
