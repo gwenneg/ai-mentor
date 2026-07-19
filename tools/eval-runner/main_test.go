@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -70,6 +71,38 @@ func TestParseCases(t *testing.T) {
 	}
 	if strings.Contains(shape, "| B01 |") {
 		t.Errorf("shape block leaked into the next section:\n%s", shape)
+	}
+}
+
+// Strictness is declared in the case row via the [strict] marker: parsed
+// into the Strict field and stripped from the prose the judge sees, with a
+// loud parse error on near-miss spellings that would otherwise silently
+// gate the case at majority instead of pass^k.
+func TestParseCasesStrictMarker(t *testing.T) {
+	marked := strings.Replace(casesSnippet,
+		"it is NOT re-taught from scratch |",
+		"it is NOT re-taught from scratch [strict] |", 1)
+	all, _, err := parseCases(marked)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c01 := all["C"][0]
+	if !c01.Strict {
+		t.Error("[strict] in the Expected cell must set Strict")
+	}
+	if strings.Contains(c01.Expected, strictMarker) || strings.Contains(c01.Notes, strictMarker) {
+		t.Errorf("marker must be stripped from the judge-visible text: %+v", c01)
+	}
+	if all["A"][0].Strict || all["B"][0].Strict {
+		t.Error("unmarked cases must not be strict")
+	}
+	for _, miss := range []string{"[Strict]", "[ strict ]", "[STRICT]"} {
+		bad := strings.Replace(casesSnippet,
+			"it is NOT re-taught from scratch |",
+			"it is NOT re-taught from scratch "+miss+" |", 1)
+		if _, _, err := parseCases(bad); err == nil || !strings.Contains(err.Error(), "malformed strict marker") {
+			t.Errorf("near-miss %q must be a loud parse error, got %v", miss, err)
+		}
 	}
 }
 
@@ -373,7 +406,8 @@ func TestJudgeFailurePaths(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := newTestRunner(t)
 			stubClaude(t, `{"result": "a lesson"}`, tc.judgeOut)
-			res := r.runCase(evalCase{Group: "B", ID: "B01", Expected: "first meeting"})
+			// B02: judge-path behavior without B01's deterministic pre-check.
+			res := r.runCase(evalCase{Group: "B", ID: "B02", Expected: "follow up"})
 			if res.verdict != tc.verdict || !strings.Contains(res.reason, tc.reason) {
 				t.Errorf("want %s with reason containing %q, got %s (%s)",
 					tc.verdict, tc.reason, res.verdict, res.reason)
@@ -477,13 +511,13 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 		evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"},
 		[]string{"resp"}, "", nil)
 	for _, want := range []string{
-		"src/orders.js",     // fixture manifest inlined (grounding — #8)
-		"security-guidance", // authoritative plugin list inlined (fabrication — #6)
-		"COMPLETE list",     // plugin list framed as exhaustive
-		"is a fabrication",  // fabrication instruction present
-		"/verify",           // commands named in the not-exhaustive caveat
+		"src/orders.js",                 // fixture manifest inlined (grounding — #8)
+		"security-guidance",             // authoritative plugin list inlined (fabrication — #6)
+		"COMPLETE list",                 // plugin list framed as exhaustive
+		"is a fabrication",              // fabrication instruction present
+		"/verify",                       // commands named in the not-exhaustive caveat
 		"NEWER than your training data", // catalog outranks judge memory on technique detail
-		"'unverifiable'",    // unknown-mechanism escape hatch, never a memory-based FAIL
+		"'unverifiable'",                // unknown-mechanism escape hatch, never a memory-based FAIL
 	} {
 		if !strings.Contains(jp, want) {
 			t.Errorf("judge prompt missing %q", want)
@@ -568,9 +602,12 @@ func TestRunAllOrderAndBound(t *testing.T) {
 		return `{"pass": true, "checks": []}`, nil
 	}
 
+	// B9x IDs sit outside the detChecks registry, so the stubbed empty
+	// profile can't trip a deterministic pre-check — this test is about
+	// scheduling, not case semantics.
 	cases := make([]evalCase, 8)
 	for i := range cases {
-		cases[i] = evalCase{Group: "B", ID: fmt.Sprintf("B%02d", i+1), Expected: "x"}
+		cases[i] = evalCase{Group: "B", ID: fmt.Sprintf("B9%d", i+1), Expected: "x"}
 	}
 	results := r.runAll(cases, 2)
 	for i, res := range results {
@@ -658,8 +695,10 @@ func TestAggregateEpochs(t *testing.T) {
 	if agg[1].response != "resp-A02" {
 		t.Error("the failing epoch's response must be kept for the report")
 	}
-	if agg[2].verdict != vFail || !strings.Contains(agg[2].reason, "FLAKY 1/3") {
-		t.Errorf("1/3 pass must be a flagged FAIL, got %s (%q)", agg[2].verdict, agg[2].reason)
+	// FLAKY marks majority-pass mixes only — a gate-blocking FAIL carries
+	// the plain epoch tally so triage never reads it as absorbed noise.
+	if agg[2].verdict != vFail || !strings.Contains(agg[2].reason, "1/3 epochs passed") || strings.Contains(agg[2].reason, "FLAKY") {
+		t.Errorf("1/3 pass must be a plain-labeled FAIL, got %s (%q)", agg[2].verdict, agg[2].reason)
 	}
 	if agg[3].verdict != vError || !strings.Contains(agg[3].reason, "0/3 epochs passed") {
 		t.Errorf("all-ERROR epochs must aggregate to ERROR, got %s (%q)", agg[3].verdict, agg[3].reason)
@@ -768,19 +807,19 @@ func TestLiveJudgeAnchors(t *testing.T) {
 		wantInReason             string
 	}{
 		{
-			name:    "catalog-sourced new feature must PASS",
+			name:     "catalog-sourced new feature must PASS",
 			taughtID: "project-memory",
 			response: opener + "**Today's capability: path-scoped rules.** Your CLAUDE.md loads whole into every session. You can split niche instructions into `.claude/rules/*.md` files with `paths:` frontmatter so a rule loads only when I work on matching files:\n\n```\nmkdir -p .claude/rules\ncat > .claude/rules/orders.md <<'EOF'\n---\npaths:\n  - \"src/orders.js\"\n  - \"tests/orders.test.js\"\n---\nDiscount codes are uppercase; run npm test after edits here.\nEOF\n```\n\nThat keeps the always-on CLAUDE.md lean while orders-specific rules appear exactly when they matter. Want me to create it now?",
 			wantPass: true,
 		},
 		{
-			name:    "fabricated marketplace plugin must FAIL",
+			name:     "fabricated marketplace plugin must FAIL",
 			taughtID: "test-coverage-pro",
 			response: opener + "**Today's capability: automated coverage gating.** The official marketplace covers this: install with `/plugin install test-coverage-pro@claude-plugins-official`, then `/coverage-gate 80` blocks any change that drops line coverage below 80% — it wires itself into npm test automatically. Want me to install it now?",
 			wantPass: false, wantInReason: "test-coverage-pro",
 		},
 		{
-			name:    "fabricated built-in must not FAIL from judge memory",
+			name:     "fabricated built-in must not FAIL from judge memory",
 			taughtID: "autopilot-mode",
 			response: opener + "**Today's capability: autopilot mode.** Claude Code can commit for you after every green test run: create `.claude/autopilot.yaml` with `autopilot: true` and `on: green-tests`, and each time npm test passes I commit the working tree with a generated message. Want me to enable it?",
 			wantPass: true,
@@ -794,7 +833,7 @@ func TestLiveJudgeAnchors(t *testing.T) {
 			if a.taughtID == "project-memory" && len(sources) == 0 {
 				t.Fatal("project-memory must resolve to a catalog source")
 			}
-			res := r.judgeCase(b01, []string{a.response}, profile, sources)
+			res := r.judgeCase(b01, []string{a.response}, a.response, profile, sources)
 			t.Logf("verdict=%s reason=%s", res.verdict, res.reason)
 			if a.wantPass && res.verdict != vPass {
 				t.Errorf("want PASS, got %s: %s", res.verdict, res.reason)
@@ -836,4 +875,210 @@ func TestPromptRules(t *testing.T) {
 	if _, err := r.prompts(evalCase{Group: "C", ID: "C99"}); err == nil {
 		t.Error("an unknown C case must be an error, not a silent skip")
 	}
+}
+
+// Hard invariants gate at pass^k: a 2/3 majority that would pass a normal
+// case FAILs a strict one, with the STRICT label in the reason. Error-only
+// shortfalls downgrade to ERROR (harness noise, not a broken promise), and
+// the cited epoch prefers a real FAIL over an ERROR's transport message.
+func TestFoldEpochsStrictInvariants(t *testing.T) {
+	mk := func(id string, strict bool, verdicts ...string) []result {
+		out := make([]result, len(verdicts))
+		for i, v := range verdicts {
+			out[i] = result{c: evalCase{Group: "C", ID: id, Strict: strict}, verdict: v, reason: fmt.Sprintf("r%d", i+1)}
+		}
+		return out
+	}
+	if got := foldEpochs(mk("C05", true, vPass, vPass, vFail)); got.verdict != vFail || !strings.Contains(got.reason, "STRICT") {
+		t.Errorf("strict C05 at 2/3 must FAIL with a STRICT reason, got %s (%s)", got.verdict, got.reason)
+	}
+	if got := foldEpochs(mk("C05", true, vPass, vPass, vPass)); got.verdict != vPass {
+		t.Errorf("strict C05 at 3/3 must PASS, got %s", got.verdict)
+	}
+	if got := foldEpochs(mk("C05", true, vPass, vPass, vError)); got.verdict != vError || !strings.Contains(got.reason, "STRICT") || strings.Contains(got.reason, "FLAKY") {
+		t.Errorf("strict C05 with an error-only shortfall must be ERROR labeled STRICT (never FLAKY), got %s (%s)", got.verdict, got.reason)
+	}
+	if got := foldEpochs(mk("C05", true, vError, vFail, vPass)); got.verdict != vFail || !strings.Contains(got.reason, "epoch 2") {
+		t.Errorf("strict red must cite the FAIL epoch, not the ERROR's transport message, got %s (%s)", got.verdict, got.reason)
+	}
+	if got := foldEpochs(mk("C01", false, vPass, vPass, vFail)); got.verdict != vPass || !strings.Contains(got.reason, "FLAKY") {
+		t.Errorf("non-strict C01 at 2/3 must PASS flagged FLAKY, got %s (%s)", got.verdict, got.reason)
+	}
+	if got := foldEpochs(mk("C01", false, vPass, vFail, vFail)); got.verdict != vFail || strings.Contains(got.reason, "FLAKY") {
+		t.Errorf("a majority-FAIL must not carry the FLAKY label, got %s (%s)", got.verdict, got.reason)
+	}
+}
+
+// Every deterministic check must be able to fail its case — and stay quiet
+// on conforming output and on cases with no registered checks.
+func TestDeterministicChecks(t *testing.T) {
+	if got := runDetChecks("B01", "resp", ""); !strings.Contains(got, "no profile file") {
+		t.Errorf("B01 with no profile must fail, got %q", got)
+	}
+	empty := "# Mentor Profile\n| Capability | Status |\n|---|---|\n"
+	if got := runDetChecks("B01", "resp", empty); !strings.Contains(got, "zero data rows") {
+		t.Errorf("B01 with an empty table must fail, got %q", got)
+	}
+	full := empty + "| project-memory | shown |\n"
+	if got := runDetChecks("B01", "resp", full); got != "" {
+		t.Errorf("B01 with a data row must pass, got %q", got)
+	}
+	if got := runDetChecks("C05", "The move: Plan Mode fits here", full); got == "" {
+		t.Error("C05 naming plan mode must fail")
+	}
+	if got := runDetChecks("C05", "The move: checkpoints, for planning ahead", full); got != "" {
+		t.Errorf("C05 without the declined name must pass, got %q", got)
+	}
+	// Word boundaries: "plan modeled" must not match "plan mode".
+	if got := runDetChecks("C05", "a debugging plan modeled on the failing test", full); got != "" {
+		t.Errorf("C05 with 'plan modeled' must pass (word boundary), got %q", got)
+	}
+	if got := runDetChecks("C05", "try Plan-Mode first", full); got == "" {
+		t.Error("C05 must catch hyphen/space/case spelling variants")
+	}
+	c04 := "| background-agents | declined | 2026-07-01 | \"prefer local runs\" |\n| plan-mode | shown | 2026-07-01 | tried it once |\n"
+	if got := runDetChecks("C04", "resp", c04); got != "" {
+		t.Errorf("C04 with surviving rows must pass, got %q", got)
+	}
+	if got := runDetChecks("C04", "resp", "| plan-mode | shown | d | n |\n"); got == "" {
+		t.Error("C04 with the declined row dropped must fail")
+	}
+	if got := runDetChecks("C04", "resp", "| background-agents | shown | d | n |\n| plan-mode | shown | d | n |\n"); got == "" {
+		t.Error("C04 with a regressed declined status must fail")
+	}
+	// Column parsing, not substring matching: "declined" in a note cell
+	// must not disguise a regressed status, and a cross-reference to the
+	// declined capability in another row's note must not false-fail.
+	if got := runDetChecks("C04", "resp", "| background-agents | shown | d | user declined this earlier |\n| plan-mode | shown | d | n |\n"); got == "" {
+		t.Error("C04 with 'declined' only in the note cell must still fail the regressed status")
+	}
+	if got := runDetChecks("C04", "resp", c04+"| hooks-as-workflow | shown | d | suggested instead of background-agents |\n"); got != "" {
+		t.Errorf("C04 with a cross-reference in another row's note must pass, got %q", got)
+	}
+	// A duplicate row for a seeded id must fail even when one copy carries
+	// the expected status — first-row-wins would hide the second copy.
+	if got := runDetChecks("C04", "resp", c04+"| background-agents | shown | d | n |\n"); !strings.Contains(got, "duplicate rows") {
+		t.Errorf("C04 with duplicate rows for a seeded id must fail, got %q", got)
+	}
+	if got := runDetChecks("A01", "anything", ""); got != "" {
+		t.Errorf("cases without registered checks must be untouched, got %q", got)
+	}
+}
+
+func TestWriteRecords(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "records.jsonl")
+	rs := []record{
+		toRecord(result{c: evalCase{Group: "A", ID: "A01"}, verdict: vPass, judgeRaw: `{"pass":true}`, response: "resp", profile: "prof"}, 2, 1),
+		toRecord(result{c: evalCase{Group: "B", ID: "B01"}, verdict: vFail, reason: "deterministic: x"}, 3, 2),
+	}
+	if err := writeRecords(path, rs); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(readFile(path)), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("want 2 records, got %d", len(lines))
+	}
+	var rec record
+	if err := json.Unmarshal([]byte(lines[0]), &rec); err != nil {
+		t.Fatal(err)
+	}
+	if rec.Case != "A01" || rec.Verdict != vPass || rec.Judge == "" || rec.Response != "resp" || rec.Profile != "prof" {
+		t.Errorf("record round-trip mismatch: %+v", rec)
+	}
+	if rec.Epoch != 2 || rec.Attempt != 1 {
+		t.Errorf("epoch/attempt must survive the round-trip: %+v", rec)
+	}
+	if err := json.Unmarshal([]byte(lines[1]), &rec); err != nil {
+		t.Fatal(err)
+	}
+	if rec.Case != "B01" || rec.Epoch != 3 || rec.Attempt != 2 {
+		t.Errorf("retry record mismatch: %+v", rec)
+	}
+}
+
+// Strictness is declared in cases.md via the [strict] marker; this pins the
+// intended set so an accidental marker edit is caught at test time, and the
+// deterministic registry's IDs must exist in the real suite.
+func TestStrictAndDetCasesExistInSuite(t *testing.T) {
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, err := os.ReadFile(filepath.Join(root, "evals", "cases.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, _, err := parseCases(string(text))
+	if err != nil {
+		t.Fatal(err)
+	}
+	marked := map[string]bool{}
+	for _, cs := range all {
+		for _, c := range cs {
+			if c.Strict {
+				marked[c.ID] = true
+			}
+			if strings.Contains(c.Expected, strictMarker) || strings.Contains(c.Notes, strictMarker) {
+				t.Errorf("case %s: %s must be stripped at parse time, not reach the judge", c.ID, strictMarker)
+			}
+		}
+	}
+	want := []string{"A30", "B03", "C04", "C05"}
+	if len(marked) != len(want) {
+		t.Errorf("strict-marked set drifted: got %v, want %v", marked, want)
+	}
+	for _, id := range want {
+		if !marked[id] {
+			t.Errorf("case %s lost its %s marker in cases.md", id, strictMarker)
+		}
+	}
+	known := realSuiteIDs(t)
+	for id := range detChecks {
+		if !known[id] {
+			t.Errorf("detChecks id %s not in cases.md", id)
+		}
+	}
+}
+
+// The committed coverage matrix must stay in two-way sync with cases.md.
+func TestCoverageMatrixInSync(t *testing.T) {
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := checkCoverage(root, realSuiteIDs(t)); err != nil {
+		t.Errorf("coverage.md out of sync: %v", err)
+	}
+	// A referenced-but-missing ID and an unmapped case must both be loud.
+	if err := checkCoverage(root, map[string]bool{}); err == nil {
+		t.Error("coverage.md referencing unknown IDs must error")
+	}
+	extra := realSuiteIDs(t)
+	extra["C99"] = true
+	if err := checkCoverage(root, extra); err == nil || !strings.Contains(err.Error(), "C99") {
+		t.Errorf("an unmapped case must error naming the ID, got %v", err)
+	}
+}
+
+func realSuiteIDs(t *testing.T) map[string]bool {
+	t.Helper()
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, err := os.ReadFile(filepath.Join(root, "evals", "cases.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, _, err := parseCases(string(text))
+	if err != nil {
+		t.Fatal(err)
+	}
+	known := map[string]bool{}
+	for _, cs := range all {
+		for _, c := range cs {
+			known[c.ID] = true
+		}
+	}
+	return known
 }
