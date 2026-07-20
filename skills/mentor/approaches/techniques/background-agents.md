@@ -32,7 +32,7 @@ Background agents convert attention-bound work into queue-bound work: thirty sec
 4. Press `Enter` or `→` on a row to attach — the full conversation takes over your terminal, opening with a recap of what happened while you were away. Press `←` on an empty prompt to detach and go back to the table.
 5. Review the result like any change: the diff lives on the session's worktree branch, ready to merge or discard.
 
-Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"` dispatches straight from your shell (add `--name` to label it), and `/background` (alias `/bg`) pushes your *current* interactive session into the background mid-task.
+Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"` dispatches straight from your shell (add `--name` to label it); `/background` (alias `/bg`) pushes your *current* interactive session into the background mid-task; and `/fork` (v2.1.207+) copies the conversation so far into a *new* background session with its own row in agent view, leaving your current session running untouched (the in-session subagent `/fork` used to launch is now `/subtask` — see Subagent Delegation).
 
 ### Composing with Other Approaches (Intermediate)
 

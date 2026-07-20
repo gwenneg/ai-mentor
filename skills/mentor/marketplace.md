@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-07-12 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
+*Last synced: 2026-07-20 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -46,6 +46,7 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
+| `receipts` | Generates a personal Claude Code impact report from local session transcripts cross-referenced against git history — what you shipped and each project's usage share — for a self-review or manager report | `devops` | ☑️ desk-checked 2026-07-20 — mining runs locally against `~/.claude/projects` transcripts and read-only git commands; only an aggregate summary (counts, project names) leaves the machine to write the report |
 
 ### Language servers (LSPs)
 
@@ -155,6 +156,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | Plugin | What it does | Author | Relevant goal | Verdict |
 |--------|-------------|--------|--------------|---------|
 | `agentforce-adlc` | Author, scaffold, deploy, test, and optimize Salesforce Agentforce .agent files | unlabeled | `building-agents` | ☑️ desk-checked 2026-07-08 — 4 skills + 4 agents + hooks; active 2026-06; needs Salesforce Agentforce org |
+| `amd-skills` | AMD's verified skills: route image/audio through local AI on Ryzen AI, serve LLMs on AMD Instinct GPUs with vLLM, and analyze GPU kernel/PyTorch trace performance | AMD | `performance` | ☑️ desk-checked 2026-07-20 — 4 skills (local-ai-use, local-ai-app-integration, serving-llms-on-instinct, tracelens-analysis-orchestrator) per manifest; needs AMD Ryzen AI or Instinct GPU hardware |
 | `apollo-skills` | Apollo GraphQL skills for Client, Server, Federation, Router, Rover, and MCP server | Apollo GraphQL | `api-design` | ☑️ desk-checked 2026-07-08 — MCP server + LSP config + 14 skills; active 2026-07 |
 | `appwrite` | Appwrite SDK skills, MCP servers, and deployment commands | Appwrite | `devops` | ☑️ desk-checked 2026-07-08 — MCP server + 11 SDK skills + 2 deploy commands; active 2026-04; needs Appwrite account |
 | `astronomer-data-agents` | Airflow and Astronomer data engineering: author DAGs, debug pipelines, lineage, migrations, deployments | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — 26 skills + astro-airflow-mcp server dir; active 2026-07; needs Airflow/Astronomer environment |
@@ -178,6 +180,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `data` | Apache Airflow and Astronomer data engineering: DAG authoring, debugging, lineage, migration | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — 26 skills + bundled Airflow MCP server; active 2026-07; needs Airflow/Astronomer environment |
 | `data-agent-kit-starter-pack` | GCP data engineering skills for pipelines, dbt, BigQuery SQL, and workflow orchestration | Google LLC | `devops` | ☑️ desk-checked 2026-07-07 — 20 skills + MCP server; active 2026-07; needs GCP account |
 | `datarobot-agent-skills` | DataRobot skills for model training, deployment, predictions, monitoring, and explainability | DataRobot | `devops` | ☑️ desk-checked 2026-07-07 — 13 skills; active 2026-07; needs DataRobot account |
+| `deepeval` | Skills for adding DeepEval evaluations, tracing, datasets, Confident AI reports, and iterative improvement loops to AI applications | Confident AI | `llm-features` | ☑️ desk-checked 2026-07-20 — needs a DeepEval/Confident AI setup to exercise evaluation and tracing workflows |
 | `dominodatalab` | Domino Data Lab platform support for workspaces, jobs, model deployment, experiment tracking | Domino Data Lab | `devops` | ☑️ desk-checked 2026-07-07 — 23 skills + 4 commands + 3 agents + hooks + MCP servers; active 2026-06; needs Domino platform |
 | `expo` | Expo skills for building, deploying, upgrading, and debugging React Native apps | unlabeled | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 19 skills; active 2026-07 |
 | `firecrawl` | Firecrawl web scraping, crawling, and structured data extraction skills | unlabeled | `research` | ☑️ desk-checked 2026-07-08 — 10 skills + 1 command, no MCP; active 2026-06; needs Firecrawl API key |
@@ -218,7 +221,6 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `sap-fiori-mcp-server` | MCP server for building and modifying SAP Fiori applications | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server + 5 skills; active 2026-07 |
 | `sap-mdk-server` | MCP server for SAP Mobile Development Kit app building and scaffolding | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server; active 2026-06 |
 | `servicenow-sdk` | Create, edit, and deploy ServiceNow applications with the Fluent SDK | ServiceNow | `greenfield` | ☑️ desk-checked 2026-07-07 — 1 skill; active 2026-06; needs ServiceNow instance |
-| `shopify` | Shopify dev MCP for docs search and GraphQL, Liquid, extension code validation | Shopify | `greenfield` | ⚠️ overlaps shopify-ai-toolkit (same author, superset, newer) — recommend shopify-ai-toolkit first; desk-checked 2026-07-07 — MCP server only; last commit 2026-04; needs Shopify partner/store account |
 | `shopify-ai-toolkit` | 18 Shopify skills covering docs, GraphQL, Liquid, Hydrogen, Polaris, CLI workflows | Shopify | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server + 20 skills + hooks; active 2026-06; needs Shopify partner/store account for CLI workflows |
 | `snowflake-cortex-code` | Routes Snowflake prompts to Cortex Code with routing, run, and setup skills | Snowflake | `devops` | ☑️ desk-checked 2026-07-08 — 3 skills + hooks; active 2026-06; needs Snowflake account with Cortex Code |
 | `sourcegraph` | Sourcegraph MCP for cross-repository code search, reference tracing, and impact analysis | unlabeled | `code-understanding` | ☑️ desk-checked 2026-07-08 — MCP server + 1 skill; last commit 2026-03; needs Sourcegraph access |
