@@ -1332,6 +1332,7 @@ func main() {
 	gate := flag.Bool("gate", false, "exit 1 when any case fails or errors")
 	smoke := flag.Bool("smoke", false, "run the curated smoke tier (one case per behavior class) — the cheap per-change signal; the full suite stays the release gate")
 	epochs := flag.Int("epochs", 1, "independent runs per case; with N>1 a case passes on a strict majority of epochs ([strict]-marked cases need every epoch) and majority-pass mixes are flagged FLAKY")
+	passk := flag.Bool("passk", false, "treat every selected case as a strict pass^k invariant: each must pass all -epochs runs — the bar for a PR that claims to fix a case")
 	jobs := flag.Int("j", 3, "cases to run concurrently (keep modest: every case is a subject run plus a judge run against the same account)")
 	judge := flag.String("model-judge", "claude-sonnet-5", "judge model for scoring")
 	modelSubject := flag.String("model-subject", "claude-sonnet-5", "model the mentor under test runs on (pinned so a gate red is a regression, not CLI-default drift)")
@@ -1379,6 +1380,11 @@ func main() {
 	selected, err := selectCases(all, splitList(*groups), idList)
 	if err != nil {
 		fatal(err)
+	}
+	if *passk {
+		for i := range selected {
+			selected[i].Strict = true
+		}
 	}
 	// The deterministic-check registry is keyed by case ID in Go; a renamed
 	// or deleted case must fail the run loudly, not silently drop its extra

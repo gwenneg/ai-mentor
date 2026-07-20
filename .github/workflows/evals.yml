@@ -6,6 +6,13 @@
 #     "run Groups A-C before every release tag". The branch is force-refreshed
 #     on every push to main, so concurrency cancels superseded runs — only the
 #     state you'd actually tag gets a full run.
+#   - Targeted PR runs: a feature PR whose body carries a line-anchored
+#     "Evals: <case ids | smoke>" marker (optional "Eval-Epochs: N", default 6)
+#     runs exactly those cases, gated and pass^k — a PR that claims to fix a
+#     case must show that case passing every epoch BEFORE merge. PRs without
+#     the marker keep the skipped-run behavior that satisfies the ruleset.
+#     Side effects: declare "Evals: smoke" (or add cases) when the change
+#     could ripple; the full 3-epoch suite still gates at release/next.
 #   - Manual dispatch for feature branches (pick groups/cases; gate=false
 #     for a report-only run).
 #
@@ -22,6 +29,8 @@ name: Evals
 
 on:
   pull_request:
+    # "edited" so adding the Evals: marker to an existing PR body starts a run.
+    types: [opened, synchronize, reopened, edited]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -56,7 +65,7 @@ permissions:
 
 jobs:
   evals:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next' || contains(github.event.pull_request.body, 'Evals:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -92,16 +101,37 @@ jobs:
           EPOCHS: ${{ github.event.inputs.epochs || '3' }}
           JOBS: ${{ github.event.inputs.jobs || '9' }}
           GATE: ${{ github.event.inputs.gate || 'true' }}
+          PR_BODY: ${{ github.event_name == 'pull_request' && github.event.pull_request.body || '' }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
-          ARGS="-epochs $EPOCHS -j $JOBS -out $GITHUB_WORKSPACE/eval-report.md -records $GITHUB_WORKSPACE/eval-records.jsonl"
-          if [ "$SMOKE" = "true" ]; then
-            ARGS="$ARGS -smoke"
+          ARGS="-j $JOBS -out $GITHUB_WORKSPACE/eval-report.md -records $GITHUB_WORKSPACE/eval-records.jsonl"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$HEAD_REF" != "release/next" ]; then
+            # Targeted PR run: the body's "Evals:" line names the cases this
+            # change must pass. Always gated and pass^k — a fix PR's target
+            # passing 4 of 6 epochs is not a demonstrated fix.
+            TARGETS=$(printf '%s\n' "$PR_BODY" | tr -d '\r' | sed -n 's/^Evals:[[:space:]]*//p' | head -1)
+            if [ -z "$TARGETS" ]; then
+              echo "No line-anchored 'Evals:' marker in the PR body — nothing to run." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            EP=$(printf '%s\n' "$PR_BODY" | tr -d '\r' | sed -n 's/^Eval-Epochs:[[:space:]]*//p' | head -1)
+            ARGS="$ARGS -epochs ${EP:-6} -gate -passk"
+            if [ "$TARGETS" = "smoke" ]; then
+              ARGS="$ARGS -smoke"
+            else
+              ARGS="$ARGS -cases $(echo $TARGETS | tr ' ' ',')"
+            fi
           else
-            ARGS="$ARGS -groups $GROUPS"
-            if [ -n "$CASES" ]; then ARGS="$ARGS -cases $CASES"; fi
+            ARGS="$ARGS -epochs $EPOCHS"
+            if [ "$SMOKE" = "true" ]; then
+              ARGS="$ARGS -smoke"
+            else
+              ARGS="$ARGS -groups $GROUPS"
+              if [ -n "$CASES" ]; then ARGS="$ARGS -cases $CASES"; fi
+            fi
+            if [ "$GATE" = "true" ]; then ARGS="$ARGS -gate"; fi
           fi
-          if [ "$GATE" = "true" ]; then ARGS="$ARGS -gate"; fi
           go -C tools/eval-runner run . $ARGS
         working-directory: ${{ github.workspace }}
 
@@ -115,7 +145,9 @@ jobs:
           name: eval-records
           path: eval-records.jsonl
           retention-days: 14
-          if-no-files-found: ignore
+          # warn, not ignore: -records is always passed above, so a missing
+          # file is always a failure — ignore would hide it on a green run.
+          if-no-files-found: warn
 
       - name: Publish report
         if: always()
@@ -128,6 +160,13 @@ jobs:
           fi
           cat eval-report.md >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${{ github.event.pull_request.number }}" ]; then
-            gh pr comment ${{ github.event.pull_request.number }} --body-file eval-report.md \
-              --edit-last --create-if-none
+            if [ "${{ github.head_ref }}" = "release/next" ]; then
+              gh pr comment ${{ github.event.pull_request.number }} --body-file eval-report.md \
+                --edit-last --create-if-none
+            else
+              # Targeted PR runs post a fresh comment per run — measurements
+              # are history worth keeping, and --edit-last could hijack the
+              # skill-budget bot comment on PRs that touch skill files.
+              gh pr comment ${{ github.event.pull_request.number }} --body-file eval-report.md
+            fi
           fi
