@@ -9,7 +9,7 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | ID | Problem statement | Expected goal | Notes |
 |----|-------------------|--------------|-------|
 | A01 | `debug a flaky test that only fails in CI` | debugging | The README's canonical example |
-| A02 | `our checkout endpoint got slow after the last release` | performance | Symptom wording, no "performance" keyword |
+| A02 | `our checkout endpoint got slow after the last release` | performance | Symptom wording, no "performance" keyword. The fixture has no checkout code, so the portable-prompt exception legitimately applies: EITHER a portable fence (placeholders, no fixture paths) OR one grounded in the service's real files (profiling the orders endpoints as the concrete surface) passes — never fail one for not being the other |
 | A03 | `refactor authentication across 30 files` | refactoring | Cross-file scale signal |
 | A04 | `we need to move from Vue 2 to Vue 3` | migration | No "migrate" keyword |
 | A05 | `review a large PR that touches billing` | code-review | |
