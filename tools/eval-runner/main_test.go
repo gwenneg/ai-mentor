@@ -201,8 +201,8 @@ func TestRenderReport(t *testing.T) {
 	}
 	report := renderReport(results)
 	for _, want := range []string{
-		"Group A: 1 pass / 1 fail / 0 error",
-		"Group B: 0 pass / 0 fail / 1 error",
+		"Group A — problem mode: 1 pass / 1 fail / 0 error",
+		"Group B — growth mode: 0 pass / 0 fail / 1 error",
 		"| A01 | PASS |  |",
 		"| A03 | FAIL | classification: routed to testing second / line |",
 		"| B01 | ERROR | judge reply not parseable |",
