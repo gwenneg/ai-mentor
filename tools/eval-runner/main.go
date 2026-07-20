@@ -390,7 +390,11 @@ const b04Hooks = `{"hooks":{"PostToolUse":[{"matcher":"Edit|Write","hooks":[{"ty
 func buildGroundTruth(repo, fixture string) (groundTruth, error) {
 	skill := filepath.Join(repo, "skills", "mentor")
 	gt := groundTruth{fixture: fixtureFiles(fixture)}
-	gt.fixtureText = fixtureContents(fixture, gt.fixture)
+	text, err := fixtureContents(fixture, gt.fixture)
+	if err != nil {
+		return gt, err
+	}
+	gt.fixtureText = text
 	b, err := os.ReadFile(filepath.Join(skill, "marketplace.md"))
 	if err != nil {
 		return gt, fmt.Errorf("judge ground truth: %w", err)
@@ -423,25 +427,33 @@ func buildGroundTruth(repo, fixture string) (groundTruth, error) {
 	return gt, nil
 }
 
+// frameFile renders one file block in the judge's fixture-contents format —
+// the single owner of the "--- name ---" delimiter, shared with the B04
+// settings append so the two can never drift apart.
+func frameFile(name, content string) string {
+	return fmt.Sprintf("--- %s ---\n%s\n", name, strings.TrimRight(content, "\n"))
+}
+
 // fixtureContents inlines every fixture file verbatim so the judge can
 // check fenced commands and stack claims against real content, not just
 // path membership — a fenced `npm run <invented>` used to sail through a
-// paths-only whitelist. The fixture is deliberately tiny; the cap is a
-// guard against a future fixture bloating every judge prompt.
-func fixtureContents(dir string, files []string) string {
+// paths-only whitelist. Ground-truth doctrine applies: the judge is told
+// these contents are COMPLETE, so a read failure or an over-cap fixture
+// must be fatal, never a silent omission that mass-fails grounded fences.
+func fixtureContents(dir string, files []string) (string, error) {
 	var b strings.Builder
 	for _, f := range files {
 		data, err := os.ReadFile(filepath.Join(dir, f))
 		if err != nil {
-			continue
+			return "", fmt.Errorf("fixture ground truth: %w", err)
 		}
-		fmt.Fprintf(&b, "--- %s ---\n%s\n", f, strings.TrimRight(string(data), "\n"))
+		b.WriteString(frameFile(f, string(data)))
 	}
 	const max = 8 * 1024
 	if b.Len() > max {
-		return b.String()[:max] + "\n... (fixture contents truncated)"
+		return "", fmt.Errorf("fixture ground truth: contents are %d bytes (cap %d) — the judge prompt inlines them as COMPLETE; trim the fixture or raise the cap deliberately", b.Len(), max)
 	}
-	return b.String()
+	return b.String(), nil
 }
 
 // fixtureFiles lists the fixture repo's files as repo-relative paths.
@@ -980,7 +992,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 		text := r.ground.fixtureText
 		if c.ID == "B04" {
 			files = append(slices.Clone(files), ".claude/settings.json")
-			text += "--- .claude/settings.json (written for this case) ---\n" + b04Hooks
+			text += frameFile(".claude/settings.json (written for this case)", b04Hooks)
 		}
 		// Bulleted like the promoted list: judges misscan comma runs.
 		b.WriteString("Fixture repo files (the only real paths in the fixture repo):\n")
@@ -988,7 +1000,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 			b.WriteString("- " + f + "\n")
 		}
 		if text != "" {
-			b.WriteString("Complete fixture file contents — ground truth for any claim about the repo's stack, commands, or code (a fenced command that could not work against these files is fabricated grounding):\n" + text)
+			b.WriteString("Complete fixture file contents — ground truth for any claim about the repo's stack, commands, or code (a fenced command that could not work against these files is fabricated grounding — unless the case notes mark the prompt portable to a different repo, where foreign-stack commands are exactly what a correct fence carries):\n" + text)
 		}
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")

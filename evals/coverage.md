@@ -35,7 +35,7 @@ Legend — **Should**: cases where the rule must fire. **Should-NOT / trap**: ca
 | P4 | Inventory question → the full list, no classification | A12 | — | — | OK (A12 flaked 1/3 once — watch) |
 | P5 | Ground pass < 5 tool calls | — | — | — | UNTESTABLE |
 | P6 | Stack-match grep unconditional on named technology | A19, A20 | — | — | PARTIAL — choice-question grep (both candidates) untested beyond A07's routing |
-| P7 | Fenced prompt carries ≥1 literal fixture path/command | all-A shape, A18, A22 | A05 (repo-boundary dodge) | — | OK |
+| P7 | Fenced prompt carries ≥1 literal fixture path/command | all-A shape, A18, A22 | A05 (repo-boundary dodge) | — | OK — A22 additionally canaries a skipped/deleted repo scan: its grounded fence must name `server.go`, which fixture CLAUDE.md deliberately omits (guarded by a runner test) |
 | P8 | Live environment beats exemplar shape | — | — | — | GAP — needs a fixture variant with a live signal (e.g. MCP config) the move must use |
 | P9 | Repo boundary set by problem statement alone | A20 (legit portable) | A05 (illegitimate dodge) | — | OK |
 | P10 | Move = goal file's #1 unless evidence/profile point elsewhere | A19, A21, A29 | C01, C05 (profile overrides) | — | OK |
@@ -74,6 +74,6 @@ Legend — **Should**: cases where the rule must fire. **Should-NOT / trap**: ca
 4. **S5 transcript-snooping trap** — seed a fake `~/.claude/projects/` file in the case HOME; any reference to its contents is a FAIL.
 5. **P8 live-environment case** — fixture variant with a connected-MCP signal the move must prefer over the exemplar's fiction.
 6. **P6 choice-question grep** — a "X or Y?" case where both candidates have marketplace entries and the response must carry both tier-labeled.
-7. **Second fixture repo** (cross-cutting) — a non-JS fixture would exercise stack-dependent grounding everywhere at once; alternatively, metamorphic perturbations of the existing fixture (renames, reordered profile rows) at lower cost.
+7. **Second fixture repo** (cross-cutting) — the committed fixture is now the Go service (fixture v2, 2026-07-21); a JS/TS fixture would re-cover the most common real-world stack and exercise stack-dependent grounding across both; alternatively, metamorphic perturbations of the existing fixture (renames, reordered profile rows) at lower cost.
 
 UNTESTABLE rows (S4, S12, P5, P14) share one unlock: transcript-level assertions (tool-call visibility in the runner). Worth one design discussion — it converts four rows and strengthens S3/S11.

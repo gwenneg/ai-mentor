@@ -506,6 +506,40 @@ func TestTaughtIDsAndCatalogSources(t *testing.T) {
 	}
 }
 
+// B04's fixture copy gains .claude/settings.json after ground truth is
+// built; the judge's "only real paths" list must include it for that case
+// (and only that case) or the case's own expected demo reads as fabricated.
+func TestJudgePromptB04InjectedSettings(t *testing.T) {
+	r := newTestRunner(t)
+	jp := r.judgePrompt(evalCase{Group: "B", ID: "B04", Statement: "hooks fixture", Expected: "x"}, []string{"resp"}, "", nil)
+	for _, want := range []string{".claude/settings.json", "go test ./...", "written for this case"} {
+		if !strings.Contains(jp, want) {
+			t.Errorf("B04 judge prompt missing %q", want)
+		}
+	}
+	other := r.judgePrompt(evalCase{Group: "B", ID: "B01", Statement: "x", Expected: "y"}, []string{"resp"}, "", nil)
+	if strings.Contains(other, ".claude/settings.json") {
+		t.Error("non-B04 prompts must not carry the injected settings path")
+	}
+}
+
+// A22 is the scan canary: its grounded fence must name server.go, which
+// only a real repo scan can surface — so the fixture CLAUDE.md must never
+// document the routes file (cases.md A22, coverage.md P7).
+func TestFixtureClaudeMDKeepsScanCanary(t *testing.T) {
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := readFile(filepath.Join(root, "evals", "fixture", "CLAUDE.md"))
+	if text == "" {
+		t.Fatal("fixture CLAUDE.md missing")
+	}
+	if strings.Contains(text, "server.go") || strings.Contains(strings.ToLower(text), "route") {
+		t.Error("fixture CLAUDE.md must not mention server.go or the routes — A22's scan-canary role depends on the omission")
+	}
+}
+
 func TestJudgePromptGroundTruth(t *testing.T) {
 	r := newTestRunner(t)
 	jp := r.judgePrompt(
