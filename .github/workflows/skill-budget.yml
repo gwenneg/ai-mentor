@@ -107,6 +107,17 @@ jobs:
       - name: Post as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
-          gh pr comment ${{ github.event.pull_request.number }} \
-            --body-file budget.md --edit-last --create-if-none
+          set -euo pipefail
+          # Replace-by-marker, not --edit-last: the bot's most recent comment
+          # can be an eval report (targeted PR runs post those since #109), and
+          # --edit-last would overwrite it with this table. Deleting previous
+          # budget comments by their own heading keeps exactly one, always
+          # newest, and never touches other bot comments.
+          gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.body | startswith("### Skill-def token budget")) | .id' \
+          | while read -r id; do
+              gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$id"
+            done
+          gh pr comment "$PR" --body-file budget.md
