@@ -35,7 +35,7 @@ on:
   workflow_dispatch:
     inputs:
       groups:
-        description: 'Groups to run (comma-separated: A,B,C)'
+        description: 'Groups to run, comma-separated. A = problem mode (classification + output shape), B = growth mode, C = never-repeat. (D = trigger calibration is interactive-only, never runs here)'
         default: 'A,B,C'
       cases:
         description: 'Optional case filter (e.g. A01,A19,B03)'

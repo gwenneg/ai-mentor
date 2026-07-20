@@ -92,6 +92,17 @@ var (
 	classifiedMarkers = map[string]bool{"(no dedicated goal)": true}
 )
 
+// groupLabels make report headings self-explanatory; the letters stay the
+// keys everywhere else (case IDs, -groups, coverage.md, PR markers).
+var groupLabels = map[string]string{"A": "problem mode", "B": "growth mode", "C": "never-repeat"}
+
+func groupTitle(g string) string {
+	if l := groupLabels[g]; l != "" {
+		return g + " — " + l
+	}
+	return g
+}
+
 // Seeded capability ids shared by setupProfile's fixtures and the
 // deterministic checks — one identity const per capability, used at every
 // seed site and every check, so a rename cannot silently desynchronize a
@@ -1243,7 +1254,7 @@ func summary(results []result) string {
 				errs++
 			}
 		}
-		parts = append(parts, fmt.Sprintf("Group %s: %d pass / %d fail / %d error", g, pass, fail, errs))
+		parts = append(parts, fmt.Sprintf("Group %s: %d pass / %d fail / %d error", groupTitle(g), pass, fail, errs))
 	}
 	return strings.Join(parts, " | ")
 }
@@ -1270,7 +1281,7 @@ func renderReport(results []result) string {
 	b.WriteString("# ai-mentor eval report\n\n")
 	b.WriteString(summary(results) + "\n")
 	for _, g := range groupsIn(results) {
-		fmt.Fprintf(&b, "\n## Group %s\n\n| Case | Verdict | Reason |\n|------|---------|--------|\n", g)
+		fmt.Fprintf(&b, "\n## Group %s\n\n| Case | Verdict | Reason |\n|------|---------|--------|\n", groupTitle(g))
 		for _, r := range results {
 			if r.c.Group == g {
 				fmt.Fprintf(&b, "| %s | %s | %s |\n", r.c.ID, r.verdict, oneLine(r.reason))

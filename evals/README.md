@@ -2,6 +2,8 @@
 
 Benchmark the skill against its baseline alternative (asking Claude directly, no skill) and catch regressions in the discovery-first behavior before release.
 
+Group key — **A**: problem mode (classifies correctly + output shape). **B**: growth mode (bare invocation picks the right opener). **C**: never-repeat (the profile promise holds). **D**: trigger calibration (fires on mentor-shaped questions, silent otherwise; interactive-only).
+
 ## Why this exists
 
 Two claims need numbers and a harness to stay true:
