@@ -367,11 +367,20 @@ func approachNames(repo string) ([]string, error) {
 // not the judge's own memory.
 type groundTruth struct {
 	fixture      []string
+	fixtureText  string   // every fixture file inlined verbatim, for command/stack claims
 	plugins      []string // directory plugins ∪ promoted (the fabrication whitelist)
 	promoted     []string // promoted plugin ids — first-class approaches, no tier label
 	techniques   []string
 	integrations []string
 }
+
+// b04Hooks is B04's per-case .claude/settings.json — the one project-level
+// setup signal that case is about. Single-sourced so the judge's ground
+// truth always matches what caseFixture actually writes: the file lands in
+// the copy AFTER buildGroundTruth runs, and a judge told the fixture list
+// is "the only real paths" would otherwise brand B04's own expected demo
+// path a fabrication.
+const b04Hooks = `{"hooks":{"PostToolUse":[{"matcher":"Edit|Write","hooks":[{"type":"command","command":"go test ./..."}]}]}}` + "\n"
 
 // buildGroundTruth reads the catalog and fixture once so every judge call can
 // check recommendations against them. Any failure here must be fatal to the
@@ -381,6 +390,7 @@ type groundTruth struct {
 func buildGroundTruth(repo, fixture string) (groundTruth, error) {
 	skill := filepath.Join(repo, "skills", "mentor")
 	gt := groundTruth{fixture: fixtureFiles(fixture)}
+	gt.fixtureText = fixtureContents(fixture, gt.fixture)
 	b, err := os.ReadFile(filepath.Join(skill, "marketplace.md"))
 	if err != nil {
 		return gt, fmt.Errorf("judge ground truth: %w", err)
@@ -411,6 +421,27 @@ func buildGroundTruth(repo, fixture string) (groundTruth, error) {
 		}
 	}
 	return gt, nil
+}
+
+// fixtureContents inlines every fixture file verbatim so the judge can
+// check fenced commands and stack claims against real content, not just
+// path membership — a fenced `npm run <invented>` used to sail through a
+// paths-only whitelist. The fixture is deliberately tiny; the cap is a
+// guard against a future fixture bloating every judge prompt.
+func fixtureContents(dir string, files []string) string {
+	var b strings.Builder
+	for _, f := range files {
+		data, err := os.ReadFile(filepath.Join(dir, f))
+		if err != nil {
+			continue
+		}
+		fmt.Fprintf(&b, "--- %s ---\n%s\n", f, strings.TrimRight(string(data), "\n"))
+	}
+	const max = 8 * 1024
+	if b.Len() > max {
+		return b.String()[:max] + "\n... (fixture contents truncated)"
+	}
+	return b.String()
 }
 
 // fixtureFiles lists the fixture repo's files as repo-relative paths.
@@ -620,8 +651,7 @@ func (r *runner) caseFixture(withHooks bool) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(settings), 0o755); err != nil {
 		return fail(err)
 	}
-	hooks := `{"hooks":{"PostToolUse":[{"matcher":"Edit|Write","hooks":[{"type":"command","command":"npm test"}]}]}}` + "\n"
-	if err := os.WriteFile(settings, []byte(hooks), 0o644); err != nil {
+	if err := os.WriteFile(settings, []byte(b04Hooks), 0o644); err != nil {
 		return fail(err)
 	}
 	return dir, nil
@@ -946,7 +976,20 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 
 	b.WriteString("\n--- Ground truth: judge the response's recommendations against THIS, not your own memory ---\n")
 	if len(r.ground.fixture) > 0 {
-		b.WriteString("Fixture repo files (the only real paths in the fixture repo): " + strings.Join(r.ground.fixture, ", ") + "\n")
+		files := r.ground.fixture
+		text := r.ground.fixtureText
+		if c.ID == "B04" {
+			files = append(slices.Clone(files), ".claude/settings.json")
+			text += "--- .claude/settings.json (written for this case) ---\n" + b04Hooks
+		}
+		// Bulleted like the promoted list: judges misscan comma runs.
+		b.WriteString("Fixture repo files (the only real paths in the fixture repo):\n")
+		for _, f := range files {
+			b.WriteString("- " + f + "\n")
+		}
+		if text != "" {
+			b.WriteString("Complete fixture file contents — ground truth for any claim about the repo's stack, commands, or code (a fenced command that could not work against these files is fabricated grounding):\n" + text)
+		}
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
 	b.WriteString(strings.Join(r.ground.plugins, ", ") + "\n")

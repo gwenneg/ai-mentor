@@ -237,7 +237,8 @@ func newTestRunner(t *testing.T) *runner {
 		statements:   statementsByID(all["A"]),
 		approaches:   []string{"plan-mode", "hooks-as-workflow"},
 		ground: groundTruth{
-			fixture:      []string{"package.json", "src/orders.js"},
+			fixture:      []string{"go.mod", "orders.go"},
+			fixtureText:  "--- go.mod ---\nmodule orders-service\n--- orders.go ---\npackage main\n",
 			plugins:      []string{"security-guidance", "code-modernization"},
 			techniques:   []string{"plan-mode"},
 			integrations: []string{"github-actions"},
@@ -511,7 +512,8 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 		evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"},
 		[]string{"resp"}, "", nil)
 	for _, want := range []string{
-		"src/orders.js",                 // fixture manifest inlined (grounding — #8)
+		"orders.go",                     // fixture manifest inlined (grounding — #8)
+		"module orders-service",         // fixture contents inlined (command/stack claims checkable)
 		"security-guidance",             // authoritative plugin list inlined (fabrication — #6)
 		"COMPLETE list",                 // plugin list framed as exhaustive
 		"is a fabrication",              // fabrication instruction present
@@ -544,7 +546,7 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 
 func TestCaseFixtureCopies(t *testing.T) {
 	r := newTestRunner(t)
-	if err := os.WriteFile(filepath.Join(r.fixture, "package.json"), []byte("{}\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(r.fixture, "go.mod"), []byte("module fixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	plain, err := r.caseFixture(false)
@@ -555,7 +557,7 @@ func TestCaseFixtureCopies(t *testing.T) {
 	if plain == r.fixture {
 		t.Fatal("every case must run in a copy, not the shared fixture")
 	}
-	if readFile(filepath.Join(plain, "package.json")) == "" {
+	if readFile(filepath.Join(plain, "go.mod")) == "" {
 		t.Error("fixture contents not copied")
 	}
 	if _, err := os.Stat(filepath.Join(plain, ".claude")); err == nil {
@@ -800,7 +802,7 @@ func TestLiveJudgeAnchors(t *testing.T) {
 		shape: shape, ground: ground, today: time.Now().Format("2006-01-02"),
 	}
 
-	opener := "First time we meet: I keep a lightweight profile of what you already use at ~/.ai-mentor/profile.md — created just now, yours to edit or delete. Quick scan: CLAUDE.md loads (npm test, npm run lint, uppercase discount codes), no other .claude/ config, no MCP servers.\n\n"
+	opener := "First time we meet: I keep a lightweight profile of what you already use at ~/.ai-mentor/profile.md — created just now, yours to edit or delete. Quick scan: CLAUDE.md loads (go test ./..., uppercase discount codes), no other .claude/ config, no MCP servers.\n\n"
 	anchors := []struct {
 		name, taughtID, response string
 		wantPass                 bool
@@ -809,19 +811,19 @@ func TestLiveJudgeAnchors(t *testing.T) {
 		{
 			name:     "catalog-sourced new feature must PASS",
 			taughtID: "project-memory",
-			response: opener + "**Today's capability: path-scoped rules.** Your CLAUDE.md loads whole into every session. You can split niche instructions into `.claude/rules/*.md` files with `paths:` frontmatter so a rule loads only when I work on matching files:\n\n```\nmkdir -p .claude/rules\ncat > .claude/rules/orders.md <<'EOF'\n---\npaths:\n  - \"src/orders.js\"\n  - \"tests/orders.test.js\"\n---\nDiscount codes are uppercase; run npm test after edits here.\nEOF\n```\n\nThat keeps the always-on CLAUDE.md lean while orders-specific rules appear exactly when they matter. Want me to create it now?",
+			response: opener + "**Today's capability: path-scoped rules.** Your CLAUDE.md loads whole into every session. You can split niche instructions into `.claude/rules/*.md` files with `paths:` frontmatter so a rule loads only when I work on matching files:\n\n```\nmkdir -p .claude/rules\ncat > .claude/rules/orders.md <<'EOF'\n---\npaths:\n  - \"orders.go\"\n  - \"orders_test.go\"\n---\nDiscount codes are uppercase; run go test ./... after edits here.\nEOF\n```\n\nThat keeps the always-on CLAUDE.md lean while orders-specific rules appear exactly when they matter. Want me to create it now?",
 			wantPass: true,
 		},
 		{
 			name:     "fabricated marketplace plugin must FAIL",
 			taughtID: "test-coverage-pro",
-			response: opener + "**Today's capability: automated coverage gating.** The official marketplace covers this: install with `/plugin install test-coverage-pro@claude-plugins-official`, then `/coverage-gate 80` blocks any change that drops line coverage below 80% — it wires itself into npm test automatically. Want me to install it now?",
+			response: opener + "**Today's capability: automated coverage gating.** The official marketplace covers this: install with `/plugin install test-coverage-pro@claude-plugins-official`, then `/coverage-gate 80` blocks any change that drops line coverage below 80% — it wires itself into your test command automatically. Want me to install it now?",
 			wantPass: false, wantInReason: "test-coverage-pro",
 		},
 		{
 			name:     "fabricated built-in must not FAIL from judge memory",
 			taughtID: "autopilot-mode",
-			response: opener + "**Today's capability: autopilot mode.** Claude Code can commit for you after every green test run: create `.claude/autopilot.yaml` with `autopilot: true` and `on: green-tests`, and each time npm test passes I commit the working tree with a generated message. Want me to enable it?",
+			response: opener + "**Today's capability: autopilot mode.** Claude Code can commit for you after every green test run: create `.claude/autopilot.yaml` with `autopilot: true` and `on: green-tests`, and each time go test passes I commit the working tree with a generated message. Want me to enable it?",
 			wantPass: true,
 		},
 	}

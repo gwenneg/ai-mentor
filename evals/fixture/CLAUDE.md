@@ -1,7 +1,6 @@
 # orders-service
 
-Small Express service handling order totals and discount codes.
+Small Go HTTP service handling order totals and discount codes.
 
-- Run tests with `npm test` (node:test, files under `tests/`)
-- Lint with `npm run lint`
-- Order logic lives in `src/orders.js`; keep discount codes uppercase
+- Run tests with `go test ./...` (standard library `testing`, tests live alongside the code)
+- Order logic lives in `orders.go`; keep discount codes uppercase

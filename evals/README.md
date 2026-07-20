@@ -13,7 +13,7 @@ Two claims need numbers and a harness to stay true:
 
 ## Method
 
-For each case, run in a fixture repo (any real project checkout works; one with a `package.json`, tests, and some `.claude/` config exercises grounding and signal detection best). Groups B and C additionally control the profile state: write the fixture `~/.ai-mentor/profile.md` before the run, inspect it after, and remove it between cases — the profile is global to the machine, so eval runs pollute a real one. Back up any real profile first.
+For each case, run in a fixture repo — the committed one at `evals/fixture/` is a small Go HTTP service (stdlib-only, `go test ./...`, real routes in `server.go` deliberately unmentioned by its CLAUDE.md so grounding can require an actual scan). Any real project checkout also works; one with a build/test config and some `.claude/` config exercises grounding and signal detection best. Groups B and C additionally control the profile state: write the fixture `~/.ai-mentor/profile.md` before the run, inspect it after, and remove it between cases — the profile is global to the machine, so eval runs pollute a real one. Back up any real profile first.
 
 ```bash
 # Arm A — the skill (Groups A-C)
