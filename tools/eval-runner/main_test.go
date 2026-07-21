@@ -515,7 +515,7 @@ func TestJudgePromptB04InjectedSettings(t *testing.T) {
 	// "\n- ..." pins the bulleted paths LIST specifically: the bare path also
 	// appears in the contents-block header, and a mutant that drops only the
 	// list append must fail here (proven by mutation testing in review).
-	for _, want := range []string{"\n- .claude/settings.json\n", "go test ./...", "written for this case"} {
+	for _, want := range []string{"\n- .claude/settings.json\n", "gofmt -l .", "written for this case"} {
 		if !strings.Contains(jp, want) {
 			t.Errorf("B04 judge prompt missing %q", want)
 		}

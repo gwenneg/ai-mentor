@@ -380,7 +380,12 @@ type groundTruth struct {
 // the copy AFTER buildGroundTruth runs, and a judge told the fixture list
 // is "the only real paths" would otherwise brand B04's own expected demo
 // path a fabrication.
-const b04Hooks = `{"hooks":{"PostToolUse":[{"matcher":"Edit|Write","hooks":[{"type":"command","command":"go test ./..."}]}]}}` + "\n"
+// The hook command is deliberately instant (gofmt, no compile): the hook's
+// eval purpose is to EXIST as a project-config signal, and it fires on the
+// subject's own profile writes too — a `go test ./...` hook injected a cold
+// compile plus test output into the middle of the Record flow, and B04's
+// empty-profile flips appeared with it (2 of 8 epochs post-fixture-v2).
+const b04Hooks = `{"hooks":{"PostToolUse":[{"matcher":"Edit|Write","hooks":[{"type":"command","command":"gofmt -l ."}]}]}}` + "\n"
 
 // buildGroundTruth reads the catalog and fixture once so every judge call can
 // check recommendations against them. Any failure here must be fatal to the
