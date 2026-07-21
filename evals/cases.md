@@ -10,15 +10,15 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 |----|-------------------|--------------|-------|
 | A01 | `debug a flaky test that only fails in CI` | debugging | The README's canonical example |
 | A02 | `our checkout endpoint got slow after the last release` | performance | Symptom wording, no "performance" keyword. The fixture has no checkout code, so the portable-prompt exception legitimately applies: EITHER a portable fence (placeholders, no fixture paths) OR one grounded in the service's real files (profiling the orders endpoints as the concrete surface) passes — never fail one for not being the other |
-| A03 | `refactor authentication across 30 files` | refactoring | Cross-file scale signal |
-| A04 | `we need to move from Vue 2 to Vue 3` | migration | No "migrate" keyword |
+| A03 | `refactor authentication across 30 files` | refactoring | Cross-file scale signal. The fixture has no auth code: the portable-prompt exception applies — the fence must not import fixture paths or conventions |
+| A04 | `we need to move from Vue 2 to Vue 3` | migration | No "migrate" keyword. No Vue in the fixture: portable fence expected |
 | A05 | `review a large PR that touches billing` | code-review | |
 | A06 | `I just joined this team and the codebase is huge` | code-understanding or onboarding | Either accepted; at most one CLARIFYING (information-gathering/calibration) question. The move's "Do it now" offer and the surprise's "want me to show it" offer are mandated output shape, not questions — never count them against this cap |
-| A07 | `should we use Prisma or Drizzle?` | research or dependency-management | Either accepted |
+| A07 | `should we use Prisma or Drizzle?` | research or dependency-management | Either accepted. The fixture is a Go service and these are JS ORMs: treating the question as another project's (portable) or answering against the real Go stack both pass — never fail one for not being the other |
 | A08 | `add tests before I dare touch this legacy module` | testing | "Before refactoring" phrasing must not misroute to refactoring |
 | A09 | `production error rates spiked 20 minutes ago` | incident-response | Must not route to debugging: the fenced move must be triage/mitigation-shaped (correlate with what changed, contain, roll back, or establish the missing telemetry/deploy-history source), never "inspect this file for bugs" however it is framed. The fixture has no telemetry or git history, so a setup-shaped move (e.g. connecting an observability MCP) is expected — its fence needs the concrete setup command and the service/suspect surface named, not a fixture file path |
 | A10 | `run a code review automatically on every PR` | ci-automation | |
-| A11 | `our screen reader users can't complete signup` | accessibility | |
+| A11 | `our screen reader users can't complete signup` | accessibility | No UI exists in the fixture: portable fence expected |
 | A12 | `what approaches do you know?` | (catalog browse) | Must list approaches directly, no classification |
 | A13 | `help me write a poem about my cat` | (out of scope) | Must decline gracefully, no forced classification |
 | A14 | `I want to build an AI agent that triages our support tickets` | building-agents | Must not route to greenfield despite "build" |
@@ -26,11 +26,11 @@ Run as `/ai-mentor:mentor <statement>` in the fixture repo. Phrasings deliberate
 | A16 | `package our release workflow so the whole team can use it` | building-skills-plugins | |
 | A17 | `add an AI summary box to our dashboard` | llm-features | Must not route to greenfield or UI work |
 | A18 | `my long session keeps getting dumber` | (no dedicated goal) | Should surface session-context-management, not misclassify |
-| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (hands-on-validated tool record, ranked in the migration playbook) as the move or its tool — a desk-checked directory plugin (e.g. `aws-transform`) must not displace it |
-| A20 | `convert our SAPUI5 app from JavaScript to TypeScript` | migration | Stack-match rule: must surface `ui5-typescript-conversion` with the "not hands-on evaluated" label |
+| A19 | `migrate our legacy COBOL billing system to Java` | migration | Response must surface `code-modernization` (hands-on-validated tool record, ranked in the migration playbook) as the move or its tool — a desk-checked directory plugin (e.g. `aws-transform`) must not displace it. The fixture has no COBOL: portable fence expected |
+| A20 | `convert our SAPUI5 app from JavaScript to TypeScript` | migration | Stack-match rule: must surface `ui5-typescript-conversion` with the "not hands-on evaluated" label. The fixture has no SAPUI5 code: portable fence expected |
 | A21 | `my tests pass but I'm not convinced the feature really works` | testing | The move must be `/verify` directly (taught inside `built-in-review-skills`, ranked in the testing playbook), with the copy-ready command; the profile row is `built-in-review-skills` |
-| A22 | `write API docs for our orders endpoints` | documentation | |
-| A23 | `build a discount-code feature from scratch` | greenfield | "From scratch" must not misroute to refactoring despite touching existing checkout code |
+| A22 | `write API docs for our orders endpoints` | documentation | The fixture's real routes live in `server.go`, which CLAUDE.md deliberately does not mention: a grounded fence must name the routes surface, which only an actual repo scan can supply — this case is the suite's canary for a deleted or skipped scan step |
+| A23 | `build a discount-code feature from scratch` | greenfield | "From scratch" must not misroute to refactoring despite touching the existing order/discount code |
 | A24 | `check this codebase for injection vulnerabilities before launch` | security | Must not route to code-review; there is no diff, the subject is the codebase. The playbook's ranked fit for a no-diff audit is subagent-delegation (row 2); `security-guidance` (promoted, ranked 5) is an every-edit automation, so naming it is welcome but NOT required — its absence is never a failure. If it does appear, it carries no disclaimer: describing a promoted record as "not hands-on evaluated" contradicts the record and fails |
 | A25 | `design a versioning strategy for our public orders API` | api-design | |
 | A26 | `containerize this service and deploy it to Kubernetes` | devops | |

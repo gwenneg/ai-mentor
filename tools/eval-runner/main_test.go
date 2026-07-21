@@ -237,7 +237,8 @@ func newTestRunner(t *testing.T) *runner {
 		statements:   statementsByID(all["A"]),
 		approaches:   []string{"plan-mode", "hooks-as-workflow"},
 		ground: groundTruth{
-			fixture:      []string{"package.json", "src/orders.js"},
+			fixture:      []string{"go.mod", "orders.go"},
+			fixtureText:  frameFile("go.mod", "module orders-service") + frameFile("orders.go", "package main"),
 			plugins:      []string{"security-guidance", "code-modernization"},
 			techniques:   []string{"plan-mode"},
 			integrations: []string{"github-actions"},
@@ -505,13 +506,97 @@ func TestTaughtIDsAndCatalogSources(t *testing.T) {
 	}
 }
 
+// B04's fixture copy gains .claude/settings.json after ground truth is
+// built; the judge's "only real paths" list must include it for that case
+// (and only that case) or the case's own expected demo reads as fabricated.
+func TestJudgePromptB04InjectedSettings(t *testing.T) {
+	r := newTestRunner(t)
+	jp := r.judgePrompt(evalCase{Group: "B", ID: "B04", Statement: "hooks fixture", Expected: "x"}, []string{"resp"}, "", nil)
+	// "\n- ..." pins the bulleted paths LIST specifically: the bare path also
+	// appears in the contents-block header, and a mutant that drops only the
+	// list append must fail here (proven by mutation testing in review).
+	for _, want := range []string{"\n- .claude/settings.json\n", "gofmt -l .", "written for this case"} {
+		if !strings.Contains(jp, want) {
+			t.Errorf("B04 judge prompt missing %q", want)
+		}
+	}
+	other := r.judgePrompt(evalCase{Group: "B", ID: "B01", Statement: "x", Expected: "y"}, []string{"resp"}, "", nil)
+	if strings.Contains(other, ".claude/settings.json") {
+		t.Error("non-B04 prompts must not carry the injected settings path")
+	}
+}
+
+// A22 is the scan canary: its grounded fence must name server.go, which
+// only a real repo scan can surface — so the fixture CLAUDE.md must never
+// document the routes file (cases.md A22, coverage.md P7).
+func TestFixtureClaudeMDKeepsScanCanary(t *testing.T) {
+	root, err := findRoot(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Existence side: the canary file must exist and cases.md must still
+	// name it — a rename would otherwise kill the canary silently.
+	if _, err := os.Stat(filepath.Join(root, "evals", "fixture", "server.go")); err != nil {
+		t.Fatalf("A22's canary file is gone: %v — update cases.md A22 and this test together", err)
+	}
+	if !strings.Contains(readFile(filepath.Join(root, "evals", "cases.md")), "`server.go`") {
+		t.Error("cases.md no longer names server.go — A22's canary note drifted from the fixture")
+	}
+	// Omission side, case-folded both ways.
+	text := strings.ToLower(readFile(filepath.Join(root, "evals", "fixture", "CLAUDE.md")))
+	if text == "" {
+		t.Fatal("fixture CLAUDE.md missing")
+	}
+	if strings.Contains(text, "server.go") || strings.Contains(text, "route") {
+		t.Error("fixture CLAUDE.md must not mention server.go or the routes — A22's scan-canary role depends on the omission")
+	}
+}
+
+// The judge is told fixture contents are COMPLETE; both fatal paths that
+// protect the claim must stay fatal — a silent skip or truncation would
+// mass-fail grounded fences as fabrication.
+func TestFixtureContentsFatalPaths(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := fixtureContents(dir, []string{"ghost.md"}); err == nil {
+		t.Error("an unreadable listed file must be fatal, not silently skipped")
+	}
+	if err := os.WriteFile(filepath.Join(dir, "big.md"), []byte(strings.Repeat("x", 9*1024)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixtureContents(dir, []string{"big.md"}); err == nil {
+		t.Error("over-cap contents must be fatal, not truncated")
+	}
+}
+
+// The enumerator must skip editor/OS junk (a stray .DS_Store would be
+// inlined into every judge prompt and can trip the fatal cap) without
+// filtering dotfiles wholesale — future fixtures may carry .mcp.json.
+func TestFixtureFilesFiltersJunk(t *testing.T) {
+	dir := t.TempDir()
+	for name, content := range map[string]string{
+		"go.mod": "module x", ".DS_Store": "junk", "notes~": "x", ".mcp.json": "{}",
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	files, err := fixtureFiles(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(files, []string{".mcp.json", "go.mod"}) {
+		t.Errorf("junk must be filtered and dotfiles kept: %v", files)
+	}
+}
+
 func TestJudgePromptGroundTruth(t *testing.T) {
 	r := newTestRunner(t)
 	jp := r.judgePrompt(
 		evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"},
 		[]string{"resp"}, "", nil)
 	for _, want := range []string{
-		"src/orders.js",                 // fixture manifest inlined (grounding — #8)
+		"orders.go",                     // fixture manifest inlined (grounding — #8)
+		"module orders-service",         // fixture contents inlined (command/stack claims checkable)
 		"security-guidance",             // authoritative plugin list inlined (fabrication — #6)
 		"COMPLETE list",                 // plugin list framed as exhaustive
 		"is a fabrication",              // fabrication instruction present
@@ -544,7 +629,7 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 
 func TestCaseFixtureCopies(t *testing.T) {
 	r := newTestRunner(t)
-	if err := os.WriteFile(filepath.Join(r.fixture, "package.json"), []byte("{}\n"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(r.fixture, "go.mod"), []byte("module fixture\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	plain, err := r.caseFixture(false)
@@ -555,7 +640,7 @@ func TestCaseFixtureCopies(t *testing.T) {
 	if plain == r.fixture {
 		t.Fatal("every case must run in a copy, not the shared fixture")
 	}
-	if readFile(filepath.Join(plain, "package.json")) == "" {
+	if readFile(filepath.Join(plain, "go.mod")) == "" {
 		t.Error("fixture contents not copied")
 	}
 	if _, err := os.Stat(filepath.Join(plain, ".claude")); err == nil {
@@ -800,7 +885,7 @@ func TestLiveJudgeAnchors(t *testing.T) {
 		shape: shape, ground: ground, today: time.Now().Format("2006-01-02"),
 	}
 
-	opener := "First time we meet: I keep a lightweight profile of what you already use at ~/.ai-mentor/profile.md — created just now, yours to edit or delete. Quick scan: CLAUDE.md loads (npm test, npm run lint, uppercase discount codes), no other .claude/ config, no MCP servers.\n\n"
+	opener := "First time we meet: I keep a lightweight profile of what you already use at ~/.ai-mentor/profile.md — created just now, yours to edit or delete. Quick scan: CLAUDE.md loads (go test ./..., uppercase discount codes), no other .claude/ config, no MCP servers.\n\n"
 	anchors := []struct {
 		name, taughtID, response string
 		wantPass                 bool
@@ -809,19 +894,19 @@ func TestLiveJudgeAnchors(t *testing.T) {
 		{
 			name:     "catalog-sourced new feature must PASS",
 			taughtID: "project-memory",
-			response: opener + "**Today's capability: path-scoped rules.** Your CLAUDE.md loads whole into every session. You can split niche instructions into `.claude/rules/*.md` files with `paths:` frontmatter so a rule loads only when I work on matching files:\n\n```\nmkdir -p .claude/rules\ncat > .claude/rules/orders.md <<'EOF'\n---\npaths:\n  - \"src/orders.js\"\n  - \"tests/orders.test.js\"\n---\nDiscount codes are uppercase; run npm test after edits here.\nEOF\n```\n\nThat keeps the always-on CLAUDE.md lean while orders-specific rules appear exactly when they matter. Want me to create it now?",
+			response: opener + "**Today's capability: path-scoped rules.** Your CLAUDE.md loads whole into every session. You can split niche instructions into `.claude/rules/*.md` files with `paths:` frontmatter so a rule loads only when I work on matching files:\n\n```\nmkdir -p .claude/rules\ncat > .claude/rules/orders.md <<'EOF'\n---\npaths:\n  - \"orders.go\"\n  - \"orders_test.go\"\n---\nDiscount codes are uppercase; run go test ./... after edits here.\nEOF\n```\n\nThat keeps the always-on CLAUDE.md lean while orders-specific rules appear exactly when they matter. Want me to create it now?",
 			wantPass: true,
 		},
 		{
 			name:     "fabricated marketplace plugin must FAIL",
 			taughtID: "test-coverage-pro",
-			response: opener + "**Today's capability: automated coverage gating.** The official marketplace covers this: install with `/plugin install test-coverage-pro@claude-plugins-official`, then `/coverage-gate 80` blocks any change that drops line coverage below 80% — it wires itself into npm test automatically. Want me to install it now?",
+			response: opener + "**Today's capability: automated coverage gating.** The official marketplace covers this: install with `/plugin install test-coverage-pro@claude-plugins-official`, then `/coverage-gate 80` blocks any change that drops line coverage below 80% — it wires itself into your test command automatically. Want me to install it now?",
 			wantPass: false, wantInReason: "test-coverage-pro",
 		},
 		{
 			name:     "fabricated built-in must not FAIL from judge memory",
 			taughtID: "autopilot-mode",
-			response: opener + "**Today's capability: autopilot mode.** Claude Code can commit for you after every green test run: create `.claude/autopilot.yaml` with `autopilot: true` and `on: green-tests`, and each time npm test passes I commit the working tree with a generated message. Want me to enable it?",
+			response: opener + "**Today's capability: autopilot mode.** Claude Code can commit for you after every green test run: create `.claude/autopilot.yaml` with `autopilot: true` and `on: green-tests`, and each time go test passes I commit the working tree with a generated message. Want me to enable it?",
 			wantPass: true,
 		},
 	}
