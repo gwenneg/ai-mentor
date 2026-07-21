@@ -238,7 +238,7 @@ func newTestRunner(t *testing.T) *runner {
 		approaches:   []string{"plan-mode", "hooks-as-workflow"},
 		ground: groundTruth{
 			fixture:      []string{"go.mod", "orders.go"},
-			fixtureText:  "--- go.mod ---\nmodule orders-service\n--- orders.go ---\npackage main\n",
+			fixtureText:  frameFile("go.mod", "module orders-service") + frameFile("orders.go", "package main"),
 			plugins:      []string{"security-guidance", "code-modernization"},
 			techniques:   []string{"plan-mode"},
 			integrations: []string{"github-actions"},
@@ -512,7 +512,10 @@ func TestTaughtIDsAndCatalogSources(t *testing.T) {
 func TestJudgePromptB04InjectedSettings(t *testing.T) {
 	r := newTestRunner(t)
 	jp := r.judgePrompt(evalCase{Group: "B", ID: "B04", Statement: "hooks fixture", Expected: "x"}, []string{"resp"}, "", nil)
-	for _, want := range []string{".claude/settings.json", "go test ./...", "written for this case"} {
+	// "\n- ..." pins the bulleted paths LIST specifically: the bare path also
+	// appears in the contents-block header, and a mutant that drops only the
+	// list append must fail here (proven by mutation testing in review).
+	for _, want := range []string{"\n- .claude/settings.json\n", "go test ./...", "written for this case"} {
 		if !strings.Contains(jp, want) {
 			t.Errorf("B04 judge prompt missing %q", want)
 		}
@@ -531,12 +534,58 @@ func TestFixtureClaudeMDKeepsScanCanary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := readFile(filepath.Join(root, "evals", "fixture", "CLAUDE.md"))
+	// Existence side: the canary file must exist and cases.md must still
+	// name it — a rename would otherwise kill the canary silently.
+	if _, err := os.Stat(filepath.Join(root, "evals", "fixture", "server.go")); err != nil {
+		t.Fatalf("A22's canary file is gone: %v — update cases.md A22 and this test together", err)
+	}
+	if !strings.Contains(readFile(filepath.Join(root, "evals", "cases.md")), "`server.go`") {
+		t.Error("cases.md no longer names server.go — A22's canary note drifted from the fixture")
+	}
+	// Omission side, case-folded both ways.
+	text := strings.ToLower(readFile(filepath.Join(root, "evals", "fixture", "CLAUDE.md")))
 	if text == "" {
 		t.Fatal("fixture CLAUDE.md missing")
 	}
-	if strings.Contains(text, "server.go") || strings.Contains(strings.ToLower(text), "route") {
+	if strings.Contains(text, "server.go") || strings.Contains(text, "route") {
 		t.Error("fixture CLAUDE.md must not mention server.go or the routes — A22's scan-canary role depends on the omission")
+	}
+}
+
+// The judge is told fixture contents are COMPLETE; both fatal paths that
+// protect the claim must stay fatal — a silent skip or truncation would
+// mass-fail grounded fences as fabrication.
+func TestFixtureContentsFatalPaths(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := fixtureContents(dir, []string{"ghost.md"}); err == nil {
+		t.Error("an unreadable listed file must be fatal, not silently skipped")
+	}
+	if err := os.WriteFile(filepath.Join(dir, "big.md"), []byte(strings.Repeat("x", 9*1024)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixtureContents(dir, []string{"big.md"}); err == nil {
+		t.Error("over-cap contents must be fatal, not truncated")
+	}
+}
+
+// The enumerator must skip editor/OS junk (a stray .DS_Store would be
+// inlined into every judge prompt and can trip the fatal cap) without
+// filtering dotfiles wholesale — future fixtures may carry .mcp.json.
+func TestFixtureFilesFiltersJunk(t *testing.T) {
+	dir := t.TempDir()
+	for name, content := range map[string]string{
+		"go.mod": "module x", ".DS_Store": "junk", "notes~": "x", ".mcp.json": "{}",
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	files, err := fixtureFiles(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(files, []string{".mcp.json", "go.mod"}) {
+		t.Errorf("junk must be filtered and dotfiles kept: %v", files)
 	}
 }
 

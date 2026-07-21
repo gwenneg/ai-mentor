@@ -389,7 +389,12 @@ const b04Hooks = `{"hooks":{"PostToolUse":[{"matcher":"Edit|Write","hooks":[{"ty
 // would mass-fail every plugin recommendation.
 func buildGroundTruth(repo, fixture string) (groundTruth, error) {
 	skill := filepath.Join(repo, "skills", "mentor")
-	gt := groundTruth{fixture: fixtureFiles(fixture)}
+	gt := groundTruth{}
+	fixFiles, err := fixtureFiles(fixture)
+	if err != nil {
+		return gt, err
+	}
+	gt.fixture = fixFiles
 	text, err := fixtureContents(fixture, gt.fixture)
 	if err != nil {
 		return gt, err
@@ -456,20 +461,42 @@ func fixtureContents(dir string, files []string) (string, error) {
 	return b.String(), nil
 }
 
-// fixtureFiles lists the fixture repo's files as repo-relative paths.
-func fixtureFiles(dir string) []string {
+// fixtureFiles lists the fixture repo's files as repo-relative paths. The
+// enumerator matches fixtureContents' strictness: a walk error is fatal (a
+// silently dropped entry would make the judge's "only real paths" list
+// incomplete — the same mass-fail mode the reader treats as fatal), and
+// only well-known editor/OS junk is filtered — never dotfiles wholesale,
+// because future fixture variants may legitimately carry .mcp.json or
+// .claude/ files as ground truth.
+func fixtureFiles(dir string) ([]string, error) {
 	var out []string
-	filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		name := d.Name()
+		if d.IsDir() {
+			if name == ".git" || name == ".idea" {
+				return fs.SkipDir
+			}
 			return nil
 		}
-		if rel, e := filepath.Rel(dir, p); e == nil {
-			out = append(out, rel)
+		if name == ".DS_Store" || name == "Thumbs.db" || strings.HasSuffix(name, "~") ||
+			strings.HasSuffix(name, ".swp") || strings.HasSuffix(name, ".swo") || strings.HasPrefix(name, ".#") {
+			return nil
 		}
+		rel, err := filepath.Rel(dir, p)
+		if err != nil {
+			return err
+		}
+		out = append(out, rel)
 		return nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("fixture ground truth: %w", err)
+	}
 	slices.Sort(out)
-	return out
+	return out, nil
 }
 
 // approachKind returns the value of an approach file's `kind:` line, or ""
@@ -981,7 +1008,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 		b.WriteString("\nGroup A output-shape expectations (verbatim from cases.md; every classified case must satisfy all of them):\n")
 		b.WriteString(r.shape + "\n")
 		b.WriteString("\nThe case notes take precedence over the shape expectations when they conflict.\n")
-		b.WriteString("For a problem about the fixture repo itself, a fenced prompt that cites a code path not in the fixture file list below is fabricated grounding — fail it (unless the case notes mark the prompt portable to a different repo).\n")
+		b.WriteString("For a problem about the fixture repo itself, a fenced prompt that cites a code path not in the fixture file list below is fabricated grounding — fail it (unless the fence is portable: the problem targets a different repo or names code the fixture does not contain, or the case notes mark it portable).\n")
 	} else {
 		fmt.Fprintf(&b, "Setup / profile fixture: %s\nExpected behavior: %s\n", c.Statement, c.Expected)
 	}
@@ -1000,7 +1027,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 			b.WriteString("- " + f + "\n")
 		}
 		if text != "" {
-			b.WriteString("Complete fixture file contents — ground truth for any claim about the repo's stack, commands, or code (a fenced command that could not work against these files is fabricated grounding — unless the case notes mark the prompt portable to a different repo, where foreign-stack commands are exactly what a correct fence carries):\n" + text)
+			b.WriteString("Complete fixture file contents — ground truth for any claim about the repo's stack, commands, or code. Judge each fence by the mode it chose: for a fence grounded in this repo, a command that could not work against these files is fabricated grounding; a portable fence — one for a problem that targets a different repo or names code the fixture does not contain — correctly carries foreign-stack commands and placeholders instead, but a fence mixing fixture paths with commands these files cannot support gets no portable excuse:\n" + text)
 		}
 	}
 	b.WriteString("Real marketplace plugins (COMPLETE list; installed as `<name>@claude-plugins-official`). A recommended plugin whose name is NOT in this list is a fabrication — fail the case and name it:\n")
