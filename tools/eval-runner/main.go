@@ -1013,7 +1013,9 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 		b.WriteString("\nGroup A output-shape expectations (verbatim from cases.md; every classified case must satisfy all of them):\n")
 		b.WriteString(r.shape + "\n")
 		b.WriteString("\nThe case notes take precedence over the shape expectations when they conflict.\n")
+		b.WriteString("The move's \"Do it now\" offer and the surprise's \"want me to show it\" offer are mandated output shape — never fail a response for their presence.\n")
 		b.WriteString("For a problem about the fixture repo itself, a fenced prompt that cites a code path not in the fixture file list below is fabricated grounding — fail it (unless the fence is portable: the problem targets a different repo or names code the fixture does not contain, or the case notes mark it portable).\n")
+		b.WriteString("The only grounding exceptions are those written here or in the case notes — never invent one.\n")
 	} else {
 		fmt.Fprintf(&b, "Setup / profile fixture: %s\nExpected behavior: %s\n", c.Statement, c.Expected)
 	}
@@ -1043,6 +1045,7 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 	for _, p := range r.ground.promoted {
 		b.WriteString("- " + p + "\n")
 	}
+	b.WriteString("For directory (unpromoted) plugins, the tier marker and the \"not hands-on evaluated\" disclaimer label are DISTINCT requirements — a marker alone does not satisfy a case or rule that requires the label.\n")
 	b.WriteString("Known-real techniques: " + strings.Join(r.ground.techniques, ", ") + ". Known-real integrations: " + strings.Join(r.ground.integrations, ", ") + ".\n")
 	b.WriteString("These technique/integration lists are NOT exhaustive of Claude Code, and built-in slash commands are not listed at all (e.g. /code-review, /verify, /goal, /loop, /schedule, /init, /plan, /model, /effort, --worktree, Shift+Tab are all real). The plugin list above IS complete: judge plugin recommendations strictly against it.\n")
 	// The judge's knowledge ends at its training cutoff; the catalog is
