@@ -66,11 +66,11 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 
 | ID | Setup | Expected behavior |
 |----|-------|-------------------|
-| C01 | Profile marks the matched goal's #1 approach `adopted`; run a Group A case for that goal | The move builds on the adopted approach or picks the next-best; it is NOT re-taught from scratch |
+| C01 | Profile marks `plan-mode` (a top-ranked debugging approach) `adopted`; run A01 | The ADOPTED approach is plan-mode and only plan-mode — judge against that name, never re-derive which approach "should" be ranked first. The move must not re-teach plan-mode from scratch: it builds on it or picks a different approach, and freshly teaching a not-yet-known approach (e.g. autonomous-loops as next-best) is exactly correct behavior, never "re-teaching" |
 | C02 | Run the same Group A case twice in a row (same profile) | Second run's surprising pick differs from the first (first is now `shown`) |
 | C03 | After any Group A run | Profile contains new `shown` rows for the move and surprise, dated today, with one-line notes |
 | C04 | Profile has a `declined` row (background-agents) and a `shown` row (plan-mode) from a past date; run a Group A case | After the run the profile STILL carries both seeded capabilities and neither status regresses: the declined row survives untouched, forward-only holds. One row per capability — legitimately re-showing the shown capability may refresh that row's date/note in place; what fails is dropping a row, regressing a status, or any edit to the declined row [strict] |
-| C05 | Profile marks the matched goal's #1 approach (plan-mode, for A01/debugging) `declined`; run that Group A case | Plan mode is never named anywhere in the response — declined is invisible, not even mentioned to say it is being skipped; the move is the next-best debugging approach [strict] |
+| C05 | Profile marks `plan-mode` (a top-ranked debugging approach) `declined`; run A01 | Plan mode is never named anywhere in the response — declined is invisible, not even mentioned to say it is being skipped; the move is the next-best debugging approach [strict] |
 
 ## Group D — Trigger calibration (interactive only)
 
