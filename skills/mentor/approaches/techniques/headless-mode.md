@@ -40,7 +40,7 @@ Headless mode turns Claude from an interactive assistant into a Unix-style comma
 ### Advanced Patterns
 
 - **`--bare` for reproducible runs**: The `--bare` flag skips auto-discovery of `CLAUDE.md`, auto memory, hooks, skills, plugins, and MCP servers, so a run behaves the same on every machine regardless of local configuration. Docs recommend it for all scripted calls, and it will become the default for `-p`.
-- **Structured streaming**: Use `--output-format stream-json` to get a stream of JSON events as Claude works. Events carry a top-level type (`system`, `assistant`, `user`, `result`), with tool calls and results inside the message content, allowing your pipeline to react to intermediate steps — for example, logging tool invocations in real time.
+- **Structured streaming**: Use `--output-format stream-json` to get a stream of JSON events as Claude works. Events carry a top-level type (`system`, `assistant`, `user`, `result`), with tool calls and results inside the message content, allowing your pipeline to react to intermediate steps — for example, logging tool invocations in real time. Add `--forward-subagent-text` (or set `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT`, v2.1.207+) to include subagent text and thinking blocks in that stream too, instead of only the orchestrator's own output.
 - **MCP server integration**: Headless Claude can connect to MCP servers with `--mcp-config`, giving it access to databases, APIs, or custom tools without any interactive setup: `claude -p "Query the staging database for users created today" --mcp-config mcp-servers.json`
 
 ## Common Pitfalls

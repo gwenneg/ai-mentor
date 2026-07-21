@@ -44,6 +44,7 @@ Most coding mistakes happen not because the AI cannot write code, but because it
 - **MCP Tool Search for large tool sets**: Without tool search, dozens of MCP servers' tool schemas would consume a significant portion of the context window. MCP Tool Search — on by default, controlled via the `ENABLE_TOOL_SEARCH` environment variable — loads only tool names at session start and defers full schemas until Claude actually needs them, so you can register hundreds of tools without paying the context cost upfront.
 - **Cross-system correlation**: Pull a Sentry error report, then query your database schema, then read the relevant code — all in one conversation. The AI connects the dots across systems that normally require three browser tabs and manual context-switching.
 - **Production-informed refactoring**: Query your monitoring system for the slowest API endpoints, then ask Claude to profile and optimize the relevant code paths. The refactoring is driven by real data, not guesswork.
+- **Long calls background themselves** (v2.1.207+): an MCP tool call still running after two minutes moves to the background automatically so the session stays usable instead of blocking on a slow server; tune or disable the threshold with `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`.
 
 ## Common Pitfalls
 

@@ -31,7 +31,7 @@ Some information is spatial, not linear: layout carries meaning terminal text ca
 2. Ask Claude to render it: "Publish this architecture summary as an artifact — one section per service, with a dependency diagram at the top."
 3. Claude writes a self-contained HTML file, asks permission the first time it publishes, and prints a `claude.ai` link — your browser opens to the page automatically.
 4. Iterate in conversation: "make the timeline horizontal", "collapse the low-severity findings". Claude edits the file and redeploys to the same URL.
-5. Share the link when you're happy. Artifacts are private to you by default, and the URL alone grants nothing — viewers must be signed in to claude.ai. On Team and Enterprise plans you can share with specific people or everyone in your organization, never outside it (there is no public option); on Pro and Max plans artifacts stay private to you entirely.
+5. Share the link when you're happy. Artifacts are private to you by default. On Pro and Max plans, a public link — open to anyone, no claude.ai sign-in required — is the only way to share. On Team and Enterprise plans you instead share within your organization (specific people or everyone), and can grant some viewers editor access so they publish new versions themselves; public sharing there is off until an Owner enables it.
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -44,6 +44,7 @@ Some information is spatial, not linear: layout carries meaning terminal text ca
 - **Living status pages**: Keep one artifact current across sessions — asking to "refresh the artifact" re-gathers live state and redeploys to the same URL, so the team's bookmark stays valid while the content tracks reality. A *new* session needs the artifact's URL to update it — without the URL it mints a new page. The official `project-artifact` plugin packages this pattern, remembering the project's sources and published URL between sessions.
 - **Interactive deliverables**: Artifacts execute inline JavaScript, so a comparison can have sortable columns and a dependency map can have clickable nodes. Ask for interactivity when the data is bigger than one screen.
 - **Design iteration on mockups**: For greenfield UI work, generate two or three visual directions as separate artifacts and A/B them with stakeholders before writing any application code.
+- **Live data via MCP connectors** (v2.1.209+): a published artifact can call MCP connectors each time someone views it, so a dashboard shows current data instead of a snapshot from the session that built it — ask directly: "Build a dashboard artifact of our open pull requests that pulls the live list through my GitHub connector when the page loads." Each call runs through the *viewer's* own connector account, not the publisher's, and claude.ai asks each viewer to approve access before the page's first call. The tradeoff: a connector-backed artifact can't be shared to a public link on any plan.
 
 ## Common Pitfalls
 
