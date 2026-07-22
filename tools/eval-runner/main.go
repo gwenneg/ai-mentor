@@ -1288,16 +1288,28 @@ type record struct {
 	Epoch    int    `json:"epoch"`
 	Attempt  int    `json:"attempt"`
 	Verdict  string `json:"verdict"`
+	Trailer  string `json:"trailer,omitempty"` // raw mentor trailer fields (V2 Phase 1: observed, never gated)
 	Reason   string `json:"reason,omitempty"`
 	Judge    string `json:"judge,omitempty"`
 	Response string `json:"response,omitempty"`
 	Profile  string `json:"profile,omitempty"`
 }
 
+// reTrailer extracts the mentor's machine-readable trailer (V2 Phase 1:
+// recorded for observation; no check reads it yet).
+var reTrailer = regexp.MustCompile(`<!--\s*mentor\s+([^>]*?)-->`)
+
+func parseTrailer(response string) string {
+	if m := reTrailer.FindStringSubmatch(response); m != nil {
+		return strings.TrimSpace(m[1])
+	}
+	return ""
+}
+
 func toRecord(r result, epoch, attempt int) record {
 	return record{
 		Case: r.c.ID, Group: r.c.Group, Epoch: epoch, Attempt: attempt,
-		Verdict: r.verdict, Reason: r.reason,
+		Verdict: r.verdict, Trailer: parseTrailer(r.response), Reason: r.reason,
 		Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
 	}
 }
@@ -1370,6 +1382,14 @@ func renderReport(results []result) string {
 	var b strings.Builder
 	b.WriteString("# ai-mentor eval report\n\n")
 	b.WriteString(summary(results) + "\n")
+	// V2 Phase 1 observability: emission fidelity for the mentor trailer.
+	withTrailer := 0
+	for _, r := range results {
+		if parseTrailer(r.response) != "" {
+			withTrailer++
+		}
+	}
+	fmt.Fprintf(&b, "\nTrailers: %d/%d responses carried a parseable mentor trailer (observed only; nothing gates on this yet).\n", withTrailer, len(results))
 	for _, g := range groupsIn(results) {
 		fmt.Fprintf(&b, "\n## Group %s\n\n| Case | Verdict | Reason |\n|------|---------|--------|\n", groupTitle(g))
 		for _, r := range results {
