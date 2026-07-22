@@ -1050,6 +1050,16 @@ func TestDeterministicChecks(t *testing.T) {
 	}
 }
 
+func TestParseTrailer(t *testing.T) {
+	resp := "prose...\n\nMore options — say \"more\".\n\n<!-- mentor mode=problem goal=debugging move=plan-mode surprise=hooks-as-workflow plugins=none -->"
+	if got := parseTrailer(resp); got != "mode=problem goal=debugging move=plan-mode surprise=hooks-as-workflow plugins=none" {
+		t.Errorf("trailer parse: %q", got)
+	}
+	if got := parseTrailer("no trailer here"); got != "" {
+		t.Errorf("absent trailer must parse empty, got %q", got)
+	}
+}
+
 func TestWriteRecords(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "records.jsonl")
 	rs := []record{
