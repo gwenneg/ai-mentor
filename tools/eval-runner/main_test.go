@@ -243,6 +243,7 @@ func newTestRunner(t *testing.T) *runner {
 			techniques:   []string{"plan-mode"},
 			integrations: []string{"github-actions"},
 		},
+		specs: map[string]v2Spec{"A30": {Judge: true}, "B05": {Judge: true}, "B06": {Judge: true}},
 		today: "2026-07-07",
 	}
 }
@@ -302,7 +303,7 @@ func argAfter(call []string, flagName string) string {
 func TestRunCaseStubbed(t *testing.T) {
 	t.Setenv("ANTHROPIC_API_KEY", "test-key") // skip the credentials copy
 	r := newTestRunner(t)
-	calls := stubClaude(t, `{"result": "growth-mode lesson"}`, `{"pass": true, "checks": []}`)
+	calls := stubClaude(t, `{"result": "growth-mode lesson\n\n<!-- mentor mode=growth opener=lesson taught=project-memory -->"}`, `{"pass": true, "checks": []}`)
 
 	b03 := evalCase{Group: "B", ID: "B03",
 		Statement: "A declined row", Expected: "The declined capability is never offered"}
@@ -352,7 +353,7 @@ func TestRunCaseStubbed(t *testing.T) {
 func TestRunCaseGroupAIncludesShape(t *testing.T) {
 	t.Setenv("ANTHROPIC_API_KEY", "test-key")
 	r := newTestRunner(t)
-	calls := stubClaude(t, `{"result": "a move"}`, `{"pass": true, "checks": []}`)
+	calls := stubClaude(t, `{"result": "a move\n\n<!-- mentor mode=problem goal=debugging move=plan-mode -->"}`, `{"pass": true, "checks": []}`)
 
 	a01 := evalCase{Group: "A", ID: "A01",
 		Statement: "debug a flaky test that only fails in CI", Expected: "debugging"}
@@ -364,15 +365,18 @@ func TestRunCaseGroupAIncludesShape(t *testing.T) {
 		t.Errorf("Group A prompt wrong: %q", got)
 	}
 	jp := argAfter(judge, "-p")
-	if !strings.Contains(jp, "Exactly **one** primary move") {
-		t.Error("Group A judge prompt must include the output-shape expectations verbatim")
+	if strings.Contains(jp, "Exactly **one** primary move") {
+		t.Error("non-semantic Group A cases use the short form — shape is det-checked, not judge prose")
+	}
+	if !strings.Contains(jp, "consistency") {
+		t.Error("short-form judge prompt must carry the consistency mandate")
 	}
 }
 
 func TestRunCaseC02RunsTwiceSameHome(t *testing.T) {
 	t.Setenv("ANTHROPIC_API_KEY", "test-key")
 	r := newTestRunner(t)
-	calls := stubClaude(t, `{"result": "a move"}`, `{"pass": true, "checks": []}`)
+	calls := stubClaude(t, `{"result": "a move\n\n<!-- mentor mode=problem goal=refactoring move=subagent-delegation -->"}`, `{"pass": true, "checks": []}`)
 
 	c02 := evalCase{Group: "C", ID: "C02", Statement: "same case twice", Expected: "surprises differ"}
 	if res := r.runCase(c02); res.verdict != vPass {
@@ -406,7 +410,7 @@ func TestJudgeFailurePaths(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := newTestRunner(t)
-			stubClaude(t, `{"result": "a lesson"}`, tc.judgeOut)
+			stubClaude(t, `{"result": "a lesson\n\n<!-- mentor mode=growth opener=followup taught=none -->"}`, tc.judgeOut)
 			// B02: judge-path behavior without B01's deterministic pre-check.
 			res := r.runCase(evalCase{Group: "B", ID: "B02", Expected: "follow up"})
 			if res.verdict != tc.verdict || !strings.Contains(res.reason, tc.reason) {
@@ -506,29 +510,24 @@ func TestTaughtIDsAndCatalogSources(t *testing.T) {
 	}
 }
 
-// B04's fixture copy gains .claude/settings.json after ground truth is
-// built; the judge's "only real paths" list must include it for that case
-// (and only that case) or the case's own expected demo reads as fabricated.
-func TestJudgePromptB04InjectedSettings(t *testing.T) {
+// Non-semantic cases get the V2 short form: consistency is the only
+// gating question, and none of the full prompt's fabrication machinery
+// (which the det layer now owns) may appear.
+func TestJudgePromptShortForm(t *testing.T) {
 	r := newTestRunner(t)
 	jp := r.judgePrompt(evalCase{Group: "B", ID: "B04", Statement: "hooks fixture", Expected: "x"}, []string{"resp"}, "", nil)
-	// "\n- ..." pins the bulleted paths LIST specifically: the bare path also
-	// appears in the contents-block header, and a mutant that drops only the
-	// list append must fail here (proven by mutation testing in review).
-	for _, want := range []string{"\n- .claude/settings.json\n", "gofmt -l .", "written for this case"} {
+	for _, want := range []string{"consistency", "ALREADY verified", "STRICT JSON"} {
 		if !strings.Contains(jp, want) {
-			t.Errorf("B04 judge prompt missing %q", want)
+			t.Errorf("short-form judge prompt missing %q", want)
 		}
 	}
-	other := r.judgePrompt(evalCase{Group: "B", ID: "B01", Statement: "x", Expected: "y"}, []string{"resp"}, "", nil)
-	if strings.Contains(other, ".claude/settings.json") {
-		t.Error("non-B04 prompts must not carry the injected settings path")
+	for _, banned := range []string{"fabricated grounding", "COMPLETE list", "Fixture repo files", "<!-- mentor"} {
+		if strings.Contains(jp, banned) {
+			t.Errorf("short-form judge prompt must not carry %q", banned)
+		}
 	}
 }
 
-// A22 is the scan canary: its grounded fence must name server.go, which
-// only a real repo scan can surface — so the fixture CLAUDE.md must never
-// document the routes file (cases.md A22, coverage.md P7).
 func TestFixtureClaudeMDKeepsScanCanary(t *testing.T) {
 	root, err := findRoot(".")
 	if err != nil {
@@ -591,8 +590,11 @@ func TestFixtureFilesFiltersJunk(t *testing.T) {
 
 func TestJudgePromptGroundTruth(t *testing.T) {
 	r := newTestRunner(t)
+	// A30 is spec-marked `judge` (semantic), so it keeps the full
+	// ground-truth prompt; non-semantic cases get the short form (tested
+	// separately below).
 	jp := r.judgePrompt(
-		evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"},
+		evalCase{Group: "A", ID: "A30", Statement: "x", Expected: "(fabrication trap)"},
 		[]string{"resp"}, "", nil)
 	for _, want := range []string{
 		"orders.go",                     // fixture manifest inlined (grounding — #8)
@@ -613,7 +615,7 @@ func TestJudgePromptGroundTruth(t *testing.T) {
 	}
 
 	jp = r.judgePrompt(
-		evalCase{Group: "B", ID: "B01", Statement: "no profile", Expected: "teaches one capability"},
+		evalCase{Group: "B", ID: "B05", Statement: "stale anchor", Expected: "ledger-grounded"},
 		[]string{"resp"}, "profile",
 		[]capSource{{id: "project-memory", content: "path-scoped rules in .claude/rules/*.md"}})
 	for _, want := range []string{
@@ -682,14 +684,16 @@ func TestRunAllOrderAndBound(t *testing.T) {
 		inflight--
 		mu.Unlock()
 		if slices.Contains(args, "--plugin-dir") {
-			return `{"result": "a lesson"}`, nil
+			// A minimal valid trailer so the V2 structural layer (which
+			// requires self-reports on every non-D case) passes — this
+			// test is about scheduling, not case semantics.
+			return `{"result": "a lesson\n\n<!-- mentor mode=growth opener=lesson taught=none -->"}`, nil
 		}
 		return `{"pass": true, "checks": []}`, nil
 	}
 
-	// B9x IDs sit outside the detChecks registry, so the stubbed empty
-	// profile can't trip a deterministic pre-check — this test is about
-	// scheduling, not case semantics.
+	// B9x IDs sit outside the detChecks registry and the machine-
+	// expectations table, so no case-specific check can trip.
 	cases := make([]evalCase, 8)
 	for i := range cases {
 		cases[i] = evalCase{Group: "B", ID: fmt.Sprintf("B9%d", i+1), Expected: "x"}

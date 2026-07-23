@@ -86,3 +86,53 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 | D06 | `write a README for this project` | Skill does NOT fire — ordinary task |
 
 Score as precision/recall over the should-fire (D01-D03) and shouldn't-fire (D04-D06) sets. A miss on D01-D03 means the description is too shy; a fire on D04-D06 means too eager — the frontmatter `description` is the tuning dial.
+
+## Machine expectations (V2 — deterministic layer)
+
+*One row per headless case; parsed by the runner and enforced in code. `goal`/`move` compare against the response trailer (alternatives `|`-separated, `-` = unconstrained). `surprise`: `required`, `omitted-ok`, or `-`. `fence`: `grounded` (≥1 fixture path in the fenced block), `portable` (zero unflagged fixture paths), `either`, `setup` (concrete setup command + named surface, no repo path needed), `scan` (grounded AND names `server.go` — the scan canary), `none` (no fence expected). `judge`: cases whose substance stays LLM-judged (fabrication/ledger/invented-lesson semantics); their structural columns still apply where not `-`.*
+
+| ID | goal | move | surprise | fence | judge |
+|----|------|------|----------|-------|-------|
+| A01 | debugging | - | required | grounded | - |
+| A02 | performance | - | required | either | - |
+| A03 | refactoring | - | required | portable | - |
+| A04 | migration | - | required | portable | - |
+| A05 | code-review | - | required | portable | - |
+| A06 | code-understanding\|onboarding | - | required | grounded | - |
+| A07 | research\|dependency-management | - | required | either | - |
+| A08 | testing | - | required | grounded | - |
+| A09 | incident-response | - | omitted-ok | setup | - |
+| A10 | ci-automation | - | required | grounded | - |
+| A11 | accessibility | - | required | portable | - |
+| A12 | browse | - | - | none | - |
+| A13 | none | - | - | none | - |
+| A14 | building-agents | - | required | portable | - |
+| A15 | building-mcp-integrations | - | required | portable | - |
+| A16 | building-skills-plugins | - | required | grounded | - |
+| A17 | llm-features | - | required | portable | - |
+| A18 | none | session-context-management | required | grounded | - |
+| A19 | migration | code-modernization | required | portable | - |
+| A20 | migration | ui5-typescript-conversion | required | portable | - |
+| A21 | testing | built-in-review-skills | required | grounded | - |
+| A22 | documentation | - | required | scan | - |
+| A23 | greenfield | - | required | grounded | - |
+| A24 | security | - | required | grounded | - |
+| A25 | api-design | - | required | grounded | - |
+| A26 | devops | - | required | either | - |
+| A27 | release-management | - | required | grounded | - |
+| A28 | tech-debt | - | required | grounded | - |
+| A29 | llm-features | llm-evals | required | either | - |
+| A30 | - | - | - | - | judge |
+| B01 | - | - | - | - | - |
+| B02 | - | - | - | - | - |
+| B03 | - | - | - | - | - |
+| B04 | - | - | - | - | - |
+| B05 | - | - | - | - | judge |
+| B06 | - | - | - | - | judge |
+| C01 | debugging | !plan-mode | required | grounded | - |
+| C02 | refactoring | - | required | portable | - |
+| C03 | debugging | - | required | grounded | - |
+| C04 | debugging | - | required | grounded | - |
+| C05 | debugging | !plan-mode | required | grounded | - |
+
+Growth-mode trailer expectations (B cases): B01 `opener=lesson`, B02 `opener=followup`, B03 `opener=lesson`, B04 `opener=lesson` + `taught=hooks-as-workflow`, B06 `opener=transfer|empty` + `taught=none` — enforced in code alongside the existing profile det checks; B05's opener is ledger-dependent and stays judged.
