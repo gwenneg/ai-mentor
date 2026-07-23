@@ -1060,6 +1060,20 @@ func TestParseTrailer(t *testing.T) {
 	}
 }
 
+// Phase 1 isolation: the judge must never see the trailer (nothing gates
+// on it yet — not even a judge side-reading a trailer/prose mismatch).
+func TestJudgePromptStripsTrailer(t *testing.T) {
+	r := newTestRunner(t)
+	resp := "prose body\n\nMore options — say \"more\".\n\n<!-- mentor mode=problem goal=debugging move=plan-mode surprise=omitted plugins=none -->"
+	jp := r.judgePrompt(evalCase{Group: "A", ID: "A01", Statement: "x", Expected: "debugging"}, []string{stripTrailer(resp)}, "", nil)
+	if strings.Contains(jp, "<!-- mentor") {
+		t.Error("judge prompt must not contain the mentor trailer")
+	}
+	if !strings.Contains(jp, "prose body") {
+		t.Error("stripping must preserve the prose")
+	}
+}
+
 func TestWriteRecords(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "records.jsonl")
 	rs := []record{
