@@ -79,6 +79,17 @@ func TestV2SpecsCoverRealSuite(t *testing.T) {
 	}
 }
 
+// v2Checks2 aliases v2Checks for tests written against the gating return.
+func v2Checks2(c evalCase, spec v2Spec, responses []string, plugins, promoted []string) (string, string) {
+	return v2Checks(c, spec, responses, plugins, promoted)
+}
+
+// adv returns only the advisory (fence-discipline) tier.
+func adv(c evalCase, spec v2Spec, responses []string) string {
+	_, a := v2Checks(c, spec, responses, nil, nil)
+	return a
+}
+
 const v2Closing = "\n\nMore options for this — say \"more\". (Calibrated for intermediate.)\n"
 
 func v2resp(trailer, body string) string {
@@ -91,7 +102,7 @@ func TestV2ChecksFailPaths(t *testing.T) {
 	good := v2resp("mode=problem goal=debugging move=plan-mode surprise=hooks-as-workflow",
 		"Diagnosis.\n**One thing you might not know exists:** hooks.\n\n```\n/plan debug orders.go — go test ./...\n```")
 
-	if got := v2Checks(a, spec, []string{good}, nil, nil); got != "" {
+	if got, _ := v2Checks2(a, spec, []string{good}, nil, nil); got != "" {
 		t.Fatalf("valid response must pass, got %q", got)
 	}
 	cases := []struct{ name, resp, wantSub string }{
@@ -100,14 +111,29 @@ func TestV2ChecksFailPaths(t *testing.T) {
 		{"wrong goal", strings.Replace(good, "goal=debugging", "goal=testing", 1), "classification"},
 		{"no surprise marker", strings.Replace(good, "One thing you might not know exists", "note", 1), "surprise"},
 		{"trailer omits surprise", strings.Replace(good, "surprise=hooks-as-workflow", "surprise=omitted", 1), "trailer declares none"},
-		{"no fence", strings.Replace(good, "```", "", 2), "fence"},
-		{"ungrounded fence", strings.Replace(good, "orders.go — go test ./...", "your test file", 1), "grounding"},
 		{"no closing line", strings.Replace(good, "say \"more\"", "bye", 1), "closing line"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := v2Checks(a, spec, []string{tc.resp}, nil, nil); !strings.Contains(got, tc.wantSub) {
+			if got, _ := v2Checks2(a, spec, []string{tc.resp}, nil, nil); !strings.Contains(got, tc.wantSub) {
 				t.Errorf("want failure containing %q, got %q", tc.wantSub, got)
+			}
+		})
+	}
+	// Fence discipline is the ADVISORY tier in Phase 2 (true rates too high
+	// to gate per-run; Phase 3 rate-gates them) — observed, never gating.
+	advCases := []struct{ name, resp, wantSub string }{
+		{"no fence", strings.Replace(good, "```", "", 2), "fence"},
+		{"ungrounded fence", strings.Replace(good, "orders.go — go test ./...", "your test file", 1), "grounding"},
+	}
+	for _, tc := range advCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gating, advisory := v2Checks(a, spec, []string{tc.resp}, nil, nil)
+			if gating != "" {
+				t.Errorf("discipline finding must not gate, got gating %q", gating)
+			}
+			if !strings.Contains(advisory, tc.wantSub) {
+				t.Errorf("want advisory containing %q, got %q", tc.wantSub, advisory)
 			}
 		})
 	}
@@ -118,25 +144,25 @@ func TestV2MoveAndPortability(t *testing.T) {
 	spec := v2Spec{Goals: []string{"migration"}, Move: "code-modernization", Surprise: "required", Fence: "portable"}
 	good := v2resp("mode=problem goal=migration move=code-modernization surprise=worktree-isolation",
 		"Diagnosis.\n**One thing you might not know exists:** worktrees.\n\n```\nMigrate <your COBOL sources> to Java module by module.\n```")
-	if got := v2Checks(c, spec, []string{good}, nil, nil); got != "" {
+	if got, _ := v2Checks2(c, spec, []string{good}, nil, nil); got != "" {
 		t.Fatalf("valid portable response must pass, got %q", got)
 	}
-	if got := v2Checks(c, spec, []string{strings.Replace(good, "move=code-modernization", "move=plan-mode", 1)}, nil, nil); !strings.Contains(got, "move identity") {
+	if got, _ := v2Checks2(c, spec, []string{strings.Replace(good, "move=code-modernization", "move=plan-mode", 1)}, nil, nil); !strings.Contains(got, "move identity") {
 		t.Errorf("wrong move must fail, got %q", got)
 	}
 	leaked := strings.Replace(good, "<your COBOL sources>", "server.go", 1)
-	if got := v2Checks(c, spec, []string{leaked}, nil, nil); !strings.Contains(got, "portability") {
-		t.Errorf("fixture import into portable fence must fail, got %q", got)
+	if got := adv(c, spec, []string{leaked}); !strings.Contains(got, "portability") {
+		t.Errorf("fixture import into portable fence must be an advisory finding, got %q", got)
 	}
 	flagged := strings.Replace(good, "<your COBOL sources>", "your sources (adjust: this repo's is server.go)", 1)
-	if got := v2Checks(c, spec, []string{flagged}, nil, nil); got != "" {
+	if got := adv(c, spec, []string{flagged}); got != "" {
 		t.Errorf("flagged-for-replacement reference must pass (maintainer ruling), got %q", got)
 	}
 	// forbidden move (C05-style)
 	c05 := evalCase{Group: "C", ID: "C05"}
 	neg := v2Spec{Move: "!plan-mode", Fence: ""}
 	bad := v2resp("mode=problem goal=debugging move=plan-mode surprise=hooks-as-workflow", "x")
-	if got := v2Checks(c05, neg, []string{bad}, nil, nil); !strings.Contains(got, "excluded") {
+	if got, _ := v2Checks2(c05, neg, []string{bad}, nil, nil); !strings.Contains(got, "excluded") {
 		t.Errorf("forbidden move must fail, got %q", got)
 	}
 }
@@ -146,27 +172,27 @@ func TestV2SetupScanAndC02(t *testing.T) {
 	setup := v2Spec{Fence: "setup", Surprise: "omitted-ok"}
 	good := v2resp("mode=problem goal=incident-response move=mcp-context surprise=omitted",
 		"Triage.\n\n```\nclaude mcp add --transport http obs <url> — then correlate the orders handlers.\n```")
-	if got := v2Checks(a09, setup, []string{good}, nil, nil); got != "" {
+	if got, _ := v2Checks2(a09, setup, []string{good}, nil, nil); got != "" {
 		t.Fatalf("valid setup fence must pass, got %q", got)
 	}
 	noCmd := strings.Replace(good, "claude mcp add --transport http obs <url>", "connect your telemetry", 1)
-	if got := v2Checks(a09, setup, []string{noCmd}, nil, nil); !strings.Contains(got, "setup command") {
-		t.Errorf("setup fence without the command must fail, got %q", got)
+	if got := adv(a09, setup, []string{noCmd}); !strings.Contains(got, "setup command") {
+		t.Errorf("setup fence without the command must be advisory, got %q", got)
 	}
 	noSurface := strings.Replace(good, " — then correlate the orders handlers", "", 1)
-	if got := v2Checks(a09, setup, []string{noSurface}, nil, nil); !strings.Contains(got, "surface") {
-		t.Errorf("setup fence without the surface must fail, got %q", got)
+	if got := adv(a09, setup, []string{noSurface}); !strings.Contains(got, "surface") {
+		t.Errorf("setup fence without the surface must be advisory, got %q", got)
 	}
 
 	a22 := evalCase{Group: "A", ID: "A22"}
 	scan := v2Spec{Fence: "scan", Surprise: "required"}
 	scanGood := v2resp("mode=problem goal=documentation move=custom-skills surprise=hooks-as-workflow",
 		"Diagnosis.\n**One thing you might not know exists:** hooks.\n\n```\nDocument GET /orders/total from server.go.\n```")
-	if got := v2Checks(a22, scan, []string{scanGood}, nil, nil); got != "" {
+	if got, _ := v2Checks2(a22, scan, []string{scanGood}, nil, nil); got != "" {
 		t.Fatalf("scan fence naming server.go must pass, got %q", got)
 	}
-	if got := v2Checks(a22, scan, []string{strings.ReplaceAll(scanGood, "server.go", "orders.go")}, nil, nil); !strings.Contains(got, "canary") {
-		t.Errorf("scan fence without server.go must fail, got %q", got)
+	if got := adv(a22, scan, []string{strings.ReplaceAll(scanGood, "server.go", "orders.go")}); !strings.Contains(got, "canary") {
+		t.Errorf("scan fence without server.go must be an advisory finding, got %q", got)
 	}
 
 	c02 := evalCase{Group: "C", ID: "C02"}
@@ -175,11 +201,11 @@ func TestV2SetupScanAndC02(t *testing.T) {
 		"D.\n**One thing you might not know exists:** checkpoints.\n\n```\nRefactor <your files>.\n```")
 	r2same := v2resp("mode=problem goal=refactoring move=plan-mode surprise=checkpoints-rewind",
 		"D.\n**One thing you might not know exists:** checkpoints.\n\n```\nRefactor <your files>.\n```")
-	if got := v2Checks(c02, pspec, []string{r1, r2same}, nil, nil); !strings.Contains(got, "never-repeat") {
+	if got, _ := v2Checks2(c02, pspec, []string{r1, r2same}, nil, nil); !strings.Contains(got, "never-repeat") {
 		t.Errorf("same surprise across C02 runs must fail, got %q", got)
 	}
 	r2diff := strings.Replace(r2same, "surprise=checkpoints-rewind", "surprise=autonomous-loops", 1)
-	if got := v2Checks(c02, pspec, []string{r1, r2diff}, nil, nil); got != "" {
+	if got, _ := v2Checks2(c02, pspec, []string{r1, r2diff}, nil, nil); got != "" {
 		t.Errorf("differing surprises must pass, got %q", got)
 	}
 }
@@ -192,22 +218,22 @@ func TestV2CalibrationFixes(t *testing.T) {
 	spec := v2Spec{Fence: "portable", Surprise: "required"}
 	twoFences := v2resp("mode=problem goal=migration move=code-modernization surprise=worktree-isolation",
 		"D.\n**One thing you might not know exists:** worktrees.\n\n```\n/plugin install code-modernization@claude-plugins-official\n```\n\n```\nMigrate <your COBOL> module by module.\n```")
-	if got := v2Checks(a19, spec, []string{twoFences}, nil, nil); got != "" {
+	if got, _ := v2Checks2(a19, spec, []string{twoFences}, []string{"code-modernization"}, []string{"code-modernization"}); got != "" {
 		t.Errorf("a setup-only fence beside the move fence must pass, got %q", got)
 	}
 	twoMoves := v2resp("mode=problem goal=migration move=code-modernization surprise=worktree-isolation",
 		"D.\n**One thing you might not know exists:** worktrees.\n\n```\nMigrate <your COBOL> plan A.\n```\n\n```\nMigrate <your COBOL> plan B.\n```")
-	if got := v2Checks(a19, spec, []string{twoMoves}, nil, nil); !strings.Contains(got, "fence") {
-		t.Errorf("two substantive fences must still fail, got %q", got)
+	if got := adv(a19, spec, []string{twoMoves}); !strings.Contains(got, "fence") {
+		t.Errorf("two substantive fences must still be flagged (advisory), got %q", got)
 	}
 
 	b06 := evalCase{Group: "B", ID: "B06"}
 	transfer := "offer\n\n<!-- mentor mode=growth opener=transfer taught=hooks-as-workflow -->"
-	if got := v2Checks(b06, v2Spec{}, []string{transfer}, nil, nil); got != "" {
+	if got, _ := v2Checks2(b06, v2Spec{}, []string{transfer}, nil, nil); got != "" {
 		t.Errorf("B06 transfer naming the adopted capability must pass, got %q", got)
 	}
 	emptyTeach := "offer\n\n<!-- mentor mode=growth opener=empty taught=hooks-as-workflow -->"
-	if got := v2Checks(b06, v2Spec{}, []string{emptyTeach}, nil, nil); !strings.Contains(got, "empty-map") {
+	if got, _ := v2Checks2(b06, v2Spec{}, []string{emptyTeach}, nil, nil); !strings.Contains(got, "empty-map") {
 		t.Errorf("B06 empty-map answer teaching something must fail, got %q", got)
 	}
 }
@@ -234,16 +260,16 @@ func TestV2PluginChecks(t *testing.T) {
 func TestV2GrowthOpeners(t *testing.T) {
 	b04 := evalCase{Group: "B", ID: "B04"}
 	good := "lesson\n\n<!-- mentor mode=growth opener=lesson taught=hooks-as-workflow -->"
-	if got := v2Checks(b04, v2Spec{}, []string{good}, nil, nil); got != "" {
+	if got, _ := v2Checks2(b04, v2Spec{}, []string{good}, nil, nil); got != "" {
 		t.Fatalf("valid B04 must pass, got %q", got)
 	}
 	wrongTaught := strings.Replace(good, "taught=hooks-as-workflow", "taught=project-memory", 1)
-	if got := v2Checks(b04, v2Spec{}, []string{wrongTaught}, nil, nil); !strings.Contains(got, "hooks-as-workflow") {
+	if got, _ := v2Checks2(b04, v2Spec{}, []string{wrongTaught}, nil, nil); !strings.Contains(got, "hooks-as-workflow") {
 		t.Errorf("B04 must teach the configured hook signal, got %q", got)
 	}
 	b06 := evalCase{Group: "B", ID: "B06"}
 	invented := "lesson\n\n<!-- mentor mode=growth opener=lesson taught=hooks-as-workflow -->"
-	if got := v2Checks(b06, v2Spec{}, []string{invented}, nil, nil); !strings.Contains(got, "opener") {
+	if got, _ := v2Checks2(b06, v2Spec{}, []string{invented}, nil, nil); !strings.Contains(got, "opener") {
 		t.Errorf("B06 must not invent a lesson, got %q", got)
 	}
 }

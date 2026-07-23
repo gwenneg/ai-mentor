@@ -623,11 +623,18 @@ func (r *runner) runCase(c evalCase) result {
 	if reason := runDetChecks(c.ID, joined, profile); reason != "" {
 		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile}
 	}
-	if reason := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted); reason != "" {
-		return result{c: c, verdict: vFail, reason: "structural: " + reason, response: joined, profile: profile}
+	gating, advisory := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted)
+	if gating != "" {
+		return result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile}
 	}
 	sources := r.catalogSources(taughtIDs(profile, seeded))
-	return r.judgeCase(c, responses, joined, profile, sources)
+	res := r.judgeCase(c, responses, joined, profile, sources)
+	if advisory != "" && res.verdict == vPass {
+		// Discipline-tier observation: visible in reports and records (the
+		// Phase 3 rate baseline), never verdict-affecting in Phase 2.
+		res.reason = strings.TrimSpace("advisory-structural: " + advisory + " | " + res.reason)
+	}
+	return res
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at

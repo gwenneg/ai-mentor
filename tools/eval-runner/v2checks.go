@@ -91,16 +91,20 @@ func trailerFields(trailer string) map[string]string {
 	return f
 }
 
-// v2Checks runs every structural check for one case. Empty return = pass.
+// v2Checks runs every structural check for one case. The first return is
+// GATING (identity/promise tier — measured ~99%+ compliant, a failure is a
+// real defect); the second is ADVISORY (the fence-discipline tier, whose
+// newly-measured true rates of 40-70% would red every gate if enforced
+// per-run — they record into results and rate-gate in Phase 3).
 // responses carries each subject run's raw text (C02 has two).
-func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []string) string {
+func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []string) (string, string) {
 	if c.Group == "D" {
-		return ""
+		return "", ""
 	}
 	last := responses[len(responses)-1]
 	fields := trailerFields(parseTrailer(last))
 	if len(fields) == 0 {
-		return "trailer: missing or unparseable — the response's self-report is the deterministic contract"
+		return "trailer: missing or unparseable — the response's self-report is the deterministic contract", ""
 	}
 
 	// mode
@@ -109,7 +113,7 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 		wantMode = "growth"
 	}
 	if got := fields["mode"]; got != wantMode {
-		return fmt.Sprintf("trailer mode: got %q, want %q", got, wantMode)
+		return fmt.Sprintf("trailer mode: got %q, want %q", got, wantMode), ""
 	}
 
 	// goal
@@ -122,7 +126,7 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 			}
 		}
 		if !ok {
-			return fmt.Sprintf("classification: trailer goal %q not in expected {%s}", fields["goal"], strings.Join(spec.Goals, ", "))
+			return fmt.Sprintf("classification: trailer goal %q not in expected {%s}", fields["goal"], strings.Join(spec.Goals, ", ")), ""
 		}
 	}
 
@@ -130,17 +134,17 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 	if spec.Move != "" {
 		if forbidden, isNeg := strings.CutPrefix(spec.Move, "!"); isNeg {
 			if fields["move"] == forbidden {
-				return fmt.Sprintf("move identity: %q is excluded for this case", forbidden)
+				return fmt.Sprintf("move identity: %q is excluded for this case", forbidden), ""
 			}
 		} else if fields["move"] != spec.Move {
-			return fmt.Sprintf("move identity: got %q, want %q", fields["move"], spec.Move)
+			return fmt.Sprintf("move identity: got %q, want %q", fields["move"], spec.Move), ""
 		}
 	}
 
 	// growth-mode opener/taught expectations
 	if c.Group == "B" {
 		if reason := b06StyleChecks(c.ID, fields); reason != "" {
-			return reason
+			return reason, ""
 		}
 	}
 
@@ -149,14 +153,14 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 	switch spec.Surprise {
 	case "required":
 		if marks != 1 {
-			return fmt.Sprintf("surprise: want exactly one labeled pick, found %d markers", marks)
+			return fmt.Sprintf("surprise: want exactly one labeled pick, found %d markers", marks), ""
 		}
 		if fields["surprise"] == "omitted" || fields["surprise"] == "" {
-			return "surprise: prose carries a pick but the trailer declares none"
+			return "surprise: prose carries a pick but the trailer declares none", ""
 		}
 	case "omitted-ok":
 		if marks > 1 {
-			return fmt.Sprintf("surprise: at most one labeled pick allowed, found %d", marks)
+			return fmt.Sprintf("surprise: at most one labeled pick allowed, found %d", marks), ""
 		}
 	}
 
@@ -165,14 +169,12 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 		s1 := trailerFields(parseTrailer(responses[0]))["surprise"]
 		s2 := fields["surprise"]
 		if s1 != "" && s1 == s2 {
-			return fmt.Sprintf("never-repeat: both runs picked the same surprise (%s)", s1)
+			return fmt.Sprintf("never-repeat: both runs picked the same surprise (%s)", s1), ""
 		}
 	}
 
-	// fence discipline
-	if reason := fenceChecks(spec.Fence, stripTrailer(last)); reason != "" {
-		return reason
-	}
+	// fence discipline: ADVISORY tier — recorded, rate-gated in Phase 3.
+	advisory := fenceChecks(spec.Fence, stripTrailer(last))
 
 	// closing line last (trailer exempt via stripTrailer); not for fence=none cases
 	if spec.Fence != "none" && spec.Fence != "" {
@@ -182,17 +184,17 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 			tail = body[len(body)-300:]
 		}
 		if !reClosing.MatchString(tail) {
-			return `closing line: the response must end with the single closing line (say "more" + calibration)`
+			return `closing line: the response must end with the single closing line (say "more" + calibration)`, ""
 		}
 	}
 
 	// plugin fabrication + directory-plugin labels, on every response
 	for _, resp := range responses {
 		if reason := pluginChecks(resp, plugins, promoted); reason != "" {
-			return reason
+			return reason, ""
 		}
 	}
-	return ""
+	return "", advisory
 }
 
 func b06StyleChecks(id string, fields map[string]string) string {
