@@ -933,8 +933,21 @@ func assistantText(out string) (string, error) {
 // judgeCase scores the case; joined is the runSeparator-joined response text
 // (computed once in runCase so det checks, records, and the report all see
 // the identical string by construction).
+// stripTrailer removes the mentor trailer from text handed to the judge:
+// Phase 1 trailers are observational — nothing may gate on them, including
+// a judge side-reading a trailer/prose mismatch (it did, A07, 2026-07-22).
+// Det checks and records keep the raw response; accuracy analysis is
+// offline until Phase 2 makes the trailer a first-class checked artifact.
+func stripTrailer(text string) string {
+	return strings.TrimSpace(reTrailer.ReplaceAllString(text, ""))
+}
+
 func (r *runner) judgeCase(c evalCase, responses []string, joined, profile string, sources []capSource) result {
 	res := result{c: c, response: joined, profile: profile}
+	stripped := make([]string, len(responses))
+	for i, resp := range responses {
+		stripped[i] = stripTrailer(resp)
+	}
 	home, err := os.MkdirTemp("", "judge-home-")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
@@ -957,7 +970,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, joined, profile strin
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, workdir, env,
-		"-p", r.judgePrompt(c, responses, profile, sources), "--model", r.judge, "--max-turns", "5")
+		"-p", r.judgePrompt(c, stripped, profile, sources), "--model", r.judge, "--max-turns", "5")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
