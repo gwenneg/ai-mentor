@@ -97,7 +97,7 @@ Score as precision/recall over the should-fire (D01-D03) and shouldn't-fire (D04
 | A02 | performance | - | required | either | - |
 | A03 | refactoring | - | required | portable | - |
 | A04 | migration | - | required | portable | - |
-| A05 | code-review | - | required | portable | - |
+| A05 | code-review | - | required | either | - |
 | A06 | code-understanding\|onboarding | - | required | grounded | - |
 | A07 | research\|dependency-management | - | required | either | - |
 | A08 | testing | - | required | grounded | - |
@@ -110,7 +110,7 @@ Score as precision/recall over the should-fire (D01-D03) and shouldn't-fire (D04
 | A15 | building-mcp-integrations | - | required | portable | - |
 | A16 | building-skills-plugins | - | required | grounded | - |
 | A17 | llm-features | - | required | portable | - |
-| A18 | none | session-context-management | required | grounded | - |
+| A18 | none | session-context-management | omitted-ok | grounded | - |
 | A19 | migration | code-modernization | required | portable | - |
 | A20 | migration | ui5-typescript-conversion | required | portable | - |
 | A21 | testing | built-in-review-skills | required | grounded | - |

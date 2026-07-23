@@ -217,22 +217,45 @@ func b06StyleChecks(id string, fields map[string]string) string {
 	if id == "B04" && fields["taught"] != "hooks-as-workflow" {
 		return fmt.Sprintf("growth lesson: got taught=%q, want hooks-as-workflow (the repo's own configured signal)", fields["taught"])
 	}
-	if id == "B06" && fields["taught"] != "none" && fields["taught"] != "" {
-		return fmt.Sprintf("growth lesson: saturated profile must teach nothing new, got taught=%q", fields["taught"])
+	// A transfer opener legitimately carries the transferred (already
+	// adopted) capability in taught= — only the empty-map answer must
+	// teach nothing. (The trailer proved more honest than this check's
+	// first version, 2026-07-24.)
+	if id == "B06" && fields["opener"] == "empty" && fields["taught"] != "none" && fields["taught"] != "" {
+		return fmt.Sprintf("growth lesson: the empty-map answer must teach nothing new, got taught=%q", fields["taught"])
 	}
 	return ""
 }
 
+// reSetupOnly matches a fence that is purely a setup line — the product
+// tolerates these as separate blocks in practice; the one-fence rule's
+// intent is one MOVE prompt, not zero setup visibility.
+var reSetupOnly = regexp.MustCompile(`(?s)^\s*(/plugin install \S+|claude mcp add[^\n]*|claude --\S+)\s*$`)
+
 func fenceChecks(mode, body string) string {
-	fences := reFence.FindAllStringSubmatch(body, -1)
+	all := reFence.FindAllStringSubmatch(body, -1)
 	switch mode {
 	case "", "none":
 		return ""
 	}
-	if len(fences) != 1 {
-		return fmt.Sprintf("fence: want exactly one fenced block, found %d", len(fences))
+	var candidates []string
+	if mode == "setup" {
+		// In a setup-shaped move the setup command IS the substantive
+		// fence — no filtering, exactly one block expected.
+		for _, m := range all {
+			candidates = append(candidates, m[1])
+		}
+	} else {
+		for _, m := range all {
+			if !reSetupOnly.MatchString(m[1]) {
+				candidates = append(candidates, m[1])
+			}
+		}
 	}
-	fence := fences[0][1]
+	if len(candidates) != 1 {
+		return fmt.Sprintf("fence: want exactly one substantive fenced block (setup-only blocks aside), found %d of %d total", len(candidates), len(all))
+	}
+	fence := candidates[0]
 	hasFixtureToken := func(s string) (string, bool) {
 		for _, t := range fixtureOnlyTokens {
 			if strings.Contains(s, t) {

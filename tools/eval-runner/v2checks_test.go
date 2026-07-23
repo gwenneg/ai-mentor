@@ -184,6 +184,34 @@ func TestV2SetupScanAndC02(t *testing.T) {
 	}
 }
 
+// Calibration fixes from the first full-suite validation (2026-07-24):
+// setup-only fences beside the move fence are tolerated style, and a
+// B06 transfer legitimately names the transferred capability.
+func TestV2CalibrationFixes(t *testing.T) {
+	a19 := evalCase{Group: "A", ID: "A19"}
+	spec := v2Spec{Fence: "portable", Surprise: "required"}
+	twoFences := v2resp("mode=problem goal=migration move=code-modernization surprise=worktree-isolation",
+		"D.\n**One thing you might not know exists:** worktrees.\n\n```\n/plugin install code-modernization@claude-plugins-official\n```\n\n```\nMigrate <your COBOL> module by module.\n```")
+	if got := v2Checks(a19, spec, []string{twoFences}, nil, nil); got != "" {
+		t.Errorf("a setup-only fence beside the move fence must pass, got %q", got)
+	}
+	twoMoves := v2resp("mode=problem goal=migration move=code-modernization surprise=worktree-isolation",
+		"D.\n**One thing you might not know exists:** worktrees.\n\n```\nMigrate <your COBOL> plan A.\n```\n\n```\nMigrate <your COBOL> plan B.\n```")
+	if got := v2Checks(a19, spec, []string{twoMoves}, nil, nil); !strings.Contains(got, "fence") {
+		t.Errorf("two substantive fences must still fail, got %q", got)
+	}
+
+	b06 := evalCase{Group: "B", ID: "B06"}
+	transfer := "offer\n\n<!-- mentor mode=growth opener=transfer taught=hooks-as-workflow -->"
+	if got := v2Checks(b06, v2Spec{}, []string{transfer}, nil, nil); got != "" {
+		t.Errorf("B06 transfer naming the adopted capability must pass, got %q", got)
+	}
+	emptyTeach := "offer\n\n<!-- mentor mode=growth opener=empty taught=hooks-as-workflow -->"
+	if got := v2Checks(b06, v2Spec{}, []string{emptyTeach}, nil, nil); !strings.Contains(got, "empty-map") {
+		t.Errorf("B06 empty-map answer teaching something must fail, got %q", got)
+	}
+}
+
 func TestV2PluginChecks(t *testing.T) {
 	plugins := []string{"prisma", "code-modernization"}
 	promoted := []string{"code-modernization"}
