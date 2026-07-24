@@ -89,7 +89,7 @@ Score as precision/recall over the should-fire (D01-D03) and shouldn't-fire (D04
 
 ## Machine expectations (V2 — deterministic layer)
 
-*One row per headless case; parsed by the runner and enforced in code. `goal`/`move` compare against the response trailer (alternatives `|`-separated, `-` = unconstrained). `surprise`: `required`, `omitted-ok`, or `-`. `fence`: `grounded` (≥1 fixture path in the fenced block), `portable` (zero unflagged fixture paths), `either`, `setup` (concrete setup command + named surface, no repo path needed), `scan` (grounded AND names `server.go` — the scan canary), `none` (no fence expected). `judge`: cases whose substance stays LLM-judged (fabrication/ledger/invented-lesson semantics); their structural columns still apply where not `-`.*
+*One row per headless case; parsed by the runner and enforced in code. `goal`/`move` compare against the response trailer (alternatives `|`-separated, `-` = unconstrained; `!id` = forbidden as move; `~id` = must be SURFACED anywhere in the response — trailer move or prose mention — rather than required as the move). `surprise`: `required`, `omitted-ok`, or `-`. `fence`: `grounded` (≥1 fixture path in the fenced block), `portable` (zero unflagged fixture paths), `either`, `setup` (concrete setup command + named surface, no repo path needed), `scan` (grounded AND names `server.go` — the scan canary), `none` (no fence expected). `judge`: cases whose substance stays LLM-judged (fabrication/ledger/invented-lesson semantics); their structural columns still apply where not `-`.*
 
 | ID | goal | move | surprise | fence | judge |
 |----|------|------|----------|-------|-------|
@@ -112,7 +112,7 @@ Score as precision/recall over the should-fire (D01-D03) and shouldn't-fire (D04
 | A17 | llm-features | - | required | portable | - |
 | A18 | none | session-context-management | omitted-ok | grounded | - |
 | A19 | migration | code-modernization | required | portable | - |
-| A20 | migration | ui5-typescript-conversion | required | portable | - |
+| A20 | migration | ~ui5-typescript-conversion | required | portable | - |
 | A21 | testing | built-in-review-skills | required | grounded | - |
 | A22 | documentation | - | required | scan | - |
 | A23 | greenfield | - | required | grounded | - |

@@ -136,6 +136,19 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 			if fields["move"] == forbidden {
 				return fmt.Sprintf("move identity: %q is excluded for this case", forbidden), ""
 			}
+		} else if surfaced, isSurf := strings.CutPrefix(spec.Move, "~"); isSurf {
+			// ~id: the capability must be SURFACED — as the move or named
+			// anywhere in the response — not necessarily chosen as the move
+			// (A20's stack-match rule is a surfacing requirement).
+			found := fields["move"] == surfaced
+			for _, resp := range responses {
+				if strings.Contains(resp, surfaced) {
+					found = true
+				}
+			}
+			if !found {
+				return fmt.Sprintf("stack-match: %q must be surfaced somewhere in the response", surfaced), ""
+			}
 		} else if fields["move"] != spec.Move {
 			return fmt.Sprintf("move identity: got %q, want %q", fields["move"], spec.Move), ""
 		}

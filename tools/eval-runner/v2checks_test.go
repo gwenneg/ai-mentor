@@ -238,6 +238,22 @@ func TestV2CalibrationFixes(t *testing.T) {
 	}
 }
 
+// ~id = surfaced-anywhere (A20's stack-match), not move-identity.
+func TestV2SurfacedRequirement(t *testing.T) {
+	a20 := evalCase{Group: "A", ID: "A20"}
+	spec := v2Spec{Move: "~ui5-typescript-conversion", Surprise: "required", Fence: "portable"}
+	asMention := v2resp("mode=problem goal=migration move=plan-mode surprise=worktree-isolation",
+		"D. Also install ui5-typescript-conversion (not hands-on evaluated).\n**One thing you might not know exists:** worktrees.\n\n```\nConvert <your app>.\n```")
+	if got, _ := v2Checks2(a20, spec, []string{asMention}, nil, nil); got != "" {
+		t.Errorf("surfaced-in-prose must satisfy ~, got %q", got)
+	}
+	absent := v2resp("mode=problem goal=migration move=plan-mode surprise=worktree-isolation",
+		"D.\n**One thing you might not know exists:** worktrees.\n\n```\nConvert <your app>.\n```")
+	if got, _ := v2Checks2(a20, spec, []string{absent}, nil, nil); !strings.Contains(got, "stack-match") {
+		t.Errorf("unsurfaced ~capability must fail, got %q", got)
+	}
+}
+
 func TestV2PluginChecks(t *testing.T) {
 	plugins := []string{"prisma", "code-modernization"}
 	promoted := []string{"code-modernization"}
