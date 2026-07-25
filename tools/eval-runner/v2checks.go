@@ -201,10 +201,17 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 		}
 	}
 
-	// plugin fabrication + directory-plugin labels, on every response
+	// plugin fabrication (promise tier, 100% measured compliance) gates;
+	// directory-plugin label wording (measured ~75-85% compliance across
+	// smoke rounds 1-3, post two wording fixes) is discipline: advisory,
+	// rate-tracked, per the promises-vs-preferences ruling.
 	for _, resp := range responses {
-		if reason := pluginChecks(resp, plugins, promoted); reason != "" {
-			return reason, ""
+		fab, label := pluginChecks(resp, plugins, promoted)
+		if fab != "" {
+			return fab, ""
+		}
+		if label != "" && advisory == "" {
+			advisory = label
 		}
 	}
 	return "", advisory
@@ -311,7 +318,9 @@ func fenceChecks(mode, body string) string {
 	return ""
 }
 
-func pluginChecks(resp string, plugins, promoted []string) string {
+// pluginChecks returns (fabrication, label) findings — the first gates,
+// the second is advisory discipline.
+func pluginChecks(resp string, plugins, promoted []string) (string, string) {
 	known := map[string]bool{}
 	for _, p := range plugins {
 		known[p] = true
@@ -323,7 +332,7 @@ func pluginChecks(resp string, plugins, promoted []string) string {
 	for _, m := range rePluginLine.FindAllStringSubmatch(resp, -1) {
 		name := m[1]
 		if !known[name] {
-			return fmt.Sprintf("plugin fabrication: %q is not in the marketplace whitelist", name)
+			return fmt.Sprintf("plugin fabrication: %q is not in the marketplace whitelist", name), ""
 		}
 		if isPromoted[name] {
 			continue
@@ -333,8 +342,8 @@ func pluginChecks(resp string, plugins, promoted []string) string {
 		idx := strings.Index(resp, name)
 		lo, hi := max(0, idx-250), min(len(resp), idx+len(name)+250)
 		if !strings.Contains(strings.ToLower(resp[lo:hi]), "not hands-on evaluated") {
-			return fmt.Sprintf("tier label: directory plugin %q recommended without the literal \"not hands-on evaluated\" label nearby", name)
+			return "", fmt.Sprintf("tier label: directory plugin %q recommended without the literal \"not hands-on evaluated\" label nearby", name)
 		}
 	}
-	return ""
+	return "", ""
 }

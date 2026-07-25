@@ -257,19 +257,26 @@ func TestV2SurfacedRequirement(t *testing.T) {
 func TestV2PluginChecks(t *testing.T) {
 	plugins := []string{"prisma", "code-modernization"}
 	promoted := []string{"code-modernization"}
-	if got := pluginChecks("install with /plugin install ghost-plugin@claude-plugins-official", plugins, promoted); !strings.Contains(got, "fabrication") {
-		t.Errorf("unknown plugin must fail, got %q", got)
+	fab, _ := pluginChecks("install with /plugin install ghost-plugin@claude-plugins-official", plugins, promoted)
+	if !strings.Contains(fab, "fabrication") {
+		t.Errorf("unknown plugin must gate, got %q", fab)
 	}
-	unlabeled := "use /plugin install prisma@claude-plugins-official for Postgres."
-	if got := pluginChecks(unlabeled, plugins, promoted); !strings.Contains(got, "tier label") {
-		t.Errorf("unlabeled directory plugin must fail, got %q", got)
+	// Label wording is ADVISORY (measured ~75-85% product compliance;
+	// promises-vs-preferences ruling) — fabrication side must stay clean.
+	fab, label := pluginChecks("use /plugin install prisma@claude-plugins-official for Postgres.", plugins, promoted)
+	if fab != "" {
+		t.Errorf("label slip must not gate, got fabrication %q", fab)
 	}
-	labeled := "prisma (☑️ desk-checked, not hands-on evaluated): /plugin install prisma@claude-plugins-official"
-	if got := pluginChecks(labeled, plugins, promoted); got != "" {
-		t.Errorf("labeled directory plugin must pass, got %q", got)
+	if !strings.Contains(label, "tier label") {
+		t.Errorf("unlabeled directory plugin must be an advisory finding, got %q", label)
 	}
-	if got := pluginChecks("/plugin install code-modernization@claude-plugins-official now", plugins, promoted); got != "" {
-		t.Errorf("promoted plugin needs no label, got %q", got)
+	fab, label = pluginChecks("prisma (☑️ desk-checked, not hands-on evaluated): /plugin install prisma@claude-plugins-official", plugins, promoted)
+	if fab != "" || label != "" {
+		t.Errorf("labeled directory plugin must be clean, got %q / %q", fab, label)
+	}
+	fab, label = pluginChecks("/plugin install code-modernization@claude-plugins-official now", plugins, promoted)
+	if fab != "" || label != "" {
+		t.Errorf("promoted plugin needs no label, got %q / %q", fab, label)
 	}
 }
 
