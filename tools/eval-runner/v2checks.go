@@ -22,6 +22,10 @@ type v2Spec struct {
 // escaped-pipe placeholder: goal cells hold alternatives like a\|b.
 const pipePlaceholder = "\x00PIPE\x00"
 
+// trailerMissing is v2Checks' fallback sentinel: grade this epoch with the
+// full judge prompt instead of the deterministic layer.
+const trailerMissing = "__TRAILER_MISSING__"
+
 // parseV2Specs reads the machine-expectations table. Loud on drift: the
 // caller must verify one row per headless case and no unknown IDs.
 func parseV2Specs(text string) (map[string]v2Spec, error) {
@@ -104,7 +108,10 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 	last := responses[len(responses)-1]
 	fields := trailerFields(parseTrailer(last))
 	if len(fields) == 0 {
-		return "trailer: missing or unparseable — the response's self-report is the deterministic contract", ""
+		// No self-report, no deterministic contract: signal the caller to
+		// fall back to full judge scoring for this epoch (option 1,
+		// 2026-07-25) — the instrument's gap must never fail the product.
+		return trailerMissing, ""
 	}
 
 	// mode

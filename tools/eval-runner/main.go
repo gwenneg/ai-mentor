@@ -624,6 +624,17 @@ func (r *runner) runCase(c evalCase) result {
 		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile}
 	}
 	gating, advisory := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted)
+	if gating == trailerMissing {
+		// Option 1 (2026-07-25): no trailer, no deterministic contract —
+		// this epoch falls back to full judge scoring, and the emission
+		// miss is recorded as an advisory finding for Phase 3's rates.
+		sources := r.catalogSources(taughtIDs(profile, seeded))
+		res := r.judgeFull(c, responses, joined, profile, sources)
+		if res.verdict == vPass {
+			res.reason = strings.TrimSpace("advisory-structural: trailer missing (judge-fallback epoch) | " + res.reason)
+		}
+		return res
+	}
 	if gating != "" {
 		return result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile}
 	}
@@ -953,7 +964,17 @@ func stripTrailer(text string) string {
 	return strings.TrimSpace(reTrailer.ReplaceAllString(text, ""))
 }
 
+// judgeFull scores with the full ground-truth prompt regardless of the
+// case's short-form eligibility — the trailer-missing fallback path.
+func (r *runner) judgeFull(c evalCase, responses []string, joined, profile string, sources []capSource) result {
+	return r.judgeCaseInner(c, responses, joined, profile, sources, true)
+}
+
 func (r *runner) judgeCase(c evalCase, responses []string, joined, profile string, sources []capSource) result {
+	return r.judgeCaseInner(c, responses, joined, profile, sources, false)
+}
+
+func (r *runner) judgeCaseInner(c evalCase, responses []string, joined, profile string, sources []capSource, forceFull bool) result {
 	res := result{c: c, response: joined, profile: profile}
 	stripped := make([]string, len(responses))
 	for i, resp := range responses {
@@ -981,7 +1002,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, joined, profile strin
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, workdir, env,
-		"-p", r.judgePrompt(c, stripped, profile, sources), "--model", r.judge, "--max-turns", "5")
+		"-p", r.judgePromptMode(c, stripped, profile, sources, forceFull), "--model", r.judge, "--max-turns", "5")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
@@ -1026,7 +1047,11 @@ func (r *runner) consistencyPrompt(c evalCase, responses []string, profile strin
 // structure, grounding, labels, and profile state are all verified in
 // code before the judge is ever called.
 func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sources []capSource) string {
-	if !r.specs[c.ID].Judge {
+	return r.judgePromptMode(c, responses, profile, sources, false)
+}
+
+func (r *runner) judgePromptMode(c evalCase, responses []string, profile string, sources []capSource, forceFull bool) string {
+	if !forceFull && !r.specs[c.ID].Judge {
 		return r.consistencyPrompt(c, responses, profile)
 	}
 	var b strings.Builder

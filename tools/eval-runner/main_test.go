@@ -350,6 +350,28 @@ func TestRunCaseStubbed(t *testing.T) {
 	}
 }
 
+// Option 1 (2026-07-25): a missing trailer never fails the product — the
+// epoch falls back to the FULL judge prompt and records the miss.
+func TestRunCaseTrailerFallback(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "test-key")
+	r := newTestRunner(t)
+	calls := stubClaude(t, `{"result": "a decline with no trailer"}`, `{"pass": true, "checks": []}`)
+	res := r.runCase(evalCase{Group: "A", ID: "A13", Statement: "poem", Expected: "(out of scope)"})
+	if res.verdict != vPass {
+		t.Fatalf("fallback epoch should pass via judge, got %s (%s)", res.verdict, res.reason)
+	}
+	if !strings.Contains(res.reason, "trailer missing (judge-fallback epoch)") {
+		t.Errorf("fallback must be recorded as advisory, got %q", res.reason)
+	}
+	jp := argAfter((*calls)[1], "-p")
+	if strings.Contains(jp, "ONE gating question") {
+		t.Error("fallback epoch must use the FULL judge prompt, not the short form")
+	}
+	if !strings.Contains(jp, "COMPLETE list") {
+		t.Error("full prompt must carry the fabrication ground truth")
+	}
+}
+
 func TestRunCaseGroupAIncludesShape(t *testing.T) {
 	t.Setenv("ANTHROPIC_API_KEY", "test-key")
 	r := newTestRunner(t)

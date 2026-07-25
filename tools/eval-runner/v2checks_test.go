@@ -106,7 +106,7 @@ func TestV2ChecksFailPaths(t *testing.T) {
 		t.Fatalf("valid response must pass, got %q", got)
 	}
 	cases := []struct{ name, resp, wantSub string }{
-		{"missing trailer", good[:strings.Index(good, "<!--")], "trailer"},
+		{"missing trailer", good[:strings.Index(good, "<!--")], trailerMissing},
 		{"wrong mode", strings.Replace(good, "mode=problem", "mode=growth", 1), "mode"},
 		{"wrong goal", strings.Replace(good, "goal=debugging", "goal=testing", 1), "classification"},
 		{"no surprise marker", strings.Replace(good, "One thing you might not know exists", "note", 1), "surprise"},
