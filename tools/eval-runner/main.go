@@ -577,6 +577,7 @@ type runner struct {
 	statements    map[string]string // Group A ID -> problem statement
 	approaches    []string          // approach basenames, for the B06 fixture
 	ground        groundTruth       // capability + fixture facts inlined into judge prompts
+	specs         map[string]v2Spec // machine expectations — the V2 deterministic contract
 	today         string            // YYYY-MM-DD
 }
 
@@ -622,8 +623,29 @@ func (r *runner) runCase(c evalCase) result {
 	if reason := runDetChecks(c.ID, joined, profile); reason != "" {
 		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile}
 	}
+	gating, advisory := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted)
+	if gating == trailerMissing {
+		// Option 1 (2026-07-25): no trailer, no deterministic contract —
+		// this epoch falls back to full judge scoring, and the emission
+		// miss is recorded as an advisory finding for Phase 3's rates.
+		sources := r.catalogSources(taughtIDs(profile, seeded))
+		res := r.judgeFull(c, responses, joined, profile, sources)
+		if res.verdict == vPass {
+			res.reason = strings.TrimSpace("advisory-structural: trailer missing (judge-fallback epoch) | " + res.reason)
+		}
+		return res
+	}
+	if gating != "" {
+		return result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile}
+	}
 	sources := r.catalogSources(taughtIDs(profile, seeded))
-	return r.judgeCase(c, responses, joined, profile, sources)
+	res := r.judgeCase(c, responses, joined, profile, sources)
+	if advisory != "" && res.verdict == vPass {
+		// Discipline-tier observation: visible in reports and records (the
+		// Phase 3 rate baseline), never verdict-affecting in Phase 2.
+		res.reason = strings.TrimSpace("advisory-structural: " + advisory + " | " + res.reason)
+	}
+	return res
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
@@ -942,7 +964,17 @@ func stripTrailer(text string) string {
 	return strings.TrimSpace(reTrailer.ReplaceAllString(text, ""))
 }
 
+// judgeFull scores with the full ground-truth prompt regardless of the
+// case's short-form eligibility — the trailer-missing fallback path.
+func (r *runner) judgeFull(c evalCase, responses []string, joined, profile string, sources []capSource) result {
+	return r.judgeCaseInner(c, responses, joined, profile, sources, true)
+}
+
 func (r *runner) judgeCase(c evalCase, responses []string, joined, profile string, sources []capSource) result {
+	return r.judgeCaseInner(c, responses, joined, profile, sources, false)
+}
+
+func (r *runner) judgeCaseInner(c evalCase, responses []string, joined, profile string, sources []capSource, forceFull bool) result {
 	res := result{c: c, response: joined, profile: profile}
 	stripped := make([]string, len(responses))
 	for i, resp := range responses {
@@ -970,7 +1002,7 @@ func (r *runner) judgeCase(c evalCase, responses []string, joined, profile strin
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, workdir, env,
-		"-p", r.judgePrompt(c, stripped, profile, sources), "--model", r.judge, "--max-turns", "5")
+		"-p", r.judgePromptMode(c, stripped, profile, sources, forceFull), "--model", r.judge, "--max-turns", "5")
 	if err != nil {
 		res.verdict, res.reason = vError, err.Error()
 		return res
@@ -989,11 +1021,39 @@ func (r *runner) judgeCase(c evalCase, responses []string, joined, profile strin
 	return res
 }
 
-// judgePrompt builds the strict scoring prompt: the case expectation, the
-// response(s), the after-run profile, the catalog sources behind the taught
-// capabilities, and (for Group A) the output-shape expectations from
-// cases.md verbatim.
+// consistencyPrompt is the V2 short form: one gating question.
+func (r *runner) consistencyPrompt(c evalCase, responses []string, profile string) string {
+	var b strings.Builder
+	b.WriteString("You are grading one response from the 'mentor' skill. The deterministic layer has ALREADY verified classification, structure, grounding, labels, and profile state in code — none of that is your job, and none of it may affect your verdict.\n\n")
+	fmt.Fprintf(&b, "Case %s (Group %s). Statement / setup: %s\nExpected behavior (context only, verified elsewhere): %s\n", c.ID, c.Group, c.Statement, c.Expected)
+	trailer := parseTrailer(strings.Join(responses, "\n"))
+	fmt.Fprintf(&b, "\nThe response declared about itself: %s\n", trailer)
+	for i, resp := range responses {
+		fmt.Fprintf(&b, "\nResponse %d (metadata removed): <<<\n%s\n>>>\n", i+1, stripTrailer(resp))
+	}
+	if profile != "" {
+		fmt.Fprintf(&b, "\nAfter-run profile: <<<\n%s\n>>>\n", profile)
+	}
+	b.WriteString("\nYour ONE gating question: does the response's substance contradict its own declaration? (Declared move never actually taught, declared goal plainly not what the content addresses, declared surprise not the labeled pick.) Minor wording differences are not contradictions.\n")
+	b.WriteString("Reply with STRICT JSON only: {\"pass\": bool, \"checks\": [{\"name\": string, \"pass\": bool, \"reason\": string}]}. pass=false ONLY for a real contradiction, in a check named 'consistency'. Anything else you notice — quality, tone, rule deviations — goes in checks entries with pass=true and the observation in reason (advisory; it never affects pass).\n")
+	return b.String()
+}
+
+// judgePrompt builds the scoring prompt. V2 two-path design: cases whose
+// substance stays LLM-judged (the machine-expectations table's `judge`
+// column — fabrication/ledger/invented-lesson semantics) keep the full
+// ground-truth prompt below; every other case gets the SHORT form, whose
+// only gating question is trailer/prose consistency — classification,
+// structure, grounding, labels, and profile state are all verified in
+// code before the judge is ever called.
 func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sources []capSource) string {
+	return r.judgePromptMode(c, responses, profile, sources, false)
+}
+
+func (r *runner) judgePromptMode(c evalCase, responses []string, profile string, sources []capSource, forceFull bool) string {
+	if !forceFull && !r.specs[c.ID].Judge {
+		return r.consistencyPrompt(c, responses, profile)
+	}
 	var b strings.Builder
 	b.WriteString("You are a strict evaluator for the ai-mentor Claude Code skill. Do not use any tools — judge only the material in this prompt and reply immediately. ")
 	b.WriteString("You cannot see the run's tool calls: never infer from the text whether checks actually ran, and a missing profile file does not mean reads were skipped. ")
@@ -1037,10 +1097,6 @@ func (r *runner) judgePrompt(c evalCase, responses []string, profile string, sou
 	if len(r.ground.fixture) > 0 {
 		files := r.ground.fixture
 		text := r.ground.fixtureText
-		if c.ID == "B04" {
-			files = append(slices.Clone(files), ".claude/settings.json")
-			text += frameFile(".claude/settings.json (written for this case)", b04Hooks)
-		}
 		// Bulleted like the promoted list: judges misscan comma runs.
 		b.WriteString("Fixture repo files (the only real paths in the fixture repo):\n")
 		for _, f := range files {
@@ -1511,6 +1567,36 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
+	specs, err := parseV2Specs(string(text))
+	if err != nil {
+		fatal(err)
+	}
+	// Two-way drift guard: every headless case has a machine-expectations
+	// row and every row names a real case — the V2 contract can never
+	// silently drop a case's scrutiny or grade a ghost.
+	for g, cs := range all {
+		if g == "D" {
+			continue
+		}
+		for _, c := range cs {
+			if _, ok := specs[c.ID]; !ok {
+				fatal(fmt.Errorf("case %s has no machine-expectations row — add one before it can run", c.ID))
+			}
+		}
+	}
+	for id := range specs {
+		found := false
+		for _, cs := range all {
+			for _, c := range cs {
+				if c.ID == id {
+					found = true
+				}
+			}
+		}
+		if !found {
+			fatal(fmt.Errorf("machine-expectations row %s names no case in the suite", id))
+		}
+	}
 	selected, err := selectCases(all, splitList(*groups), idList)
 	if err != nil {
 		fatal(err)
@@ -1559,6 +1645,7 @@ func main() {
 		statements:   statementsByID(all["A"]),
 		approaches:   approaches,
 		ground:       ground,
+		specs:        specs,
 		today:        time.Now().Format("2006-01-02"),
 	}
 	if err := preflight(r); err != nil {
