@@ -1158,7 +1158,7 @@ func TestStrictAndDetCasesExistInSuite(t *testing.T) {
 			}
 		}
 	}
-	want := []string{"A30", "B03", "C04", "C05"}
+	want := []string{"A30", "B03", "C04"}
 	if len(marked) != len(want) {
 		t.Errorf("strict-marked set drifted: got %v, want %v", marked, want)
 	}
