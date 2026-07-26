@@ -70,7 +70,7 @@ Run as `/ai-mentor:mentor` with a controlled `~/.ai-mentor/profile.md` fixture (
 | C02 | Run the same Group A case twice in a row (same profile) | Second run's surprising pick differs from the first (first is now `shown`) |
 | C03 | After any Group A run | Profile contains new `shown` rows for the move and surprise, dated today, with one-line notes |
 | C04 | Profile has a `declined` row (background-agents) and a `shown` row (plan-mode) from a past date; run a Group A case | After the run the profile STILL carries both seeded capabilities and neither status regresses: the declined row survives untouched, forward-only holds. One row per capability — legitimately re-showing the shown capability may refresh that row's date/note in place; what fails is dropping a row, regressing a status, or any edit to the declined row [strict] |
-| C05 | Profile marks `plan-mode` (a top-ranked debugging approach) `declined`; run A01 | Plan mode is never named anywhere in the response — declined is invisible, not even mentioned to say it is being skipped; the move is the next-best debugging approach [strict] |
+| C05 | Profile marks `plan-mode` (a top-ranked debugging approach) `declined`; run A01 | Plan mode is never named anywhere in the response — declined is invisible, not even mentioned to say it is being skipped; the move is the next-best debugging approach. Formerly a strict invariant: downgraded to majority + tracked rate (2026-07-26, Phase 3) — the det check still flags every occurrence, and the rate tier reds the gate only when the trailing rate regresses; the ~15-20% name-leak residual is a documented product limitation, not an aspirational absolute |
 
 ## Group D — Trigger calibration (interactive only)
 

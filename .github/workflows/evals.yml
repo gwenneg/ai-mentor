@@ -62,6 +62,9 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  # Rate tier (Phase 3): the gate run downloads past runs' eval-records
+  # artifacts to build trailing per-case failure baselines.
+  actions: read
 
 jobs:
   evals:
@@ -81,6 +84,28 @@ jobs:
 
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
+
+      # Rate-tier history: the last release-gate runs' records, downloaded
+      # read-only (loop-proof, unlike committing history back to the repo).
+      # Fewer than 3 available = the runner declares the tier inactive and
+      # gate semantics are unchanged — degradation is loud, never silent.
+      - name: Download rate history (release gate only)
+        if: github.head_ref == 'release/next'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p rate-history
+          n=0
+          for RID in $(gh run list -R "$GITHUB_REPOSITORY" --workflow=evals.yml --branch release/next --status completed --limit 12 --json databaseId --jq '.[].databaseId'); do
+            [ "$n" -ge 5 ] && break
+            if gh run download "$RID" -R "$GITHUB_REPOSITORY" --name eval-records --dir "rate-history/tmp-$RID" 2>/dev/null; then
+              mv "rate-history/tmp-$RID/eval-records.jsonl" "rate-history/run-$RID.jsonl"
+              rm -rf "rate-history/tmp-$RID"
+              n=$((n+1))
+            fi
+          done
+          echo "rate history: $n past runs" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run eval suite
         env:
@@ -106,6 +131,7 @@ jobs:
         run: |
           if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
           ARGS="-j $JOBS -out $GITHUB_WORKSPACE/eval-report.md -records $GITHUB_WORKSPACE/eval-records.jsonl"
+          if [ -d rate-history ]; then ARGS="$ARGS -history $GITHUB_WORKSPACE/rate-history"; fi
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$HEAD_REF" != "release/next" ]; then
             # Targeted PR run: the body's "Evals:" line names the cases this
             # change must pass. Always gated and pass^k — a fix PR's target
@@ -144,7 +170,9 @@ jobs:
         with:
           name: eval-records
           path: eval-records.jsonl
-          retention-days: 14
+          # 90 days: these artifacts are the rate tier's trailing baseline —
+          # 14-day retention left too few runs to form one at release cadence.
+          retention-days: 90
           # warn, not ignore: -records is always passed above, so a missing
           # file is always a failure — ignore would hide it on a green run.
           if-no-files-found: warn
