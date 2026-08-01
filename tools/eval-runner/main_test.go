@@ -199,7 +199,7 @@ func TestRenderReport(t *testing.T) {
 			reason: "classification: routed to testing\nsecond | line", response: longResponse},
 		{c: evalCase{Group: "B", ID: "B01"}, verdict: vError, reason: "judge reply not parseable"},
 	}
-	report := renderReport(results)
+	report := renderReport(results, results)
 	for _, want := range []string{
 		"Group A — problem mode: 1 pass / 1 fail / 0 error",
 		"Group B — growth mode: 0 pass / 0 fail / 1 error",
@@ -219,6 +219,27 @@ func TestRenderReport(t *testing.T) {
 	}
 	if got := strings.Count(report, "line\n"); got > maxRawLines+5 {
 		t.Errorf("raw failure not truncated: %d response lines in report", got)
+	}
+}
+
+// The trailer stat must count per-epoch responses: foldEpochs leaves the
+// aggregated response empty on an all-pass case, so counting the folded
+// slice reads 0/N on every multi-epoch run however faithfully the model
+// emitted trailers.
+func TestRenderReportTrailerStatUsesPerEpochResults(t *testing.T) {
+	c := evalCase{Group: "A", ID: "A01"}
+	trailer := "answer text\n\n<!-- mentor mode=problem goal=debugging move=plan-mode surprise=hooks-as-workflow -->"
+	perEpoch := []result{
+		{c: c, verdict: vPass, response: trailer},
+		{c: c, verdict: vPass, response: trailer},
+	}
+	folded := aggregateEpochs(slices.Clone(perEpoch), 2)
+	if folded[0].response != "" {
+		t.Fatalf("precondition drifted: all-pass fold now carries a response; update this test's premise")
+	}
+	report := renderReport(folded, perEpoch)
+	if want := "Trailers: 2/2 responses"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
 	}
 }
 

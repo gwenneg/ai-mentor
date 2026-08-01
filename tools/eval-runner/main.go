@@ -1446,19 +1446,22 @@ func truncateLines(s string, n int) string {
 }
 
 // renderReport writes the full markdown report: summary, one table per
-// group, then the raw responses of every non-passing case.
-func renderReport(results []result) string {
+// group, then the raw responses of every non-passing case. perEpoch is the
+// pre-fold result slice: epoch folding leaves the aggregated response empty
+// on all-pass cases, so the trailer stat counted over folded results reads
+// zero on every multi-epoch run — emission fidelity only exists per epoch.
+func renderReport(results, perEpoch []result) string {
 	var b strings.Builder
 	b.WriteString("# ai-mentor eval report\n\n")
 	b.WriteString(summary(results) + "\n")
 	// V2 Phase 1 observability: emission fidelity for the mentor trailer.
 	withTrailer := 0
-	for _, r := range results {
+	for _, r := range perEpoch {
 		if parseTrailer(r.response) != "" {
 			withTrailer++
 		}
 	}
-	fmt.Fprintf(&b, "\nTrailers: %d/%d responses carried a parseable mentor trailer (observed only; nothing gates on this yet).\n", withTrailer, len(results))
+	fmt.Fprintf(&b, "\nTrailers: %d/%d responses carried a parseable mentor trailer (observed only; nothing gates on this yet).\n", withTrailer, len(perEpoch))
 	for _, g := range groupsIn(results) {
 		fmt.Fprintf(&b, "\n## Group %s\n\n| Case | Verdict | Reason |\n|------|---------|--------|\n", groupTitle(g))
 		for _, r := range results {
@@ -1700,7 +1703,7 @@ func main() {
 	results = aggregateEpochs(results, *epochs)
 	applyRateTier(results, perEpoch, *epochs, rateHist)
 
-	if err := os.WriteFile(*out, []byte(renderReport(results)), 0o644); err != nil {
+	if err := os.WriteFile(*out, []byte(renderReport(results, perEpoch)), 0o644); err != nil {
 		fatal(err)
 	}
 	fmt.Println(summary(results))
