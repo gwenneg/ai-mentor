@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-07-20 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
+*Last synced: 2026-07-27 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -27,6 +27,7 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 | `code-simplifier` | Agent for clarity and maintainability refactors | `refactoring` | ⚠️ overlaps the built-in `/simplify` skill — recommend the built-in first |
 | `ralph-loop` | Continuous while-true agent loops re-running the same prompt until completion | `migration` | ⚠️ overlaps the built-in `/loop` and `/goal` — recommend the built-ins first |
 | `playground` | Interactive single-file HTML playgrounds with visual controls and live preview | `greenfield` | ☑️ desk-checked — partially overlaps the built-in Artifact tool for shareable pages |
+| `claude-security` | Deep in-session vulnerability scanning at a chosen effort tier, with every finding challenged before being reported and surviving findings turned into agent-verified patches | `security` | ⚠️ overlaps the built-in `/security-review` skill and the promoted `security-guidance` plugin — recommend the built-in first; desk-checked 2026-07-27 |
 
 ### Hooks & output styles
 
@@ -87,6 +88,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 
 | Plugin | What it does | Author | Relevant goal | Verdict |
 |--------|-------------|--------|--------------|---------|
+| `browser-use` | Gives Claude a real browser (local Chrome or Browser Use Cloud) for browsing, scraping, form filling, site testing, and screenshots | Browser Use | `research` | ⚠️ overlaps the built-in Chrome integration for browser-driven tasks — recommend the built-in first; desk-checked 2026-07-27 — needs a Browser Use Cloud account for cloud browsers |
 | `zyte-web-data` | Zyte API web scraping: spiders, extraction schemas, Scrapy Cloud deployment | Zyte | `research` | ☑️ desk-checked 2026-07-08 — 15 skills; active 2026-07; needs Zyte API account |
 
 ### Database
@@ -95,7 +97,9 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 |--------|-------------|--------|--------------|---------|
 | `alloydb` | Create, connect, and query AlloyDB for PostgreSQL databases | Google LLC | `devops` | ☑️ desk-checked 2026-07-08 — 7 skills (MCP Toolbox fetched via skills, none declared in manifest); active 2026-07; needs Google Cloud project with AlloyDB |
 | `alloydb-omni` | Create, connect, and query AlloyDB Omni databases | Google LLC | `devops` | ☑️ desk-checked 2026-07-08 — 9 skills (incl. Kubernetes/container ops, none declared as MCP in manifest); active 2026-07; needs AlloyDB Omni installation |
+| `altimate-code` | Delegates dbt and warehouse work to a specialized CLI agent: SQL analysis, column-level lineage, dbt build/test/run, warehouse profiling, FinOps | AltimateAI | `devops` | ☑️ desk-checked 2026-07-27 — needs a supported warehouse (Snowflake, BigQuery, Redshift, Databricks, Postgres, MySQL, or DuckDB) |
 | `azure-cosmos-db-assistant` | Azure Cosmos DB data modeling, query optimization, and performance tuning | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — MCP server (.mcp.example.json) + 1 skill + 1 agent + 3 commands; active 2026-04; needs Azure Cosmos DB account |
+| `azure-sql-developer` | Agent skills for the Azure SQL Developer local-container engine: run, connect, migrate, scaffold, wire CI, go local-to-cloud | Microsoft | `devops` | ☑️ desk-checked 2026-07-27 — needs the Private Preview Azure SQL Developer container image |
 | `bigdata-com` | Financial research, analytics, and intelligence tools powered by Bigdata MCP | RavenPack | `research` | ☑️ desk-checked 2026-07-08 — MCP server (.mcp.json) + 1 skill + 27 commands; active 2026-06; needs Bigdata.com account |
 | `bigquery-data-analytics` | Connect, query, and generate insights from BigQuery datasets | Google LLC | `devops` | ☑️ desk-checked 2026-07-08 — 3 skills (MCP toolbox-based); active 2026-07; needs GCP/BigQuery account |
 | `clickhouse` | ClickHouse Cloud MCP for schema browsing, read-only SQL, backups, billing, ClickPipes | ClickHouse | `devops` | ☑️ desk-checked 2026-07-08 — MCP server + 2 skills; active 2026-07; needs ClickHouse Cloud account |
@@ -172,9 +176,11 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `base44` | Build and deploy Base44 full-stack apps with CLI and SDK | unlabeled | `greenfield` | ☑️ desk-checked 2026-07-08 — 5 skills (CLI-driven); active 2026-07; needs Base44 account |
 | `boltz` | Predict structures, screen molecules, and design binders with Boltz | Boltz | `research` | ☑️ desk-checked 2026-07-08 — 8 skills; active 2026-06; needs Boltz API access |
 | `buildkite` | Official Buildkite skills for pipelines, migration, preflight, agent runtime, CLI, API | Buildkite | `ci-automation` | ☑️ desk-checked 2026-07-08 — 6 skills; active 2026-07; needs Buildkite account |
+| `catalyst-by-zoho` | Official plugin for Catalyst by Zoho's full-stack serverless cloud platform: services, SDKs, CLI, architecture patterns, migration guides | Catalyst by Zoho | `greenfield` | ☑️ desk-checked 2026-07-27 — needs a Catalyst by Zoho account |
 | `cds-mcp` | SAP CAP development assistant; searches CDS models and CAP documentation | SAP SE | `code-understanding` | ☑️ desk-checked 2026-07-08 — MCP server (Node, .mcp.json); active 2026-06; needs a CAP project |
 | `chrome-devtools-mcp` | Chrome DevTools MCP for browser automation, performance traces, network and console inspection | unlabeled | `debugging` | ⚠️ overlaps the built-in Chrome integration — recommend the built-in first; desk-checked 2026-07-08 — MCP server + 6 skills; active 2026-07; needs Chrome |
 | `circle-skills` | Circle skills and MCP for USDC payments, cross-chain transfers, wallets, smart contracts | Circle | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 17 skills; active 2026-06; needs Circle account |
+| `ckeditor` | Install, configure, and integrate CKEditor 5 (free and premium) in any JavaScript project | CKEditor (CKSource) | `greenfield` | ☑️ desk-checked 2026-07-27 — needs a CKEditor license for premium features |
 | `codspeed` | CodSpeed performance benchmarking, flamegraphs, and profiling via MCP | CodSpeed | `performance` | ☑️ desk-checked 2026-07-08 — MCP server + 2 skills; active 2026-06; needs CodSpeed account |
 | `confidence` | Access Confidence feature flags, experiments, and migration tools | Spotify Confidence | `release-management` | ☑️ desk-checked 2026-07-08 — MCP server + 11 skills + 5 commands; active 2026-06; needs Confidence account |
 | `data` | Apache Airflow and Astronomer data engineering: DAG authoring, debugging, lineage, migration | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — 26 skills + bundled Airflow MCP server; active 2026-07; needs Airflow/Astronomer environment |
@@ -185,6 +191,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `expo` | Expo skills for building, deploying, upgrading, and debugging React Native apps | unlabeled | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 19 skills; active 2026-07 |
 | `firecrawl` | Firecrawl web scraping, crawling, and structured data extraction skills | unlabeled | `research` | ☑️ desk-checked 2026-07-08 — 10 skills + 1 command, no MCP; active 2026-06; needs Firecrawl API key |
 | `forge-skills` | Atlassian Forge skills to scaffold, deploy, review, and debug Forge apps | Atlassian | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 6 skills; active 2026-06; needs Atlassian Forge developer account |
+| `gitkraken` | Git and project context across every repo: commits, branches, PRs, and issues across GitHub, GitLab, Azure DevOps, Bitbucket, and Jira | GitKraken | `code-review` | ☑️ desk-checked 2026-07-27 — needs GitKraken auth to the relevant provider(s) |
 | `huggingface-skills` | Build, train, evaluate, and use Hugging Face models, datasets, and spaces | unlabeled | `llm-features` | ☑️ desk-checked 2026-07-08 — MCP server + 19 skills; active 2026-07; needs Hugging Face account for hub operations |
 | `idmp-plugin` | TDengine IDMP skills for discovery, schema inspection, and safe operational workflows | TaosData | `devops` | ☑️ desk-checked 2026-07-08 — 23 skills (no MCP); active 2026-05; needs TDengine IDMP instance |
 | `liquid-lsp` | LSP for Shopify Liquid templates via Shopify CLI theme language server | Shopify | `code-understanding` | ☑️ desk-checked 2026-07-08 — LSP config (.lsp.json); last commit 2026-03; needs Shopify CLI |
@@ -197,6 +204,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `microsoft-docs` | Official Microsoft documentation, API references, and samples for Azure, .NET, Windows | unlabeled | `research` | ☑️ desk-checked 2026-07-08 — MCP server + 3 skills (docs, code-reference, skill-creator); active 2026-05 |
 | `migration-to-aws` | Plans GCP and AI-workload migrations to AWS from IaC, code, billing data | Amazon Web Services | `migration` | ☑️ desk-checked 2026-07-08 — MCP server + skills (gcp-to-aws, heroku-to-aws) + tools + rules; active 2026-07; needs AWS account as migration target, processing stays local |
 | `mintlify` | Build Mintlify documentation sites and convert files to formatted MDX pages | unlabeled | `documentation` | ☑️ desk-checked 2026-07-08 — MCP server + 1 skill; active 2026-06; needs a Mintlify docs project |
+| `modern-web-guidance` | Keeps the coding agent current on modern web platform best practices | Google Chrome | `greenfield` | ☑️ desk-checked 2026-07-27 — reference guidance, no external account needed |
 | `netlify-skills` | Netlify platform skills covering functions, blobs, forms, caching, and deployment | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — MCP server + 15 skills (functions, edge-functions, blobs, database, image-cdn, forms, config, deploy, caching, ai-gateway, more); active 2026-07; needs Netlify account |
 | `netsuite-suitecloud` | NetSuite skills for SDF objects, UIF SPA components, and AI Service Connector | Oracle NetSuite | `greenfield` | ☑️ desk-checked 2026-07-07 — 10 skills; active 2026-06; needs NetSuite account for runtime connector guidance |
 | `nvidia-skills` | NVIDIA accelerated-computing skills: cuOpt optimization, Omniverse, Dynamo, physical-AI infrastructure | NVIDIA | `performance` | ☑️ desk-checked 2026-07-07 — 12 skills; active 2026-07; needs NVIDIA GPU/SDK access |
@@ -208,7 +216,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `postman` | Postman MCP for collections, client code, API tests, mocks, docs, security audits | unlabeled | `api-design` | ☑️ desk-checked 2026-07-07 — MCP server + 10 commands + 7 skills + 1 agent; active 2026-07; needs Postman account |
 | `preset-cli-skills` | Skills for Preset/Superset sup CLI shell, scripting, and CI/CD workflows | Preset | `ci-automation` | ☑️ desk-checked 2026-07-07 — 2 skills; active 2026-06; needs Preset account + superset-sup CLI |
 | `pydantic-ai` | Pydantic AI patterns for agents, tools, structured output, streaming, multi-agent apps | unlabeled | `building-agents` | ☑️ desk-checked 2026-07-07 — 1 skill; active 2026-06 |
-| `qodo-skills` | Qodo skills for code quality checks, testing, security scanning, compliance validation | unlabeled | `code-review` | ☑️ desk-checked 2026-07-07 — 2 skills (qodo-get-rules, qodo-pr-resolver); active 2026-06; needs Qodo platform account |
+| `qodo` | Qodo skills for code quality checks, testing, security scanning, compliance validation | unlabeled | `code-review` | ☑️ desk-checked 2026-07-27 — renamed from `qodo-skills`; same source repo (qodo-ai/qodo-skills), component inventory not re-counted since the rename; needs Qodo platform account |
 | `qt-development-skills` | Qt C++/QML skills for code review, QML coding, and documentation | Qt Group | `greenfield` | ☑️ desk-checked 2026-07-07 — 12 skills + MCP server; active 2026-06; needs Qt toolchain |
 | `quarkus-agent` | Quarkus MCP for project scaffolding, dev mode lifecycle, and documentation search | Quarkus | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server (.mcp.json, Java/Maven source) + plugin dir; active 2026-07; needs Java toolchain |
 | `rc` | Configure RevenueCat projects, products, entitlements, and offerings from Claude Code | unlabeled | `devops` | ⚠️ identical source to the revenuecat plugin (same repo, path, and sha) — recommend revenuecat and list once; desk-checked 2026-07-08 — MCP server + 15 skills; active 2026-07; needs RevenueCat account |
@@ -231,6 +239,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `teamcity-cli` | TeamCity CI/CD skills via teamcity CLI: builds, logs, queues, agents | JetBrains | `ci-automation` | ☑️ desk-checked 2026-07-08 — 2 skills (repo also bundles the Go CLI source); active 2026-07; needs TeamCity server + teamcity CLI installed |
 | `togetherai-skills` | Together AI skills: inference, fine-tuning, embeddings, image/video generation, GPU clusters | Together AI | `llm-features` | ☑️ desk-checked 2026-07-08 — 12 skills; active 2026-06; needs Together AI API key |
 | `twilio-developer-kit` | Twilio API skills for SMS, Voice, WhatsApp, Verify, SendGrid, 30+ products | Twilio | `greenfield` | ☑️ desk-checked 2026-07-08 — hosted docs MCP server + 2 skill trees (twilio, sendgrid); active 2026-06; needs Twilio account |
+| `ui-theme-designer` | How-to and conceptual guidance for SAP UI Theme Designer, Fiori design tokens, and theming across UI5, UI5 Web Components, and Fundamental Styles | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-27 — pairs with the existing `ui5` plugin |
 | `ui5` | SAPUI5/OpenUI5 project creation, validation, API docs, linter, best practices | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 7 skills; active 2026-07 |
 | `ui5-modernization` | Workflow and fix patterns for modernizing SAPUI5/OpenUI5 applications | SAP SE | `migration` | ☑️ desk-checked 2026-07-08 — MCP server + 19 skills; active 2026-06 |
 | `ui5-typescript-conversion` | Converts JavaScript-based UI5 projects to TypeScript | SAP SE | `migration` | ☑️ desk-checked 2026-07-08 — MCP server + 1 skill; active 2026-06 |
@@ -273,6 +282,8 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `langfuse-observability` | Hooks that trace Claude Code sessions into Langfuse observability | Langfuse | `devops` | ☑️ desk-checked 2026-07-08 — hooks (hooks.json + Python hook); active 2026-06; needs Langfuse account |
 | `logfire` | Adds Logfire observability and auto-instrumentation to Python applications | Pydantic | `devops` | ☑️ desk-checked 2026-07-08 — MCP server + 4 commands + 3 skills; active 2026-06; needs Logfire account |
 | `logrocket` | Query LogRocket session replays, metrics, issues, and user behavior | LogRocket | `debugging` | ☑️ desk-checked 2026-07-08 — MCP server + 1 skill; active 2026-06; needs LogRocket account |
+| `mlflow` | Skills for tracing, evaluating, and improving AI agents with MLflow: instrument → trace → evaluate → iterate → validate | MLflow Team | `llm-features` | ☑️ desk-checked 2026-07-27 — needs an MLflow tracking server |
+| `newrelic` | New Relic observability: APM performance, cloud cost analysis, Kubernetes debugging, NRQL queries, alert response | New Relic | `incident-response` | ☑️ desk-checked 2026-07-27 — needs a New Relic account |
 | `pagerduty` | PagerDuty risk scoring of pre-commit diffs against historical incident data | unlabeled | `incident-response` | ☑️ desk-checked 2026-07-07 — MCP server + 2 commands (pre-commit-risk-scoring, create-pagerduty-skill); active 2026-05; needs PagerDuty account |
 | `posthog` | PostHog MCP for analytics, feature flags, experiments, error tracking, and insights | unlabeled | `devops` | ☑️ desk-checked 2026-07-07 — MCP server + 106 skills + 6 commands + 1 agent + hooks; active 2026-07; needs PostHog account |
 | `rootly` | Incident management: deploy safety, on-call, incident response, and retrospectives | Rootly | `incident-response` | ☑️ desk-checked 2026-07-08 — MCP server + 18 skills + 3 agents + hook; active 2026-05; needs Rootly account |
@@ -288,6 +299,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `apollo` | Apollo.io MCP for prospecting, lead enrichment, outreach sequences, and sales analytics | Apollo.io | `research` | ☑️ desk-checked 2026-07-08 — MCP server + 4 skills; last touched 2026-04; needs Apollo.io account |
 | `atlassian` | Jira and Confluence integration for issues, docs, sprints, and status reports | unlabeled | `documentation` | ☑️ desk-checked 2026-07-08 — MCP server + 6 skills; active 2026-06; needs Atlassian account |
 | `box` | Search, organize, and query Box content and documents via Box AI | unlabeled | `documentation` | ☑️ desk-checked 2026-07-08 — 5 skills + rules; active 2026-07; needs Box account |
+| `carbone-skill` | Official Carbone templating reference: tags, loops, conditions, formatters, and output to DOCX/XLSX/PPTX/ODT/HTML/Markdown/PDF | Carbone | `documentation` | ☑️ desk-checked 2026-07-27 — needs the Carbone engine/library in the target project |
 | `carta-cap-table` | Query Carta cap tables, grants, SAFEs, 409A valuations, and waterfall scenarios | Carta Engineering | `research` | ☑️ desk-checked 2026-07-08 — hosted MCP server + 15 skills + hooks; active 2026-07; needs Carta account |
 | `carta-crm` | Manage Carta CRM investors, companies, contacts, deals, notes, and fundraisings conversationally | Carta Engineering | `research` | ☑️ desk-checked 2026-07-08 — hosted MCP server + 21 skills + hooks; active 2026-06; needs Carta CRM account |
 | `carta-investors` | Query Carta investor data, benchmarks, regulatory reporting, and AGM deck generation | Carta Engineering | `research` | ☑️ desk-checked 2026-07-08 — hosted MCP server + 15 skills + hooks; active 2026-07; needs Carta account |
@@ -318,16 +330,25 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 |--------|-------------|--------|--------------|---------|
 | `42crunch-api-security-testing` | Audit OpenAPI specs, detect OWASP API vulnerabilities, and apply fixes with 42Crunch | 42Crunch | `security` | ☑️ desk-checked 2026-07-08 — 6 skills + references (no MCP); active 2026-07; needs 42Crunch account |
 | `auth0` | Framework-aware skills for adding Auth0 login, SSO, MFA, and access control | Auth0 | `security` | ☑️ desk-checked 2026-07-08 — 45 framework-specific skills; active 2026-07; needs Auth0 tenant |
+| `crowdsec` | Operational skill for installing, configuring, operating, and debugging CrowdSec (cscli, LAPI/CAPI, hub, bouncers, WAF/AppSec) across bare-metal, Docker, and Kubernetes | CrowdSec | `security` | ☑️ desk-checked 2026-07-27 — needs a CrowdSec deployment |
 | `crowdstrike-falcon-foundry` | Build cybersecurity apps on CrowdStrike Falcon Foundry: UI, functions, workflows | CrowdStrike | `security` | ☑️ desk-checked 2026-07-08 — 10 skills + 5 hooks; active 2026-06; needs CrowdStrike Falcon Foundry access |
 | `duende-skills` | OAuth/OIDC, IdentityServer, and ASP.NET Core identity security skills | Duende Software | `security` | ☑️ desk-checked 2026-07-08 — 24 skills + 2 agents; active 2026-06 |
 | `jfrog` | JFrog Platform: Artifactory artifacts, security findings, package safety, platform administration | JFrog Ltd. | `security` | ☑️ desk-checked 2026-07-08 — MCP server + 3 skills + hooks; active 2026-07; needs JFrog Platform account |
 | `semgrep` | Semgrep security scanning that flags vulnerabilities as Claude writes code | unlabeled | `security` | ☑️ desk-checked 2026-07-07 — MCP server + hooks; active 2026-06; needs Semgrep |
 | `sonarqube` | SonarQube quality and security analysis enforced via hooks, MCP, and skills | SonarSource | `code-review` | ☑️ desk-checked 2026-07-08 — MCP server + 9 skills + hooks; active 2026-07; needs SonarQube server/token |
 | `sonatype-guide` | Sonatype Guide MCP for dependency vulnerability analysis and secure version recommendations | unlabeled | `dependency-management` | ☑️ desk-checked 2026-07-08 — MCP server + 1 skill; last commit 2026-04 |
+| `stackhawk-api` | Query the StackHawk platform API for security posture reporting, findings analysis, and app management | StackHawk | `security` | ☑️ desk-checked 2026-07-27 — needs a StackHawk account |
+| `stackhawk-hawkscan` | Configure, run, and interpret HawkScan DAST scans; generates `stackhawk.yml` and prioritized fix tasks | StackHawk | `security` | ☑️ desk-checked 2026-07-27 — needs a StackHawk account; shares a source repo with `stackhawk-api` (different subdirectory) |
 | `vanta` | Vanta MCP for fixing security compliance test failures with repo context | Vanta | `security` | ☑️ desk-checked 2026-07-08 — MCP server + 3 skills; active 2026-05; needs Vanta account |
 | `vanta-mcp-plugin` | Vanta MCP for fixing security compliance test failures with repo context | Vanta | `security` | ⚠️ duplicate listing of the vanta plugin (identical repo and pinned SHA 345d86b) — recommend the vanta entry; desk-checked 2026-07-08 — MCP server + 3 skills; active 2026-05; needs Vanta account |
 | `workos` | WorkOS skills for AuthKit, SSO, Directory Sync, RBAC, Vault, audit logs | WorkOS | `security` | ☑️ desk-checked 2026-07-08 — 2 skills; active 2026-06; needs WorkOS account |
 | `zscaler` | Manage Zscaler security platform: policies, audits, connectivity, incident investigation | Zscaler | `security` | ☑️ desk-checked 2026-07-08 — MCP server + 8 skills + 20 commands; active 2026-06; needs Zscaler account |
+
+### Testing
+
+| Plugin | What it does | Author | Relevant goal | Verdict |
+|--------|-------------|--------|--------------|---------|
+| `growthbook` | Full lifecycle skills for GrowthBook feature flags and experimentation | GrowthBook | `release-management` | ☑️ desk-checked 2026-07-27 — needs a GrowthBook account |
 
 ### Uncategorized
 
