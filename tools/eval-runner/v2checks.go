@@ -226,7 +226,7 @@ func v2Checks(c evalCase, spec v2Spec, responses []string, plugins, promoted []s
 
 func b06StyleChecks(id string, fields map[string]string) string {
 	expect := map[string][]string{ // opener expectations; B05 is judge-owned
-		"B01": {"lesson"}, "B02": {"followup"}, "B03": {"lesson"}, "B04": {"lesson"}, "B06": {"transfer", "empty"},
+		"B01": {"lesson"}, "B02": {"followup"}, "B03": {"lesson"}, "B04": {"lesson"}, "B06": {"transfer", "empty"}, "B07": {"lesson"},
 	}
 	want, ok := expect[id]
 	if !ok {
