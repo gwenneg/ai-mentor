@@ -936,6 +936,20 @@ func permissionDenials(out string) []string {
 			if name == "" {
 				name = "unknown"
 			}
+			// The primary input names WHAT was denied — without it a
+			// "Write" denial during profile creation is undiagnosable.
+			if input, ok := dm["tool_input"].(map[string]any); ok {
+				detail, _ := input["file_path"].(string)
+				if detail == "" {
+					detail, _ = input["command"].(string)
+				}
+				if detail != "" {
+					if len(detail) > 80 {
+						detail = detail[:80] + "…"
+					}
+					name = name + "(" + detail + ")"
+				}
+			}
 			denials = append(denials, name)
 		}
 	}
