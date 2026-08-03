@@ -224,10 +224,10 @@ func TestRenderReport(t *testing.T) {
 
 func TestPermissionDenials(t *testing.T) {
 	out := `{"type":"assistant","message":{"content":[{"type":"text","text":"hi"}]}}
-{"type":"result","result":"hi","permission_denials":[{"tool_name":"Bash","tool_input":{"command":"ls approaches/"}},{"tool_input":{}}]}`
+{"type":"result","result":"hi","permission_denials":[{"tool_name":"Bash","tool_input":{"command":"ls approaches/"}},{"tool_name":"Write","tool_input":{"file_path":"/home/u/.ai-mentor/profile.md"}},{"tool_input":{}}]}`
 	got := permissionDenials(out)
-	if len(got) != 2 || got[0] != "Bash" || got[1] != "unknown" {
-		t.Errorf("want [Bash unknown], got %v", got)
+	if len(got) != 3 || got[0] != "Bash(ls approaches/)" || got[1] != "Write(/home/u/.ai-mentor/profile.md)" || got[2] != "unknown" {
+		t.Errorf("want detailed denials, got %v", got)
 	}
 	if got := permissionDenials(`{"type":"result","result":"hi"}`); got != nil {
 		t.Errorf("absent field must yield nil (older CLI), got %v", got)
