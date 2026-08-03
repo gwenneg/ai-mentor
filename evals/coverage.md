@@ -12,7 +12,7 @@ Legend — **Should**: cases where the rule must fire. **Should-NOT / trap**: ca
 | S2 | First meeting: create profile (at Record, with rows) + announce path once | B01 (+det check) | — | C03 (dated today) | OK |
 | S3 | Fast path: different-repo problem skips the setup scan | A20 (portable prompt) | — | — | PARTIAL — no case asserts the scan was actually skipped (UNTESTABLE without transcript assertions) |
 | S4 | Setup scan ≤ ~6 checks, index-driven | — | — | — | UNTESTABLE (tool-call counts invisible to judge) |
-| S5 | Session signals from current conversation only; never `~/.claude/projects/` transcripts | — | — | — | GAP — a seeded fake transcript file + assertion it was never read is buildable (metamorphic fixture variant) |
+| S5 | Session signals from current conversation only; never `~/.claude/projects/` transcripts | — | **B07 (canary transcript: name-leak, adopted-row, and read-attempt checks, all deterministic)** | — | OK (B07, strict) |
 | S6 | Project-level config ≠ personal knowledge (never silent `adopted`) | B04 | — | B04 (`shown` not `adopted`) | OK |
 | S7 | Directory plugins enter the ignorance map only on stack/goal match — never filler | A-shape (surprise) | B06 (no filler on saturated map) | — | OK |
 | S8 | Mode selection: args → problem, bare → growth | all A / all B | — | — | OK (implicit) |

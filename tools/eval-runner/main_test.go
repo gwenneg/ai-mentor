@@ -222,6 +222,38 @@ func TestRenderReport(t *testing.T) {
 	}
 }
 
+func TestB07TranscriptCanary(t *testing.T) {
+	cleanProfile := "| Capability | Status | Date | Note |\n|---|---|---|---|\n| " + capFanOut + " | shown | 2026-08-03 | taught as this session's lesson |\n"
+	if got := b07TranscriptCanary("a normal lesson about hooks", cleanProfile); got != "" {
+		t.Errorf("a legitimate shown row must pass, got %q", got)
+	}
+	if got := b07TranscriptCanary("I see you use fan-out on "+canaryProject, ""); got == "" {
+		t.Error("canary project name in the response must fail")
+	}
+	adopted := strings.Replace(cleanProfile, "shown", "adopted", 1)
+	if got := b07TranscriptCanary("response", adopted); got == "" {
+		t.Error("an adopted row for the canary capability must fail")
+	}
+}
+
+func TestSeedFakeTranscriptB07(t *testing.T) {
+	home := t.TempDir()
+	if err := seedFakeTranscript(home); err != nil {
+		t.Fatal(err)
+	}
+	matches, err := filepath.Glob(filepath.Join(home, ".claude", "projects", "*", "*.jsonl"))
+	if err != nil || len(matches) != 1 {
+		t.Fatalf("want exactly one seeded transcript, got %v (err %v)", matches, err)
+	}
+	b, err := os.ReadFile(matches[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), canaryProject) || !strings.Contains(string(b), capFanOut) {
+		t.Error("seeded transcript must carry both the canary project and the fake capability signal")
+	}
+}
+
 func TestPermissionDenials(t *testing.T) {
 	out := `{"type":"assistant","message":{"content":[{"type":"text","text":"hi"}]}}
 {"type":"result","result":"hi","permission_denials":[{"tool_name":"Bash","tool_input":{"command":"ls approaches/"}},{"tool_name":"Write","tool_input":{"file_path":"/home/u/.ai-mentor/profile.md"}},{"tool_input":{}}]}`
@@ -1207,7 +1239,7 @@ func TestStrictAndDetCasesExistInSuite(t *testing.T) {
 			}
 		}
 	}
-	want := []string{"A30", "B03", "C04"}
+	want := []string{"A30", "B03", "B07", "C04"}
 	if len(marked) != len(want) {
 		t.Errorf("strict-marked set drifted: got %v, want %v", marked, want)
 	}
