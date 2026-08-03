@@ -222,6 +222,34 @@ func TestRenderReport(t *testing.T) {
 	}
 }
 
+func TestPermissionDenials(t *testing.T) {
+	out := `{"type":"assistant","message":{"content":[{"type":"text","text":"hi"}]}}
+{"type":"result","result":"hi","permission_denials":[{"tool_name":"Bash","tool_input":{"command":"ls approaches/"}},{"tool_input":{}}]}`
+	got := permissionDenials(out)
+	if len(got) != 2 || got[0] != "Bash" || got[1] != "unknown" {
+		t.Errorf("want [Bash unknown], got %v", got)
+	}
+	if got := permissionDenials(`{"type":"result","result":"hi"}`); got != nil {
+		t.Errorf("absent field must yield nil (older CLI), got %v", got)
+	}
+}
+
+func TestRenderReportDenialsLine(t *testing.T) {
+	c := evalCase{Group: "A", ID: "A01"}
+	perEpoch := []result{
+		{c: c, verdict: vPass},
+		{c: c, verdict: vPass, denials: []string{"Bash"}},
+	}
+	folded := aggregateEpochs(slices.Clone(perEpoch), 2)
+	report := renderReport(folded, perEpoch)
+	if want := "Permission denials: 1/2 epochs"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
+	}
+	if want := "- A01: Bash"; !strings.Contains(report, want) {
+		t.Errorf("report missing denial detail %q; got:\n%s", want, report)
+	}
+}
+
 // The trailer stat must count per-epoch responses: foldEpochs leaves the
 // aggregated response empty on an all-pass case, so counting the folded
 // slice reads 0/N on every multi-epoch run however faithfully the model

@@ -230,8 +230,9 @@ type result struct {
 	verdict  string // vPass, vFail, or vError
 	reason   string
 	response string
-	profile  string // after-run profile content, for records
-	judgeRaw string // judge's raw reply, for records / calibration review
+	profile  string   // after-run profile content, for records
+	judgeRaw string   // judge's raw reply, for records / calibration review
+	denials  []string // denied tool names from the CLI result envelope (S11: observed, never gated yet)
 }
 
 func errResult(c evalCase, err error) result {
@@ -611,17 +612,19 @@ func (r *runner) runCase(c evalCase) result {
 		return errResult(c, err)
 	}
 	var responses []string
+	var denials []string
 	for _, p := range prompts {
-		resp, err := r.invoke(p, workdir, env)
+		resp, den, err := r.invoke(p, workdir, env)
 		if err != nil {
 			return errResult(c, err)
 		}
 		responses = append(responses, resp)
+		denials = append(denials, den...)
 	}
 	profile := readFile(filepath.Join(home, profileRel))
 	joined := strings.Join(responses, runSeparator)
 	if reason := runDetChecks(c.ID, joined, profile); reason != "" {
-		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile}
+		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile, denials: denials}
 	}
 	gating, advisory := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted)
 	if gating == trailerMissing {
@@ -633,10 +636,11 @@ func (r *runner) runCase(c evalCase) result {
 		if res.verdict == vPass {
 			res.reason = strings.TrimSpace("advisory-structural: trailer missing (judge-fallback epoch) | " + res.reason)
 		}
+		res.denials = denials
 		return res
 	}
 	if gating != "" {
-		return result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile}
+		return result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile, denials: denials}
 	}
 	sources := r.catalogSources(taughtIDs(profile, seeded))
 	res := r.judgeCase(c, responses, joined, profile, sources)
@@ -645,6 +649,7 @@ func (r *runner) runCase(c evalCase) result {
 		// Phase 3 rate baseline), never verdict-affecting in Phase 2.
 		res.reason = strings.TrimSpace("advisory-structural: " + advisory + " | " + res.reason)
 	}
+	res.denials = denials
 	return res
 }
 
@@ -893,17 +898,48 @@ func (r *runner) prompts(c evalCase) ([]string, error) {
 	return nil, fmt.Errorf("case %s: no prompt rule", c.ID)
 }
 
-// invoke runs one mentor invocation and extracts the JSON "result" field.
-func (r *runner) invoke(prompt, dir string, env []string) (string, error) {
+// invoke runs one mentor invocation and extracts the JSON "result" field,
+// plus any permission denials the CLI's result envelope reports.
+func (r *runner) invoke(prompt, dir string, env []string) (string, []string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, dir, env,
 		"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
 		"--output-format", "stream-json", "--verbose", "--max-turns", "30")
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return assistantText(out)
+	text, err := assistantText(out)
+	return text, permissionDenials(out), err
+}
+
+// permissionDenials extracts denied tool names from the stream-json result
+// envelope (S11 coverage gap: the "zero permission prompts" expectation was
+// judge-invisible). Observed-only until a base rate is measured — an absent
+// field (older CLI) yields nil, indistinguishable from zero denials on
+// purpose: the stat must never fail a run over CLI version skew.
+func permissionDenials(out string) []string {
+	var denials []string
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil || m["type"] != "result" {
+			continue
+		}
+		arr, _ := m["permission_denials"].([]any)
+		for _, d := range arr {
+			dm, _ := d.(map[string]any)
+			name, _ := dm["tool_name"].(string)
+			if name == "" {
+				name = "unknown"
+			}
+			denials = append(denials, name)
+		}
+	}
+	return denials
 }
 
 // assistantText extracts what the user would have seen: the concatenated
@@ -1357,11 +1393,12 @@ type record struct {
 	Epoch    int    `json:"epoch"`
 	Attempt  int    `json:"attempt"`
 	Verdict  string `json:"verdict"`
-	Trailer  string `json:"trailer,omitempty"` // raw mentor trailer fields (V2 Phase 1: observed, never gated)
-	Reason   string `json:"reason,omitempty"`
-	Judge    string `json:"judge,omitempty"`
-	Response string `json:"response,omitempty"`
-	Profile  string `json:"profile,omitempty"`
+	Trailer  string   `json:"trailer,omitempty"` // raw mentor trailer fields (V2 Phase 1: observed, never gated)
+	Denials  []string `json:"permission_denials,omitempty"` // denied tool names (S11: observed, never gated yet)
+	Reason   string   `json:"reason,omitempty"`
+	Judge    string   `json:"judge,omitempty"`
+	Response string   `json:"response,omitempty"`
+	Profile  string   `json:"profile,omitempty"`
 }
 
 // reTrailer extracts the mentor's machine-readable trailer (V2 Phase 1:
@@ -1378,8 +1415,8 @@ func parseTrailer(response string) string {
 func toRecord(r result, epoch, attempt int) record {
 	return record{
 		Case: r.c.ID, Group: r.c.Group, Epoch: epoch, Attempt: attempt,
-		Verdict: r.verdict, Trailer: parseTrailer(r.response), Reason: r.reason,
-		Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
+		Verdict: r.verdict, Trailer: parseTrailer(r.response), Denials: r.denials,
+		Reason: r.reason, Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
 	}
 }
 
@@ -1462,6 +1499,21 @@ func renderReport(results, perEpoch []result) string {
 		}
 	}
 	fmt.Fprintf(&b, "\nTrailers: %d/%d responses carried a parseable mentor trailer (observed only; nothing gates on this yet).\n", withTrailer, len(perEpoch))
+	// S11 observability: denied tool calls per epoch. Observed-only until a
+	// base rate is measured; the CLI's envelope is the only prompt-visible
+	// signal the headless harness has.
+	denied := 0
+	var deniedDetail []string
+	for _, r := range perEpoch {
+		if len(r.denials) > 0 {
+			denied++
+			deniedDetail = append(deniedDetail, fmt.Sprintf("%s: %s", r.c.ID, strings.Join(r.denials, ", ")))
+		}
+	}
+	fmt.Fprintf(&b, "Permission denials: %d/%d epochs had a denied tool call (observed only; nothing gates on this yet).\n", denied, len(perEpoch))
+	for _, d := range deniedDetail {
+		fmt.Fprintf(&b, "- %s\n", d)
+	}
 	for _, g := range groupsIn(results) {
 		fmt.Fprintf(&b, "\n## Group %s\n\n| Case | Verdict | Reason |\n|------|---------|--------|\n", groupTitle(g))
 		for _, r := range results {
