@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-07-27 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
+*Last synced: 2026-08-03 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -154,6 +154,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `hyperframes` | HeyGen HyperFrames: write HTML, render video with animations, captions, voiceovers | HeyGen | `greenfield` | ☑️ desk-checked 2026-07-08 — 21 skills (no MCP); active 2026-07; needs HyperFrames CLI/runtime |
 | `miro` | Miro board access to read context, create diagrams, and generate code | Miro | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 7 skills (diagram, doc, table, browse, code-spec, code-review, code-explain); active 2026-06; needs Miro account |
 | `runway-api` | Generate videos, images, and audio at scale with Runway's API | Runway | `greenfield` | ☑️ desk-checked 2026-07-08 — 17 skills + scripts; active 2026-04; needs Runway API key |
+| `ui-theme-designer` | How-to and conceptual guidance for SAP UI Theme Designer, Fiori design tokens, and theming across UI5, UI5 Web Components, and Fundamental Styles | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-27 — pairs with the existing `ui5` plugin |
 
 ### Development
 
@@ -198,6 +199,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `liquid-skills` | Liquid fundamentals, coding standards, and WCAG accessibility patterns for Shopify themes | Shopify | `greenfield` | ☑️ desk-checked 2026-07-08 — 3 skills; last commit 2026-03 |
 | `lovable` | Build, iterate, deploy, and manage Lovable apps via official MCP | Lovable | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server (remote, OAuth 2.1) + 3 commands; active 2026-06; needs Lovable account |
 | `lumen` | Local semantic code search MCP with Go AST indexing and Ollama embeddings | Ory Corp | `code-understanding` | ☑️ desk-checked 2026-07-08 — MCP server (local Go binary) + 2 skills + hooks; last commit 2026-05; needs Ollama or LM Studio |
+| `mattpocock-skills` | Matt Pocock's engineering skills — spec/ticket flows, TDD, code review, domain modelling | Matt Pocock | `greenfield` | ☑️ desk-checked 2026-08-03 — added via catalog sync, not yet exercised |
 | `mcp-apps` | Skills for creating MCP Apps with the MCP Apps SDK | Anthropic / Model Context Protocol | `building-mcp-integrations` | ☑️ desk-checked 2026-07-08 — 4 skills (create-mcp-app, add-app-to-server, convert-web-app, migrate-oai-app); last active 2026-03 |
 | `mercadopago` | Mercado Pago payment integration toolkit driven by the official MCP server | Mercado Pago Developer Experience | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 4 skills + 1 agent + commands + hooks; active 2026-06; needs Mercado Pago account and a live MCP connection (no offline mode) |
 | `mergify` | Mergify CLI skills for merge queues, stacked PRs, and flaky-test insights | Mergify | `ci-automation` | ☑️ desk-checked 2026-07-08 — 5 skills (merge-queue, stack, ci, merge-protections, config); active 2026-07; needs Mergify CLI and account |
@@ -212,6 +214,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `oracle-ai-data-platform-workbench-engineer-agent` | 37-skill agent operating Oracle AIDP Spark/Delta lakehouse in natural language | Oracle | `devops` | ☑️ desk-checked 2026-07-07 — 37 skills + hooks + MCP template + scripts; active 2026-06; needs Oracle AIDP account and aidp CLI |
 | `oracle-ai-data-platform-workbench-spark-connectors` | Spark connector skills for Oracle AIDP: databases, cloud storage, SaaS sources | Oracle | `devops` | ☑️ desk-checked 2026-07-07 — 25 skills + tests/examples/tools; active 2026-06; needs Oracle AIDP workbench cluster plus target data-source credentials |
 | `outputai` | Output.ai workflow toolkit: agents, scaffolding, debugging, evaluation, credential skills | Output.ai | `llm-features` | ☑️ desk-checked 2026-07-07 — 49 skills + 5 agents + SessionStart hook; active 2026-07; needs Output.ai SDK/account |
+| `paypal` | PayPal development plugin — payments, subscriptions, invoices, and disputes via PayPal's APIs and MCP server | PayPal | `greenfield` | ☑️ desk-checked 2026-08-03 — added via catalog sync, not yet exercised; needs a PayPal developer account |
 | `pixeltable` | Pixeltable skills for multimodal AI apps: tables, embedding search, UDFs, agents | Pixeltable | `llm-features` | ☑️ desk-checked 2026-07-07 — 1 skill + 2 commands + 2 agents + hooks; active 2026-07; needs Pixeltable Python library |
 | `postman` | Postman MCP for collections, client code, API tests, mocks, docs, security audits | unlabeled | `api-design` | ☑️ desk-checked 2026-07-07 — MCP server + 10 commands + 7 skills + 1 agent; active 2026-07; needs Postman account |
 | `preset-cli-skills` | Skills for Preset/Superset sup CLI shell, scripting, and CI/CD workflows | Preset | `ci-automation` | ☑️ desk-checked 2026-07-07 — 2 skills; active 2026-06; needs Preset account + superset-sup CLI |
@@ -239,7 +242,6 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `teamcity-cli` | TeamCity CI/CD skills via teamcity CLI: builds, logs, queues, agents | JetBrains | `ci-automation` | ☑️ desk-checked 2026-07-08 — 2 skills (repo also bundles the Go CLI source); active 2026-07; needs TeamCity server + teamcity CLI installed |
 | `togetherai-skills` | Together AI skills: inference, fine-tuning, embeddings, image/video generation, GPU clusters | Together AI | `llm-features` | ☑️ desk-checked 2026-07-08 — 12 skills; active 2026-06; needs Together AI API key |
 | `twilio-developer-kit` | Twilio API skills for SMS, Voice, WhatsApp, Verify, SendGrid, 30+ products | Twilio | `greenfield` | ☑️ desk-checked 2026-07-08 — hosted docs MCP server + 2 skill trees (twilio, sendgrid); active 2026-06; needs Twilio account |
-| `ui-theme-designer` | How-to and conceptual guidance for SAP UI Theme Designer, Fiori design tokens, and theming across UI5, UI5 Web Components, and Fundamental Styles | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-27 — pairs with the existing `ui5` plugin |
 | `ui5` | SAPUI5/OpenUI5 project creation, validation, API docs, linter, best practices | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 7 skills; active 2026-07 |
 | `ui5-modernization` | Workflow and fix patterns for modernizing SAPUI5/OpenUI5 applications | SAP SE | `migration` | ☑️ desk-checked 2026-07-08 — MCP server + 19 skills; active 2026-06 |
 | `ui5-typescript-conversion` | Converts JavaScript-based UI5 projects to TypeScript | SAP SE | `migration` | ☑️ desk-checked 2026-07-08 — MCP server + 1 skill; active 2026-06 |
@@ -316,6 +318,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `notion` | Notion workspace MCP: search pages, manage databases, documentation workflows | unlabeled | `documentation` | ☑️ desk-checked 2026-07-07 — MCP server + 7 commands + 1 skill; last commit 2026-01; needs Notion account |
 | `pigment` | Analyze business data and build Pigment models, metrics, and boards | Pigment | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server + 11 skills; active 2026-06; needs Pigment account |
 | `save-to-spotify` | Creates TTS audio episodes with cover images and saves them to Spotify | Spotify | `documentation` | ☑️ desk-checked 2026-07-07 — 1 skill; active 2026-05; needs save-to-spotify CLI and Spotify account |
+| `shippo` | Rate-shop, buy and print labels, validate addresses, and track packages across 40+ carriers (USPS, UPS, FedEx, DHL) | Shippo | `greenfield` | ☑️ desk-checked 2026-08-03 — added via catalog sync, not yet exercised; needs a Shippo account |
 | `slack` | Slack MCP for searching messages, channels, and threads for team context | unlabeled | `research` | ☑️ desk-checked 2026-07-08 — MCP server + 6 skills + 5 commands; active 2026-07; needs Slack workspace app/token |
 | `spotify-ads-api` | Manage Spotify ad campaigns, reports, and OAuth through conversation | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — 14 skills + 1 command + 1 agent + hooks; active 2026-07; needs Spotify Ads account/OAuth |
 | `vibe-prospecting` | Live B2B company and contact data for prospecting, enrichment, CRM workflows | vibeprospecting.ai | `research` | ☑️ desk-checked 2026-07-08 — 1 skill + helper scripts; active 2026-06; needs vibeprospecting.ai account |
