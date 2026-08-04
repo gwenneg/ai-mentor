@@ -14,6 +14,9 @@
 #   - Scheduled runs are gated on deterministic work detection (catalog drift
 #     or an unprocessed what's-new digest) so no-op weeks cost nothing.
 #     Manual dispatch always runs — it can select steps the gate doesn't model.
+#   - Commit subject and PR title use feat(catalog): deliberately — merging a
+#     maintenance PR releases a minor, not a patch (the release workflow's
+#     conventional-commit matcher treats scoped feat as minor).
 
 name: Scheduled maintenance
 
@@ -136,11 +139,13 @@ jobs:
           git checkout -b "$BRANCH"
           git add skills/ .claude/skills/
           git rm --cached -f maintenance-report.md 2>/dev/null || true
-          git commit -m "chore: scheduled content maintenance ($(date -u +%Y-%m-%d))"
+          git commit -m "feat(catalog): scheduled content maintenance ($(date -u +%Y-%m-%d))"
           git push -u origin "$BRANCH"
+          # PR title matches the commit subject so a multi-commit squash merge
+          # (which defaults to the PR title) still reads as feat(catalog):.
           gh pr create \
-            --title "Scheduled maintenance: $(date -u +%Y-%m-%d)" \
+            --title "feat(catalog): scheduled maintenance ($(date -u +%Y-%m-%d))" \
             --body-file maintenance-report.md \
             --label maintenance || gh pr create \
-            --title "Scheduled maintenance: $(date -u +%Y-%m-%d)" \
+            --title "feat(catalog): scheduled maintenance ($(date -u +%Y-%m-%d))" \
             --body-file maintenance-report.md

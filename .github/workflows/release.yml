@@ -13,7 +13,7 @@ on:
 
 jobs:
   release:
-    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@cf6372fea49df21640458053548c2b888fe70478 # 2026-07-06
+    uses: gwenneg/claude-ichiba/.github/workflows/plugin-release.yml@6ce553a1681c048b0450ddedc49d2cd53bcbf453 # 2026-08-05
     permissions:
       contents: write
       pull-requests: write
