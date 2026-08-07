@@ -5,7 +5,7 @@
 
 Built-in Review Skills are ready-to-use commands in Claude Code that analyze your code changes for bugs, security issues, and simplification opportunities. You run a slash command — `/code-review`, `/security-review`, or `/simplify` — and Claude systematically reviews your diff using structured analysis.
 
-Two companion skills close the loop from the behavior side: `/verify` exercises a change end-to-end in the running application to confirm it actually does what it's supposed to (driving the affected flow, not just the tests), and `/run` launches the project's app so you can see a change working for real.
+Two companion skills close the loop from the behavior side: `/verify` exercises a change end-to-end in the running application to confirm it actually does what it's supposed to (driving the affected flow, not just the tests), and `/run` launches the project's app so you can see a change working for real. All of these are on-demand: since v2.1.215 Claude no longer runs `/verify` or `/code-review` on its own — invoke them when you want them.
 
 ## Why It Works
 
@@ -14,7 +14,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 ## When to Use It
 
 - Self-reviewing your own changes before pushing — catch bugs your eyes skipped after hours of writing the code
-- Reviewing a teammate's PR when you want a structured first pass before doing your own read-through — `/review <PR>` runs a fast single-pass, read-only review by number (with no argument it lists open PRs to pick from)
+- Reviewing a teammate's PR when you want a structured first pass before doing your own read-through — `/code-review <pr#>` reviews it by number (since v2.1.223 `/review` is an alias of `/code-review`, not a separate command)
 - Post-refactoring cleanup — run `/simplify` after a large restructuring to find and apply missed deduplication (it applies its fixes; since v2.1.154 it deliberately doesn't hunt for bugs — that's `/code-review`'s job)
 - Confirming a nontrivial change actually works before committing — `/verify` drives the affected flow end-to-end instead of trusting typecheck and unit tests alone
 - CI integration — run reviews automatically on every PR via GitHub Actions
@@ -30,11 +30,11 @@ A reviewer following a defined methodology catches more than one who "just reads
 ### Basic (Beginner)
 
 1. Make your code changes and stage them (or leave them unstaged — both work)
-2. Run `/code-review` in your Claude Code session — optionally pass an effort level and a target — a path, PR number, branch name, or ref range like `main...my-feature` (`/code-review high src/api/`). Effort levels:
+2. Run `/code-review` in your Claude Code session — optionally pass an effort level and a target — a path, PR number, branch name, or ref range like `main...my-feature` (`/code-review high src/api/`). With no effort level it reuses the level you typed last (v2.1.223+). Effort levels:
    - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
    - High: broader coverage, may surface uncertain findings — good for thorough review
    - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
-3. Claude analyzes the diff and reports findings grouped by severity
+3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 the review runs as a background subagent, so the review work doesn't fill your conversation
 4. Optionally, add `--fix` to have Claude auto-apply its findings: `/code-review --fix`
 5. Or add `--comment` to post findings as inline PR comments: `/code-review --comment`
 

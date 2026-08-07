@@ -3,7 +3,7 @@
 
 ## What It Is
 
-Model & Effort Selection lets you match the model and the reasoning depth to what each task needs, instead of running everything at one setting. Claude Code ships multiple models (Fable — the Claude 5 flagship — for the hardest, longest-running tasks, Opus for deep reasoning, Sonnet for everyday coding, Haiku for fast, cheap work; availability varies by plan) plus an adjustable effort level that controls how much thinking the model spends per response. You choose per task, per session, or per agent — and switching takes seconds. Since Sonnet 5, the everyday tier delivers top-tier coding and tool use at Sonnet pricing — escalate for reasoning depth, not code quality.
+Model & Effort Selection lets you match the model and the reasoning depth to what each task needs, instead of running everything at one setting. Claude Code ships multiple models (Fable — the Claude 5 flagship — for the hardest, longest-running tasks, Opus for deep reasoning, Sonnet for everyday coding, Haiku for fast, cheap work; availability varies by plan) plus an adjustable effort level that controls how much thinking the model spends per response. You choose per task, per session, or per agent — and switching takes seconds. Since Sonnet 5, the everyday tier delivers top-tier coding and tool use at Sonnet pricing — escalate for reasoning depth, not code quality. And since Opus 5 (v2.1.219, now the default Opus model), the deep-reasoning tier carries a 1M-token context window.
 
 ## Why It Works
 
@@ -29,7 +29,7 @@ No single model configuration is best at everything; matching the model and effo
 1. Check your current model with `/model` — it lists available models and saves your choice as the default for new sessions.
 2. Switch based on the task ahead: pick Fable or Opus before a gnarly debugging session, Haiku for a batch of mechanical renames.
 3. Adjust reasoning depth with `/effort` (`low`, `medium`, `high`, `xhigh`, `max`, or `auto`; available levels vary by model, and an unsupported level falls back to the highest supported level at or below the one you set) — lower effort responds faster and costs less, higher effort thinks longer on hard problems. The menu also offers `ultracode`, a setting rather than a level: it sends `xhigh` and additionally has Claude orchestrate dynamic workflows for substantive tasks. For one hard turn, include `ultrathink` anywhere in the prompt — deeper reasoning without changing the session setting.
-4. On Opus, toggle `/fast` for fast mode: the same model with faster output at a higher cost per token — worth it for interactive back-and-forth where latency matters more than cost. On subscription plans, fast mode bills via usage credits outside your plan limits.
+4. On Opus (Opus 5 and Opus 4.8 — v2.1.219 dropped Opus 4.7 from fast mode), toggle `/fast` for fast mode: the same model with faster output at a higher cost per token — worth it for interactive back-and-forth where latency matters more than cost. On subscription plans, fast mode bills via usage credits outside your plan limits.
 5. Continue working. The conversation context carries over — the model you switch to sees everything discussed so far, though the first turn after a switch re-reads the history without cached context, so switch at natural task boundaries.
 
 ### Composing with Other Approaches (Intermediate)
