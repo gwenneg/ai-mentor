@@ -699,15 +699,18 @@ func (r *runner) runCase(c evalCase) result {
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
-// the isolated temp dir. When neither ANTHROPIC_API_KEY nor
-// CLAUDE_CODE_OAUTH_TOKEN is present (local runs), the developer's credential
-// is copied in so auth still works; in CI either env var passing through is
-// the whole auth story — the CLI honors both.
+// the isolated temp dir, plus AI_MENTOR_TELEMETRY — the runner is a footer
+// consumer in the skill's sense, so the skill emits the machine-readable
+// line it parses; sessions without a consumer leave the variable unset.
+// When neither ANTHROPIC_API_KEY nor CLAUDE_CODE_OAUTH_TOKEN is present
+// (local runs), the developer's credential is copied in so auth still works;
+// in CI either env var passing through is the whole auth story — the CLI
+// honors both.
 func caseEnv(home string) ([]string, error) {
 	env := slices.DeleteFunc(os.Environ(), func(kv string) bool {
 		return strings.HasPrefix(kv, "HOME=")
 	})
-	env = append(env, "HOME="+home)
+	env = append(env, "HOME="+home, "AI_MENTOR_TELEMETRY=1")
 	if os.Getenv("ANTHROPIC_API_KEY") != "" || os.Getenv("CLAUDE_CODE_OAUTH_TOKEN") != "" {
 		return env, nil
 	}

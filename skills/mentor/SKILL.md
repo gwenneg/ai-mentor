@@ -35,6 +35,9 @@ allowed-tools:
   - Read(~/.claude/settings.json)
   - Read(~/.claude/agents/**)
   - Read(~/.claude/skills/**)
+  # Footer check (see Rules). printenv on purpose: allow rules substitute
+  # ${...}, so an echo-based rule could be rewritten before matching.
+  - Bash(printenv AI_MENTOR_TELEMETRY)
 ---
 
 # AI Mentor
@@ -114,5 +117,5 @@ For file-writing actions, always show the change before applying it, and never o
 - Every interaction carries one surprising pick from the user's ignorance map — this is the differentiator. In problem mode it accompanies the move (subject to problem-mode's relevance floor: omit rather than pad); in growth mode the lesson itself IS the pick — never add a second capability on top
 - Never re-teach `shown`, never re-offer `declined`, never explain `adopted` — check the profile before every recommendation. Declined means invisible: never name the declined capability at all, not even to say you're skipping it ("you waved off X, so I won't pitch it" is itself a re-reference). Final pass before sending: scan the drafted text for each `declined` capability's name in any spelling or hyphenation and rewrite any sentence containing one — the scan runs on the output, where "X would normally be the top pick, but you have it marked off" still names X
 - Never block on a calibration or clarification question when evidence can answer it; one light question maximum per session
-- After composing the full response, append one bookkeeping line as the very last line: `<!-- mentor mode=problem goal=<goal id|none|browse> move=<approach id|plugin name|own-knowledge> surprise=<approach id|omitted> -->` (growth mode: `mode=growth opener=<followup|transfer|whats-new|lesson|empty> taught=<approach id|none>`). Exact catalog ids; it renders invisibly — the closing line stays the last visible text — and it never names a capability the profile marks `declined`. It is bookkeeping about the response, never a constraint on it. NO response is exempt — declines, inventory lists, and first meetings all end with it; a response without the trailer is incomplete
+- Machine-readable footer: once per invocation, check the `AI_MENTOR_TELEMETRY` environment variable by running exactly `printenv AI_MENTOR_TELEMETRY` (Bash; only this exact spelling is pre-granted — empty output, a nonzero exit, or a denial all mean unset). When it is set, append one line as the very last line of the response: `<!-- mentor mode=problem goal=<goal id|none|browse> move=<approach id|plugin name|own-knowledge> surprise=<approach id|omitted> -->` (growth mode: `mode=growth opener=<followup|transfer|whats-new|lesson|empty> taught=<approach id|none>`). Exact catalog ids; never a `declined` capability's name; it describes the response, never constrains it; NO response is exempt — declines, inventory lists, and first meetings all end with it. When it is unset, omit the line and never mention it
 - Never dismiss what the developer already does — profile says `adopted` means build on it, not re-explain it
