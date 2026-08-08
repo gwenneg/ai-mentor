@@ -266,6 +266,89 @@ func TestPermissionDenials(t *testing.T) {
 	}
 }
 
+func TestProfileReadSucceeded(t *testing.T) {
+	use := `{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"/tmp/h/.ai-mentor/profile.md"}}]}}`
+	okRes := `{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","content":"| hookify | adopted |"}]}}`
+	errRes := `{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":"permission denied"}]}}`
+	if !profileReadSucceeded(use + "\n" + okRes) {
+		t.Error("non-error profile tool_result must count as a successful read")
+	}
+	if profileReadSucceeded(use + "\n" + errRes) {
+		t.Error("is_error tool_result must not count as a successful read")
+	}
+	if profileReadSucceeded(okRes) {
+		t.Error("tool_result without a matching profile tool_use must not count")
+	}
+	otherUse := strings.ReplaceAll(use, ".ai-mentor/profile.md", "orders.go")
+	if profileReadSucceeded(otherUse + "\n" + okRes) {
+		t.Error("a successful Read of a non-profile file must not count")
+	}
+}
+
+func TestProfileGap(t *testing.T) {
+	seeded := []string{"hookify"}
+	readDenied := []string{"Read(/home/runner/.ai-mentor/profile.md)"}
+	if profileGap(seeded, readDenied, false) == "" {
+		t.Error("seeded profile + denied read + no success must label the gap")
+	}
+	if profileGap(nil, readDenied, false) != "" {
+		t.Error("a case with no seeded profile has nothing to be blind to")
+	}
+	if profileGap(seeded, readDenied, true) != "" {
+		t.Error("a successful profile read means the subject saw the state")
+	}
+	if profileGap(seeded, []string{"Write(/home/runner/.ai-mentor/profile.md)"}, false) != "" {
+		t.Error("write-only denials are not read blindness — no reads were attempted")
+	}
+	if profileGap(seeded, nil, false) != "" {
+		t.Error("no read attempt at all is a behavior miss, never an instrument gap")
+	}
+}
+
+func TestWithGapLabelsRecordAlwaysReasonOnFail(t *testing.T) {
+	gap := "profile-blind: seeded profile reads denied, none succeeded"
+	fail := withGap(result{verdict: vFail, reason: "structural: growth opener: got \"lesson\""}, gap)
+	if fail.instrumentGap != gap {
+		t.Errorf("FAIL must carry the gap field, got %q", fail.instrumentGap)
+	}
+	if !strings.HasPrefix(fail.reason, "instrument-gap: "+gap+" | structural:") {
+		t.Errorf("FAIL reason must lead with the gap label, got %q", fail.reason)
+	}
+	pass := withGap(result{verdict: vPass, reason: "ok"}, gap)
+	if pass.instrumentGap != gap || pass.reason != "ok" {
+		t.Errorf("PASS keeps its reason but still records the gap, got reason %q gap %q", pass.reason, pass.instrumentGap)
+	}
+	untouched := withGap(result{verdict: vFail, reason: "x"}, "")
+	if untouched.instrumentGap != "" || untouched.reason != "x" {
+		t.Error("empty gap must change nothing")
+	}
+	rec := toRecord(fail, 1, 1)
+	if rec.InstrumentGap != gap {
+		t.Errorf("record must carry instrument_gap, got %q", rec.InstrumentGap)
+	}
+}
+
+func TestRenderReportInstrumentGapLine(t *testing.T) {
+	c := evalCase{Group: "B", ID: "B06"}
+	gap := "profile-blind: seeded profile reads denied, none succeeded"
+	perEpoch := []result{
+		{c: c, verdict: vPass},
+		{c: c, verdict: vFail, reason: "instrument-gap: " + gap + " | structural: x", instrumentGap: gap},
+	}
+	folded := aggregateEpochs(slices.Clone(perEpoch), 2)
+	report := renderReport(folded, perEpoch)
+	if want := "Instrument gaps: 1/2 epochs"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
+	}
+	if want := "- B06 (FAIL): " + gap; !strings.Contains(report, want) {
+		t.Errorf("report missing gap detail %q; got:\n%s", want, report)
+	}
+	clean := renderReport(folded, []result{{c: c, verdict: vPass}})
+	if strings.Contains(clean, "Instrument gaps:") {
+		t.Error("gap-free runs must not print the instrument-gap section")
+	}
+}
+
 func TestRenderReportDenialsLine(t *testing.T) {
 	c := evalCase{Group: "A", ID: "A01"}
 	perEpoch := []result{

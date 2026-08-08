@@ -256,6 +256,11 @@ type result struct {
 	profile  string   // after-run profile content, for records
 	judgeRaw string   // judge's raw reply, for records / calibration review
 	denials  []string // denied tool names from the CLI result envelope (S11: observed, never gated yet)
+	// instrumentGap marks an epoch whose conditions the harness itself
+	// broke (e.g. the subject never got to read its seeded profile) —
+	// labeled so such epochs aren't read as behavior regressions.
+	// Verdicts and gating are unchanged by the label.
+	instrumentGap string
 }
 
 func errResult(c evalCase, err error) result {
@@ -636,14 +641,21 @@ func (r *runner) runCase(c evalCase) result {
 	}
 	var responses []string
 	var denials []string
+	profileRead := false
 	for _, p := range prompts {
-		resp, den, err := r.invoke(p, workdir, env)
+		resp, den, pread, err := r.invoke(p, workdir, env)
 		if err != nil {
 			return errResult(c, err)
 		}
 		responses = append(responses, resp)
 		denials = append(denials, den...)
+		profileRead = profileRead || pread
 	}
+	// Profile-blind instrument gap: the case seeded a profile the subject
+	// never managed to read (every attempt denied — the wrong-home path
+	// artifact exists only under the sandbox's temp HOME). Labeled on
+	// every return below; never verdict-affecting.
+	gap := profileGap(seeded, denials, profileRead)
 	profile := readFile(filepath.Join(home, profileRel))
 	joined := strings.Join(responses, runSeparator)
 	// B07's read-attempt assertion rides the denial channel: a denied Read
@@ -652,12 +664,12 @@ func (r *runner) runCase(c evalCase) result {
 	if c.ID == "B07" {
 		for _, d := range denials {
 			if strings.Contains(d, ".claude/projects") {
-				return result{c: c, verdict: vFail, reason: "deterministic: stored-transcript read attempted: " + d, response: joined, profile: profile, denials: denials}
+				return withGap(result{c: c, verdict: vFail, reason: "deterministic: stored-transcript read attempted: " + d, response: joined, profile: profile, denials: denials}, gap)
 			}
 		}
 	}
 	if reason := runDetChecks(c.ID, joined, profile); reason != "" {
-		return result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile, denials: denials}
+		return withGap(result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile, denials: denials}, gap)
 	}
 	gating, advisory := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted)
 	if gating == trailerMissing {
@@ -670,10 +682,10 @@ func (r *runner) runCase(c evalCase) result {
 			res.reason = strings.TrimSpace("advisory-structural: trailer missing (judge-fallback epoch) | " + res.reason)
 		}
 		res.denials = denials
-		return res
+		return withGap(res, gap)
 	}
 	if gating != "" {
-		return result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile, denials: denials}
+		return withGap(result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile, denials: denials}, gap)
 	}
 	sources := r.catalogSources(taughtIDs(profile, seeded))
 	res := r.judgeCase(c, responses, joined, profile, sources)
@@ -683,7 +695,7 @@ func (r *runner) runCase(c evalCase) result {
 		res.reason = strings.TrimSpace("advisory-structural: " + advisory + " | " + res.reason)
 	}
 	res.denials = denials
-	return res
+	return withGap(res, gap)
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
@@ -953,18 +965,20 @@ func (r *runner) prompts(c evalCase) ([]string, error) {
 }
 
 // invoke runs one mentor invocation and extracts the JSON "result" field,
-// plus any permission denials the CLI's result envelope reports.
-func (r *runner) invoke(prompt, dir string, env []string) (string, []string, error) {
+// plus any permission denials the CLI's result envelope reports, plus
+// whether a profile read succeeded (the profile-blind gap's counterpart
+// signal — denials alone can't prove the subject never saw the profile).
+func (r *runner) invoke(prompt, dir string, env []string) (string, []string, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	out, err := runClaude(ctx, dir, env,
 		"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
 		"--output-format", "stream-json", "--verbose", "--max-turns", "30")
 	if err != nil {
-		return "", nil, err
+		return "", nil, false, err
 	}
 	text, err := assistantText(out)
-	return text, permissionDenials(out), err
+	return text, permissionDenials(out), profileReadSucceeded(out), err
 }
 
 // permissionDenials extracts denied tool names from the stream-json result
@@ -1008,6 +1022,82 @@ func permissionDenials(out string) []string {
 		}
 	}
 	return denials
+}
+
+// profileReadSucceeded reports whether the stream-json transcript contains
+// a Read of an .ai-mentor/profile.md path whose tool_result came back
+// without is_error. Tool results always follow their tool_use in the
+// stream, so one pass suffices: collect profile-Read tool_use ids from
+// assistant messages, match non-error tool_results from user messages.
+func profileReadSucceeded(out string) bool {
+	ids := map[string]bool{}
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			continue
+		}
+		msg, _ := m["message"].(map[string]any)
+		content, _ := msg["content"].([]any)
+		for _, c := range content {
+			cm, _ := c.(map[string]any)
+			switch {
+			case m["type"] == "assistant" && cm["type"] == "tool_use" && cm["name"] == "Read":
+				input, _ := cm["input"].(map[string]any)
+				if p, _ := input["file_path"].(string); strings.Contains(p, ".ai-mentor/profile.md") {
+					if id, _ := cm["id"].(string); id != "" {
+						ids[id] = true
+					}
+				}
+			case m["type"] == "user" && cm["type"] == "tool_result":
+				id, _ := cm["tool_use_id"].(string)
+				if isErr, _ := cm["is_error"].(bool); ids[id] && !isErr {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// profileGap labels the profile-blind instrument gap: the case seeded a
+// profile fixture, at least one profile read was denied, and none
+// succeeded — the subject ran blind to state the case's expectations
+// assume it saw. The wrong-home absolute paths behind these denials
+// (/home/runner, /root) are an isolation artifact: outside the sandbox the
+// user's real home and the inferred path coincide, so the labeled epochs
+// measure the harness, not the skill. A case that never attempted a
+// profile read at all is NOT labeled — skipping the read is a genuine
+// behavior miss, not a harness artifact.
+func profileGap(seeded []string, denials []string, profileRead bool) string {
+	if len(seeded) == 0 || profileRead {
+		return ""
+	}
+	for _, d := range denials {
+		if strings.HasPrefix(d, "Read(") && strings.Contains(d, ".ai-mentor/profile.md") {
+			return "profile-blind: seeded profile reads denied, none succeeded"
+		}
+	}
+	return ""
+}
+
+// withGap attaches an instrument-gap label to an epoch result: always in
+// the record field, and prefixed onto the reason when the epoch FAILed so
+// reports attribute the flip to the harness rather than the skill.
+// Verdicts and gating are deliberately unchanged — a systematically blind
+// harness should stay loud, not absorb itself.
+func withGap(res result, gap string) result {
+	if gap == "" {
+		return res
+	}
+	res.instrumentGap = gap
+	if res.verdict == vFail {
+		res.reason = "instrument-gap: " + gap + " | " + res.reason
+	}
+	return res
 }
 
 // assistantText extracts what the user would have seen: the concatenated
@@ -1456,17 +1546,21 @@ func checkCoverage(repo string, known map[string]bool) error {
 // bounded ERROR retry — without them, a retried record is indistinguishable
 // from an extra epoch.
 type record struct {
-	Case     string `json:"case"`
-	Group    string `json:"group"`
-	Epoch    int    `json:"epoch"`
-	Attempt  int    `json:"attempt"`
-	Verdict  string `json:"verdict"`
-	Trailer  string   `json:"trailer,omitempty"` // raw mentor trailer fields (V2 Phase 1: observed, never gated)
-	Denials  []string `json:"permission_denials,omitempty"` // denied tool names (S11: observed, never gated yet)
-	Reason   string   `json:"reason,omitempty"`
-	Judge    string   `json:"judge,omitempty"`
-	Response string   `json:"response,omitempty"`
-	Profile  string   `json:"profile,omitempty"`
+	Case    string   `json:"case"`
+	Group   string   `json:"group"`
+	Epoch   int      `json:"epoch"`
+	Attempt int      `json:"attempt"`
+	Verdict string   `json:"verdict"`
+	Trailer string   `json:"trailer,omitempty"`            // raw mentor trailer fields (V2 Phase 1: observed, never gated)
+	Denials []string `json:"permission_denials,omitempty"` // denied tool names (S11: observed, never gated yet)
+	// InstrumentGap labels epochs whose conditions the harness broke
+	// (profile-blind: seeded profile reads all denied) — read these FAILs
+	// as harness artifacts, not behavior regressions.
+	InstrumentGap string `json:"instrument_gap,omitempty"`
+	Reason        string `json:"reason,omitempty"`
+	Judge         string `json:"judge,omitempty"`
+	Response      string `json:"response,omitempty"`
+	Profile       string `json:"profile,omitempty"`
 }
 
 // reTrailer extracts the mentor's machine-readable trailer (V2 Phase 1:
@@ -1484,7 +1578,8 @@ func toRecord(r result, epoch, attempt int) record {
 	return record{
 		Case: r.c.ID, Group: r.c.Group, Epoch: epoch, Attempt: attempt,
 		Verdict: r.verdict, Trailer: parseTrailer(r.response), Denials: r.denials,
-		Reason: r.reason, Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
+		InstrumentGap: r.instrumentGap,
+		Reason:        r.reason, Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
 	}
 }
 
@@ -1581,6 +1676,22 @@ func renderReport(results, perEpoch []result) string {
 	fmt.Fprintf(&b, "Permission denials: %d/%d epochs had a denied tool call (observed only; nothing gates on this yet).\n", denied, len(perEpoch))
 	for _, d := range deniedDetail {
 		fmt.Fprintf(&b, "- %s\n", d)
+	}
+	// Instrument gaps: epochs whose conditions the harness broke (labeled,
+	// never gated). Printed only when present — most runs have none.
+	gapped := 0
+	var gapDetail []string
+	for _, r := range perEpoch {
+		if r.instrumentGap != "" {
+			gapped++
+			gapDetail = append(gapDetail, fmt.Sprintf("%s (%s): %s", r.c.ID, r.verdict, r.instrumentGap))
+		}
+	}
+	if gapped > 0 {
+		fmt.Fprintf(&b, "Instrument gaps: %d/%d epochs ran blind to their seeded profile — read these as harness artifacts, not behavior regressions (labeled only; verdicts and gating unchanged).\n", gapped, len(perEpoch))
+		for _, d := range gapDetail {
+			fmt.Fprintf(&b, "- %s\n", d)
+		}
 	}
 	for _, g := range groupsIn(results) {
 		fmt.Fprintf(&b, "\n## Group %s\n\n| Case | Verdict | Reason |\n|------|---------|--------|\n", groupTitle(g))
