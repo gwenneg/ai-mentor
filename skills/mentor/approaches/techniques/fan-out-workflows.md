@@ -29,7 +29,7 @@ Embarrassingly parallel problems decompose into independent units processed in p
 1. Ask for a workflow in your prompt — say "use a workflow to ..." or include the keyword `ultracode` — and Claude writes the orchestration script (v2.1.154+, paid plans; on Pro, enable Dynamic workflows in `/config`). `/effort ultracode` makes the opt-in session-wide: Claude plans a workflow for each substantive task instead of waiting to be asked. The bundled `/deep-research` command is a ready-made workflow of this shape
 2. In the script, `agent()` spawns individual workers with specific prompts
 3. `parallel()` runs a batch and waits for all results; `pipeline()` runs one agent per item in a list
-4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself)
+4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory medium size guideline — aim for fewer than 15 agents (v2.1.219+); pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key
 
 Example — review three services in parallel:
 ```javascript

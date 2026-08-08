@@ -54,7 +54,7 @@ Steps:
 
 ### Advanced Patterns
 
-- **Forked context with `context: fork`**: Run a skill in an isolated subagent context so it does not pollute your main session's context window. The forked skill does not see your conversation history, so its instructions must be self-contained; it executes, returns a summary, and your main session stays clean. Useful for skills that read many files.
+- **Forked context with `context: fork`**: Run a skill in an isolated subagent context so it does not pollute your main session's context window. The forked skill does not see your conversation history, so its instructions must be self-contained; it executes, returns a summary, and your main session stays clean. Useful for skills that read many files. Since v2.1.218, skills with `context: fork` run in the background by default — opt out per skill with `background: false`.
 - **Skills with reference docs**: Bundle project-specific reference material (API schemas, style guides, architecture docs) in the skill directory. The skill instructions tell Claude to read these before generating code, ensuring output matches your conventions without relying on the main context.
 - **Argument parsing patterns**: Use structured argument formats in your SKILL.md to handle multiple parameters: `/create-endpoint POST /api/users CreateUserRequest`. Use positional substitutions — `$0` for the method, `$1` for the path, `$2` for the request type — instead of asking Claude to parse the raw `$ARGUMENTS` string. Better still, name them: an `arguments: [method, path, request]` frontmatter field maps names to positions so the skill body can say `$method` and `$path`.
 

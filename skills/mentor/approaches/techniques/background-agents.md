@@ -32,7 +32,7 @@ Background agents convert attention-bound work into queue-bound work: thirty sec
 4. Press `Enter` or `→` on a row to attach — the full conversation takes over your terminal, opening with a recap of what happened while you were away. Press `←` on an empty prompt to detach and go back to the table.
 5. Review the result like any change: the diff lives on the session's worktree branch, ready to merge or discard.
 
-Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"` dispatches straight from your shell (add `--name` to label it); `/background` (alias `/bg`) pushes your *current* interactive session into the background mid-task; and `/fork` (v2.1.207+) copies the conversation so far into a *new* background session with its own row in agent view, leaving your current session running untouched (the in-session subagent `/fork` used to launch is now `/subtask` — see Subagent Delegation).
+Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"` dispatches straight from your shell (add `--name` to label it); `/background` (alias `/bg`) pushes your *current* interactive session into the background mid-task; and `/fork` (v2.1.207+) copies the conversation so far into a *new* background session with its own row in agent view, leaving your current session running untouched (the in-session subagent `/fork` used to launch is now `/subtask` — see Subagent Delegation); since v2.1.221 the forked session creates a new worktree of its own instead of working in the original session's checkout.
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -44,13 +44,13 @@ Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"
 
 - **Fleet dispatch**: dispatch several sessions from agent view in a row — one per module, one per bug — and use `claude agents --cwd <path>` to filter the board per project. `@<repo>` in a dispatch prompt targets a child repository from a parent directory, and `! <command>` runs a plain shell command as a monitored background job on the same board — no model in the loop.
 - **Shell-first management**: skip the board entirely — `claude attach`, `claude logs`, `claude stop`, `claude respawn`, and `claude rm` manage background sessions straight from your shell, and `claude daemon status` checks on the machinery running them.
-- **Finish-line automation**: background agents that complete code work in a worktree commit, push, and open a draft PR when they finish (v2.1.198+), so "review the result" means reviewing a PR, not hunting for a branch.
+- **Finish-line automation**: background sessions commit and push to preserve work, open a draft PR only when the task calls for one (v2.1.221 — before that they always opened one, v2.1.198+), follow your CLAUDE.md git instructions, and always end by reporting where the work lives.
 - **Notification wiring**: while agent view is open, blocked or finished sessions fire the `Notification` hook with `agent_needs_input` / `agent_completed` events — wire it to a desktop notification or Slack webhook, park the board in a spare tab, and stop watching it.
 
 ## Common Pitfalls
 
 - **Underspecified dispatches**: a background agent can't ask you cheap clarifying questions mid-flow the way an interactive session can — vague tasks come back wrong or blocked. Spend the extra minute specifying the finish line.
-- **Forgetting the work lands in a worktree**: your working directory won't show the changes. Check the session's worktree (peek shows the path) or wait for the draft PR rather than concluding the agent did nothing.
+- **Forgetting the work lands in a worktree**: your working directory won't show the changes. Check the session's worktree (peek shows the path) or its final report of where the work lives rather than concluding the agent did nothing.
 - **Deleting sessions carelessly**: deleting a session from agent view also removes the worktree Claude created for it, *including uncommitted changes*. Merge or push what you want to keep first.
 - **Dispatching conflicting tasks**: two agents editing the same module produce two divergent branches you must reconcile. Split parallel work along module boundaries, not within them.
 

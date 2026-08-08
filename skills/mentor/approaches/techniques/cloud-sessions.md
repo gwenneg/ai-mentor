@@ -36,11 +36,11 @@ Cloud sessions decouple the work from the workstation: you keep the judgment-hea
 
 - **Plan locally, execute remotely**: collaborate on the plan in local plan mode, commit the plan file, push, then `claude --cloud "Execute the migration plan in docs/migration-plan.md"` — your judgment on strategy, cloud autonomy on execution.
 - **Cloud sessions plus code review**: `/autofix-pr` on a PR branch (requires the Claude GitHub App on the repo) spawns a web session that watches the PR — pushing fixes for clear CI failures and review comments, asking you first when a request is ambiguous or architecturally significant.
-- **Cloud sessions plus plan mode, via ultraplan**: draft and review a plan in a web session while you keep working; comment on sections in the browser, then execute remotely or send the plan back to your terminal.
 
 ### Advanced Patterns
 
 - **Parallel fleets**: fire several `--cloud` tasks back to back — independent sandboxes, no shared state, no coordination cost beyond reviewing the PRs.
+- **Self-hosted environments** (Team and Enterprise, v2.1.224+): `claude self-hosted-runner` turns your own machines or containers into a place Claude Code web, mobile, and desktop sessions can run.
 - **Tuned environments**: configure cloud environments with setup scripts (cached between runs), environment variables, and network access levels — the default "Trusted" allowlist covers package registries and common dev domains; use Custom to add your own hosts or Full for unrestricted access.
 - **Mobile-first supervision**: dispatch from the terminal before a commute, answer the one clarifying question from your phone, review the finished PR when you arrive.
 - **Remote Control — the local-machine counterpart**: when the task needs your local environment (filesystem, MCP servers, local credentials), run `/remote-control` in a running session or `claude remote-control` in server mode, then continue that session from claude.ai/code or the Claude mobile app. The session keeps executing on your machine — the phone is a window into it, and nothing moves to the cloud. Enable mobile push notifications in `/config` ("Push when Claude decides" / "Push when actions required") to get pinged when it finishes or needs a decision.
