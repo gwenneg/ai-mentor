@@ -10,7 +10,12 @@
 #     "Evals: <case ids | smoke>" marker (optional "Eval-Epochs: N", default 6)
 #     runs exactly those cases, gated and pass^k — a PR that claims to fix a
 #     case must show that case passing every epoch BEFORE merge. PRs without
-#     the marker keep the skipped-run behavior that satisfies the ruleset.
+#     the marker fall back by content: if the PR touches skills/mentor/**,
+#     the smoke tier runs at 3 epochs with strict-majority gating (release-
+#     gate semantics, NOT pass^k — this run asks "did this content PR break
+#     the product?", not "does a declared fix hold every epoch", so known
+#     single-epoch flakes absorb instead of blocking). Any other unmarked
+#     PR keeps the skipped-run behavior that satisfies the ruleset.
 #     Side effects: declare "Evals: smoke" (or add cases) when the change
 #     could ripple; the full 3-epoch suite still gates at release/next.
 #   - Manual dispatch for feature branches (pick groups/cases; gate=false
@@ -68,21 +73,45 @@ permissions:
 
 jobs:
   evals:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'release/next' || contains(github.event.pull_request.body, 'Evals:')
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      # Unmarked PRs run by content, decided before any expensive setup: a
+      # PR touching skills/mentor/** gets the auto-smoke fallback; anything
+      # else skips here in seconds (the job still reports success, which
+      # satisfies the main ruleset's required check exactly as the old
+      # job-level skip did).
+      - name: Decide scope for unmarked PRs
+        id: scope
+        if: ${{ github.event_name == 'pull_request' && github.head_ref != 'release/next' && !contains(github.event.pull_request.body, 'Evals:') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$GITHUB_REPOSITORY/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename' | grep -q '^skills/mentor/'; then
+            echo "mode=autosmoke" >> "$GITHUB_OUTPUT"
+            echo "No 'Evals:' marker but skills/mentor/ changed — running the smoke tier (3 epochs, strict-majority gate)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+            echo "No line-anchored 'Evals:' marker and no skills/mentor/ changes — nothing to run." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.scope.outputs.mode != 'skip'
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: steps.scope.outputs.mode != 'skip'
         with:
           go-version-file: tools/eval-runner/go.mod
           cache: false
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.scope.outputs.mode != 'skip'
         with:
           node-version: '24'
 
       - name: Install Claude Code CLI
+        if: steps.scope.outputs.mode != 'skip'
         run: npm install -g @anthropic-ai/claude-code
 
       # Rate-tier history: the last release-gate runs' records, downloaded
@@ -108,7 +137,9 @@ jobs:
           echo "rate history: $n past runs" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run eval suite
+        if: steps.scope.outputs.mode != 'skip'
         env:
+          SCOPE_MODE: ${{ steps.scope.outputs.mode }}
           # Auth: either secret works (the runner and the claude CLI honor
           # both). When both are set, the OAuth token wins — enforced below so
           # a stale or out-of-credit ANTHROPIC_API_KEY secret can never shadow
@@ -133,20 +164,29 @@ jobs:
           ARGS="-j $JOBS -out $GITHUB_WORKSPACE/eval-report.md -records $GITHUB_WORKSPACE/eval-records.jsonl"
           if [ -d rate-history ]; then ARGS="$ARGS -history $GITHUB_WORKSPACE/rate-history"; fi
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$HEAD_REF" != "release/next" ]; then
-            # Targeted PR run: the body's "Evals:" line names the cases this
-            # change must pass. Always gated and pass^k — a fix PR's target
-            # passing 4 of 6 epochs is not a demonstrated fix.
-            TARGETS=$(printf '%s\n' "$PR_BODY" | tr -d '\r' | sed -n 's/^Evals:[[:space:]]*//p' | head -1)
-            if [ -z "$TARGETS" ]; then
-              echo "No line-anchored 'Evals:' marker in the PR body — nothing to run." >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            EP=$(printf '%s\n' "$PR_BODY" | tr -d '\r' | sed -n 's/^Eval-Epochs:[[:space:]]*//p' | head -1)
-            ARGS="$ARGS -epochs ${EP:-6} -gate -passk"
-            if [ "$TARGETS" = "smoke" ]; then
-              ARGS="$ARGS -smoke"
+            if [ "$SCOPE_MODE" = "autosmoke" ]; then
+              # Auto-smoke fallback: no marker, but the PR touches
+              # skills/mentor/**. Strict-majority gate at 3 epochs (NOT
+              # pass^k) — this asks "did this content PR break the
+              # product?", so known single-epoch flakes absorb instead of
+              # blocking. No -history: the rate tier stays release-only.
+              ARGS="$ARGS -smoke -epochs 3 -gate"
             else
-              ARGS="$ARGS -cases $(echo $TARGETS | tr ' ' ',')"
+              # Targeted PR run: the body's "Evals:" line names the cases
+              # this change must pass. Always gated and pass^k — a fix PR's
+              # target passing 4 of 6 epochs is not a demonstrated fix.
+              TARGETS=$(printf '%s\n' "$PR_BODY" | tr -d '\r' | sed -n 's/^Evals:[[:space:]]*//p' | head -1)
+              if [ -z "$TARGETS" ]; then
+                echo "The 'Evals:' marker names no cases — nothing to run." >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              EP=$(printf '%s\n' "$PR_BODY" | tr -d '\r' | sed -n 's/^Eval-Epochs:[[:space:]]*//p' | head -1)
+              ARGS="$ARGS -epochs ${EP:-6} -gate -passk"
+              if [ "$TARGETS" = "smoke" ]; then
+                ARGS="$ARGS -smoke"
+              else
+                ARGS="$ARGS -cases $(echo $TARGETS | tr ' ' ',')"
+              fi
             fi
           else
             ARGS="$ARGS -epochs $EPOCHS"
@@ -165,7 +205,7 @@ jobs:
       # (read a sample, agree/disagree) and per-case flake history. 14-day
       # retention — calibration reviews happen within days of a run.
       - name: Upload verdict records
-        if: always()
+        if: always() && steps.scope.outputs.mode != 'skip'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: eval-records
@@ -178,7 +218,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Publish report
-        if: always()
+        if: always() && steps.scope.outputs.mode != 'skip'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
