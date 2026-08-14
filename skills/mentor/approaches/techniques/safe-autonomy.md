@@ -1,5 +1,5 @@
 # Permissions & Safe Autonomy
-*Last verified: 2026-07-12*
+*Last verified: 2026-08-15*
 
 ## What It Is
 
@@ -28,22 +28,23 @@ An agent that prompts for every `npm test` trains you to approve without reading
 1. Run `/permissions` to see every allow/ask/deny rule and which settings file each comes from.
 2. Allow the safe, frequent commands — add rules like `Bash(npm run test *)` and `Bash(git commit *)` to `.claude/settings.json`, or run `/fewer-permission-prompts` to have your transcripts scanned for read-only commands worth allowlisting.
 3. Deny the untouchables: `Read(./.env)`, `Edit(/config/production/**)`, `Bash(git push *)`. Deny always wins — rules evaluate deny, then ask, then allow, and no other settings layer can override a deny.
-4. Pick the mode for the work: `plan` to explore without edits, `default` for normal prompting, `acceptEdits` when you're fine with file changes landing without per-edit approval.
+4. Pick the mode for the work: `plan` to explore without edits, `default` (labeled Manual in the UIs) for per-action review, `acceptEdits` when you're fine with file changes landing without per-edit approval. Note the baseline moved on 2026-08-14: new sessions on Pro, Max, and Team plans now start in `auto` mode by default — a default you set yourself stays in place unless you accept the one-time switch prompt, and an organization-managed default doesn't change — so on those plans the question is often which mode to step *down* to for sensitive work.
 5. Mind the syntax details: `Bash(ls *)` needs the space before `*` (word boundary), and compound commands like `a && b` must match rules for *each* subcommand — Claude Code parses shell operators, so `Bash(safe-cmd *)` doesn't smuggle in `safe-cmd && rm -rf`.
 
 ### Composing with Other Approaches (Intermediate)
 
 - **Permissions plus autonomous loops**: allowlist the loop's inner cycle (test runner, linter, file edits via `acceptEdits`) and deny the escape hatches (pushes, deletions of test files) — the loop runs unattended and can't cheat destructively.
 - **Permissions plus hooks**: rules match patterns; hooks evaluate logic. A PreToolUse hook can block conditionally (e.g. edits to files with pending migrations) — and deny rules still apply regardless of what a hook returns.
-- **Permissions plus sandboxing**: complementary layers (enable it with `/sandbox`) — rules govern what the agent may attempt; the OS-level sandbox restricts what Bash and its child processes can reach even if a prompt injection gets past the model's judgment. With the sandbox on, sandboxed commands run without prompts by default while deny rules and content-scoped ask rules like `Bash(git push *)` still hold (only a bare `Bash` ask rule is skipped for sandboxed commands).
+- **Permissions plus sandboxing**: complementary layers (enable it with `/sandbox`) — rules govern what the agent may attempt; the OS-level sandbox restricts what Bash and its child processes can reach even if a prompt injection gets past the model's judgment. With the sandbox on, sandboxed commands run without prompts by default while deny rules and content-scoped ask rules like `Bash(git push *)` still hold (only a bare `Bash` ask rule is skipped for sandboxed commands). Sandbox credential entries can also *mask* instead of deny (`mode: "mask"`): commands see a sentinel value while the sandbox proxy injects the real credential on egress to hosts you allow — with `extract` patterns, JWT-aware `decode`, and AWS SigV4 re-signing for structured credentials (v2.1.224+) — honored only from user or managed settings, never a repository's checked-in settings.
 
 ### Advanced Patterns
 
 - **Parameter-scoped rules**: deny/ask rules can match tool parameters — `Agent(isolation:worktree)`, `Bash(run_in_background:true)` — for policies on *how* tools are used, not just which.
-- **Mode ceilings for real autonomy**: `bypassPermissions` skips prompts except those forced by explicit `ask` rules (keep it for containers/VMs — root/home `rm -rf` still trips a circuit breaker); `auto` mode auto-approves with background safety checks (all plans; on Team and Enterprise an Owner must enable it); `dontAsk` mode inverts the default — auto-denying anything not pre-approved by allow rules, for CI and restricted environments. Organizations can disable the first two via `disableBypassPermissionsMode` / `disableAutoMode` in managed settings.
+- **Mode ceilings for real autonomy**: `bypassPermissions` skips prompts except those forced by explicit `ask` rules (keep it for containers/VMs — root/home `rm -rf` still trips a circuit breaker); `auto` mode auto-approves with a classifier reviewing each action — all plans, available by default on Team and Enterprise (no Owner opt-in since the 2026-08-14 default flip), and on Pro, Max, and Team the classifier's own calls don't count toward usage limits; `dontAsk` mode inverts the default — auto-denying anything not pre-approved by allow rules, for CI and restricted environments. Organizations can disable the first two via `disableBypassPermissionsMode` / `disableAutoMode` in managed settings.
+- **Auto mode drops broad allow rules on entry**: blanket `Bash(*)`/`PowerShell(*)`, wildcarded interpreters like `Bash(python*)`, package-manager run commands, and `Agent` allow rules are suspended while auto mode is active (restored when you leave it); narrow rules like `Bash(npm test)` carry over — so tune allowlists to specific commands if you want them to keep working under the new default.
 - **Team guardrails via settings precedence**: managed settings > CLI flags > local project > shared project > user — a deny at any level cannot be re-allowed at any other level, so checked-in project denies become team-wide invariants.
 - **Third-party providers need no opt-in for auto mode** (v2.1.207+): auto mode now runs on Amazon Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry without the `CLAUDE_CODE_ENABLE_AUTO_MODE` variable those platforms previously required; administrators can still turn it off with `disableAutoMode`.
-- **"Always allow" persists across worktrees** (v2.1.207+): allow rules granted interactively now save at the repository root, so an approval given in one git worktree holds in your other worktrees and future sessions instead of re-prompting.
+- **"Always allow" persists across worktrees** (v2.1.211+): allow rules granted interactively now save to `.claude/settings.local.json` at the repository root, so an approval given in one git worktree or subdirectory holds in your other worktrees and future sessions instead of re-prompting.
 
 ## Common Pitfalls
 
