@@ -2,7 +2,9 @@
 # /ai-mentor-update skill in --auto mode and opens a PR for human review.
 #
 # Requirements before the first run:
-#   - Repository secret ANTHROPIC_API_KEY
+#   - Repository secret CLAUDE_CODE_OAUTH_TOKEN (subscription) and/or
+#     ANTHROPIC_API_KEY. When both exist the OAuth token wins (same
+#     precedence as evals.yml); the API key is only used if no token is set.
 #   - Supervise the first run (workflow_dispatch) before trusting the schedule.
 #
 # Notes:
@@ -105,11 +107,17 @@ jobs:
       - name: Run maintenance skill (headless, non-interactive)
         if: github.event_name == 'workflow_dispatch' || steps.gate.outputs.work == 'true'
         env:
+          # Same OAuth-wins credential precedence as evals.yml: when both
+          # secrets are set, the subscription token is used — enforced below
+          # so a stale or out-of-credit ANTHROPIC_API_KEY secret can never
+          # shadow a freshly added subscription token.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           STEPS: ${{ github.event.inputs.steps || '4,5' }}
           FILES: ${{ github.event.inputs.files || '5' }}
         run: |
           set -o pipefail
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then unset ANTHROPIC_API_KEY; fi
           claude -p "/ai-mentor-update --auto $STEPS --files $FILES" \
             --model claude-sonnet-5 \
             --allowedTools "WebSearch" "WebFetch" "Read" "Edit" "Write" "Glob" "Grep" \
