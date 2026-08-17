@@ -58,6 +58,7 @@ const verified = await parallel(findings.map(f =>
 - **Per-item pipelines**: Use `pipeline(items, fn)` to run one agent per item in a list; chain multiple `agent()` calls inside `fn` when an item needs staged processing.
 - **Structured output with schema**: Pass a `schema` option to `agent()` to get validated JSON output. The runtime validates the output against the schema, so you get parseable, typed results.
 - **Budget-aware loops**: Use `loop-until-dry` patterns where agents keep finding issues until a round produces zero new findings, with a budget cap to prevent runaway costs.
+- **Prefix cache staggering**: Since v2.1.229, sibling agents spawned with the same prompt prefix (e.g. one `agent()` call fanned out over many items) are staggered so later agents read the cached prefix instead of re-paying for it; disable with `CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS=0`.
 
 ## Common Pitfalls
 
