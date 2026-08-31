@@ -26,7 +26,7 @@ No single model configuration is best at everything; matching the model and effo
 
 ### Basic (Beginner)
 
-1. Check your current model with `/model` — it lists available models and saves your choice as the default for new sessions.
+1. Check your current model with `/model` — it lists available models and saves your choice as the default for new sessions. To set that starting point from the environment instead — useful for CI or a shared team default — set `ANTHROPIC_DEFAULT_MODEL` (v2.1.239+); a `/model` pick still overrides it for that session and persists across restarts.
 2. Switch based on the task ahead: pick Fable or Opus before a gnarly debugging session, Haiku for a batch of mechanical renames.
 3. Adjust reasoning depth with `/effort` (`low`, `medium`, `high`, `xhigh`, `max`, or `auto`; available levels vary by model, and an unsupported level falls back to the highest supported level at or below the one you set) — lower effort responds faster and costs less, higher effort thinks longer on hard problems. The menu also offers `ultracode`, a setting rather than a level: it sends `xhigh` and additionally has Claude orchestrate dynamic workflows for substantive tasks. For one hard turn, include `ultrathink` anywhere in the prompt — deeper reasoning without changing the session setting.
 4. On Opus (Opus 5 and Opus 4.8 — v2.1.219 dropped Opus 4.7 from fast mode), toggle `/fast` for fast mode: the same model with faster output at a higher cost per token — worth it for interactive back-and-forth where latency matters more than cost. On subscription plans, fast mode bills via usage credits outside your plan limits.
