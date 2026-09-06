@@ -26,10 +26,6 @@ allowed-tools:
   # plugin files, and ~/.claude/plugins is the installed-plugin cache location.
   - Read(/${CLAUDE_SKILL_DIR}/**)
   - Read(~/.claude/plugins/**)
-  # The mentor profile. Edit(...) is the required family — Write(path) rules
-  # never match. The Write tool auto-creates the directory; never use mkdir.
-  - Read(~/.ai-mentor/**)
-  - Edit(~/.ai-mentor/**)
   # User-level setup signals (reads under ~/.claude honor allow rules;
   # writes there would not — never write into ~/.claude).
   - Read(~/.claude/settings.json)
@@ -38,6 +34,34 @@ allowed-tools:
   # Footer check (see Rules). printenv on purpose: allow rules substitute
   # ${...}, so an echo-based rule could be rewritten before matching.
   - Bash(printenv AI_MENTOR_TELEMETRY)
+# The mentor profile is granted by hooks, not allowed-tools: an allowed-tools
+# grant lasts one turn (it clears on the user's next message), so a profile
+# update recorded on a later turn — the user reacting to the lesson, a "more"
+# that surfaces a new capability — prompted every time. Skill hooks stay
+# registered for the rest of the session. Each entry is one permission rule
+# (the `if`) plus a constant "allow": no script ships with the plugin, and
+# nothing else is pre-approved. Inside an `if` the tool name is literal, unlike
+# permission rules: Edit(...) fires for the Edit tool only and Write(...) for
+# the Write tool (creating the file included), so the profile needs both. The
+# Write tool auto-creates the directory; never mkdir.
+hooks:
+  PreToolUse:
+    - matcher: "Read"
+      hooks:
+        - type: command
+          if: "Read(~/.ai-mentor/**)"
+          command: >-
+            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"ai-mentor: profile read"}}'
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          if: "Edit(~/.ai-mentor/profile.md)"
+          command: >-
+            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"ai-mentor: profile update"}}'
+        - type: command
+          if: "Write(~/.ai-mentor/profile.md)"
+          command: >-
+            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"ai-mentor: profile update"}}'
 ---
 
 # AI Mentor
@@ -74,7 +98,7 @@ Then select the mode and **read that mode's file from the plugin root** — it i
 - Arguments or a described problem → **Problem mode**: read `problem-mode.md`
 - Bare invocation, no problem in sight → **Growth mode**: read `growth-mode.md`
 
-Profile mechanics (full schema: `profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per capability id, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent: no announcement, no "profile saved", no recap after them. Never use `mkdir` for it; the Write tool creates the directory itself. Always pass the literal `~/.ai-mentor/profile.md` path in tool calls — the tools expand `~` against the session's HOME, which is where the permission grant points; an absolute home path inferred from other paths in context breaks in sandboxed or isolated sessions.
+Profile mechanics (full schema: `profile-schema.md`): statuses `shown` / `adopted` / `declined`, one row per capability id, forward-only except user edits, which always win. Write the profile **immediately** whenever a status changes — writes are silent: no announcement, no "profile saved", no recap after them. Profile reads and writes are prompt-free on every turn of the session (two frontmatter hook entries re-grant them), so a status change on a later turn is recorded right away, never deferred. Never use `mkdir` for it; the Write tool creates the directory itself. Always pass the literal `~/.ai-mentor/profile.md` path in tool calls — the tools expand `~` against the session's HOME, which is where the permission grant points; an absolute home path inferred from other paths in context breaks in sandboxed or isolated sessions.
 
 ---
 
