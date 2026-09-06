@@ -27,7 +27,7 @@ Inserting the compiler into the generation loop replaces "generate, copy, paste,
 
 ### Basic (Beginner)
 
-1. Install the code intelligence (LSP) plugin for your language from the official marketplace — e.g. `/plugin install gopls-lsp@claude-plugins-official` for Go, or `typescript-lsp`, `pyright-lsp`, `rust-analyzer-lsp`, and others for their languages. These are marketplace-directory plugins (☑️ desk-checked as a family, not hands-on evaluated), so any mention of one by name carries that label. The language server binary itself must be installed on your machine.
+1. Install the code intelligence (LSP) plugin for your language from the official marketplace — e.g. `/plugin install gopls-lsp@claude-plugins-official` for Go, or `typescript-lsp`, `pyright-lsp`, `rust-analyzer-lsp`, and others for their languages — all ☑️ desk-checked, not hands-on evaluated; say so whenever you name one. The language server binary itself must be installed on your machine.
 2. Ask the agent to generate or modify code: "Add a `CalculateDiscount` method to the `Order` struct that returns the discounted total."
 3. The agent writes the code. The LSP immediately analyzes it and reports any diagnostics — type mismatches, missing imports, undefined references.
 4. If there are errors, the agent sees them in its context and generates a fix in the same response cycle. This may repeat for two or three iterations until the diagnostics are clean.
