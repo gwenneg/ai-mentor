@@ -264,6 +264,16 @@ func TestPermissionDenials(t *testing.T) {
 	if got := permissionDenials(`{"type":"result","result":"hi"}`); got != nil {
 		t.Errorf("absent field must yield nil (older CLI), got %v", got)
 	}
+	// A multi-line command must stay on one line so the report's bullet
+	// list survives markdown rendering; truncation counts runes, not bytes.
+	multi := `{"type":"result","result":"hi","permission_denials":[{"tool_name":"Bash","tool_input":{"command":"cd /tmp/x\n# sanity check the regex\ngrep -oE '\"[A-Z]+\"' orders.go"}},{"tool_name":"Bash","tool_input":{"command":"` + strings.Repeat("é", 81) + `"}}]}`
+	got = permissionDenials(multi)
+	if len(got) != 2 || got[0] != `Bash(cd /tmp/x # sanity check the regex grep -oE '"[A-Z]+"' orders.go)` {
+		t.Errorf("newlines must collapse to spaces, got %v", got)
+	}
+	if want := "Bash(" + strings.Repeat("é", 80) + "…)"; len(got) == 2 && got[1] != want {
+		t.Errorf("truncation must not split a multi-byte rune, got %q", got[1])
+	}
 }
 
 func TestProfileReadSucceeded(t *testing.T) {
