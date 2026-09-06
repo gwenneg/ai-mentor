@@ -53,7 +53,7 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 
 Drop-in LSP integrations for code intelligence: `clangd-lsp` (C/C++), `csharp-lsp`, `gopls-lsp` (Go), `jdtls-lsp` (Java), `kotlin-lsp`, `lua-lsp`, `php-lsp`, `pyright-lsp` (Python), `ruby-lsp`, `rust-analyzer-lsp`, `swift-lsp`, `typescript-lsp`.
 
-☑️ desk-checked as a family — uniform official wrappers around standard language servers, low risk; each requires its language-server binary on `$PATH` (the plugin errors visibly if missing). Recommend freely when the user's language matches and the binary exists or is easily installed.
+☑️ desk-checked as a family — uniform official wrappers around standard language servers, low risk; each requires its language-server binary on `$PATH` (the plugin errors visibly if missing). Recommend whenever the user's language matches and the binary exists or is easily installed — with the "not hands-on evaluated" label, like every ☑️ entry.
 
 ### Specialty
 
