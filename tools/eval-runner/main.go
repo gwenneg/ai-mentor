@@ -1015,8 +1015,12 @@ func permissionDenials(out string) []string {
 					detail, _ = input["command"].(string)
 				}
 				if detail != "" {
-					if len(detail) > 80 {
-						detail = detail[:80] + "…"
+					// One denial, one bullet: a multi-line command would
+					// otherwise split the markdown list, and a line such as
+					// "# sanity check" would render as a heading.
+					detail = strings.Join(strings.Fields(detail), " ")
+					if r := []rune(detail); len(r) > 80 {
+						detail = string(r[:80]) + "…"
 					}
 					name = name + "(" + detail + ")"
 				}
