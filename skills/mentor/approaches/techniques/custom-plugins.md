@@ -31,6 +31,7 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 3. Move components to the plugin root: `skills/`, `hooks/hooks.json`, `agents/`, `.mcp.json` — each at the top level of the plugin directory.
 4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
 5. Run `claude plugin validate .` and fix what it flags before sharing anything.
+6. If the plugin ships an eval suite, run `claude plugin eval` (v2.1.269+) to get scored, reproducible results (JSON and HTML report) against Claude Code — the same kind of regression net [LLM Evals](llm-evals.md) argues for, wired directly into the plugin toolchain.
 
 ### Composing with Other Approaches (Intermediate)
 

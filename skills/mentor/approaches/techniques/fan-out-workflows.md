@@ -29,7 +29,7 @@ Embarrassingly parallel problems decompose into independent units processed in p
 1. Ask for a workflow in your prompt — say "use a workflow to ..." or include the keyword `ultracode` — and Claude writes the orchestration script (v2.1.154+, paid plans; on Pro, enable Dynamic workflows in `/config`). `/effort ultracode` makes the opt-in session-wide: Claude plans a workflow for each substantive task instead of waiting to be asked. The bundled `/deep-research` command is a ready-made workflow of this shape
 2. In the script, `agent()` spawns individual workers with specific prompts
 3. `parallel()` runs a batch and waits for all results; `pipeline()` runs one agent per item in a list
-4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory medium size guideline — aim for fewer than 15 agents (v2.1.219+); pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key
+4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory medium size guideline — aim for fewer than 15 agents (v2.1.219+); pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key. The runtime's per-run concurrent-agent cap is itself configurable for inference-bound fan-outs via `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` (1–256, v2.1.269+)
 
 Example — review three services in parallel:
 ```javascript
@@ -61,7 +61,7 @@ const verified = await parallel(findings.map(f =>
 
 ## Common Pitfalls
 
-- **Unbounded fan-out**: Spawning 500 agents without a concurrency limit can exhaust API rate limits and produce unreliable results. The runtime caps runs at 16 concurrent agents (fewer on limited-CPU machines) and 1,000 agents per run; validate on a small slice before running the full set.
+- **Unbounded fan-out**: Spawning 500 agents without a concurrency limit can exhaust API rate limits and produce unreliable results. The runtime caps runs at 16 concurrent agents by default (fewer on limited-CPU machines, raisable up to 256 via `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`) and 1,000 agents per run; validate on a small slice before running the full set.
 - **Ignoring pipeline vs parallel**: `pipeline()` runs one agent per item in a list; `parallel()` runs a batch and waits for all of it before continuing. Pick the shape that matches whether results are consumed per item or as a whole batch.
 - **Skipping verification**: Raw fan-out results have a false-positive rate. Always add a verification phase — even a simple "does this finding still hold?" recheck — before presenting results to a human.
 - **Overly broad agent prompts**: If each agent gets the same vague prompt, you get 50 copies of shallow analysis. Give each agent specific scope: the file, the rule, the exact question to answer.

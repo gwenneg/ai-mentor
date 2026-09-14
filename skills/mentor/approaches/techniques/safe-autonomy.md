@@ -25,7 +25,7 @@ An agent that prompts for every `npm test` trains you to approve without reading
 
 ### Basic (Beginner)
 
-1. Run `/permissions` to see every allow/ask/deny rule and which settings file each comes from.
+1. Run `/permissions` to see every allow/ask/deny rule and which settings file each comes from — an Auto mode tab (v2.1.246+) lets you view and edit the classifier's own rules alongside the manual ones.
 2. Allow the safe, frequent commands — add rules like `Bash(npm run test *)` and `Bash(git commit *)` to `.claude/settings.json`, or run `/fewer-permission-prompts` to have your transcripts scanned for read-only commands worth allowlisting.
 3. Deny the untouchables: `Read(./.env)`, `Edit(/config/production/**)`, `Bash(git push *)`. Deny always wins — rules evaluate deny, then ask, then allow, and no other settings layer can override a deny.
 4. Pick the mode for the work: `plan` to explore without edits, `default` (labeled Manual in the UIs) for per-action review, `acceptEdits` when you're fine with file changes landing without per-edit approval. Note the baseline has moved: new sessions on Pro, Max, and Team plans now start in `auto` mode by default — a default you set yourself stays in place unless you accept the one-time switch prompt, and an organization-managed default doesn't change — so on those plans the question is often which mode to step *down* to for sensitive work.
@@ -45,6 +45,7 @@ An agent that prompts for every `npm test` trains you to approve without reading
 - **Team guardrails via settings precedence**: managed settings > CLI flags > local project > shared project > user — a deny at any level cannot be re-allowed at any other level, so checked-in project denies become team-wide invariants.
 - **Third-party providers need no opt-in for auto mode** (v2.1.207+): auto mode now runs on Amazon Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry without the `CLAUDE_CODE_ENABLE_AUTO_MODE` variable those platforms previously required; administrators can still turn it off with `disableAutoMode`.
 - **"Always allow" persists across worktrees** (v2.1.211+): allow rules granted interactively now save to `.claude/settings.local.json` at the repository root, so an approval given in one git worktree or subdirectory holds in your other worktrees and future sessions instead of re-prompting.
+- **Auto mode keeps narrowing its own blast radius**: a Containment Escape rule (v2.1.257+) stops auto mode from auto-approving cloud metadata-credential fetches, egress evasion, and cross-tenant reach unless your environment marks them expected; separately (v2.1.261+) a link that packs content into a public diagram renderer's URL is now treated as an upload to that site and needs an explicit ask, not a rubber stamp.
 
 ## Common Pitfalls
 

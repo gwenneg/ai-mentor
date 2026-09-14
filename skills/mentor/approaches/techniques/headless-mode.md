@@ -30,6 +30,7 @@ Headless mode turns Claude from an interactive assistant into a Unix-style comma
 3. Get structured output: `claude -p "List all exported functions in src/api/" --output-format json`
 4. The JSON output can be piped to `jq`, saved to a file, or consumed by another program — add `--json-schema` with a JSON Schema to get output conforming to a shape you define
 5. For scripts that need specific tools: `claude -p "Run the tests" --allowedTools "Bash(npm test)"` grants only the permissions your task needs
+6. On unattended hosts where no one can answer a prompt, add `--permission-prompts none` (v2.1.259+): anything that would otherwise ask is denied automatically, while the active permission mode — including auto mode — still decides everything else
 
 ### Composing with Other Approaches (Intermediate)
 

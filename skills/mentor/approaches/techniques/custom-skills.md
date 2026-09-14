@@ -64,6 +64,7 @@ Steps:
 - **Skipping the deterministic parts**: If a step should always produce the same output (timestamps, UUIDs, boilerplate), use a bundled script instead of asking the AI to generate it. AI adds variance where you want consistency.
 - **Forgetting to version the skill**: Skills live in your repo. When your project conventions change (new test framework, different directory structure), update the skill or it will generate outdated scaffolding.
 - **Overloading a single skill**: A skill that handles creation, updating, deletion, and listing is four skills pretending to be one. Keep each skill focused on one workflow.
+- **Letting unused skills sit loaded**: Every skill in scope costs context whether or not a session ever calls it. Run `/skill-doctor` (v2.1.243+) to see which loaded skills go unused and what they cost, then prune or scope them tighter.
 
 ## Sources
 
