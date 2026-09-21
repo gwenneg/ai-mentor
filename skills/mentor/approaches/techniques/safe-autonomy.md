@@ -45,6 +45,7 @@ An agent that prompts for every `npm test` trains you to approve without reading
 - **Team guardrails via settings precedence**: managed settings > CLI flags > local project > shared project > user — a deny at any level cannot be re-allowed at any other level, so checked-in project denies become team-wide invariants.
 - **Third-party providers need no opt-in for auto mode** (v2.1.207+): auto mode now runs on Amazon Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry without the `CLAUDE_CODE_ENABLE_AUTO_MODE` variable those platforms previously required; administrators can still turn it off with `disableAutoMode`.
 - **"Always allow" persists across worktrees** (v2.1.211+): allow rules granted interactively now save to `.claude/settings.local.json` at the repository root, so an approval given in one git worktree or subdirectory holds in your other worktrees and future sessions instead of re-prompting.
+- **Auto mode's default blocks keep growing**: by default the classifier also blocks requesting credentials from the cloud instance-metadata endpoint and connecting to sibling containers Claude didn't start (v2.1.251+), and it now asks you before Claude's first read of a file outside your working directories, with an option to block such reads from then on — tune both from the **Auto mode** tab under `/permissions` instead of hand-editing a settings file.
 
 ## Common Pitfalls
 

@@ -29,7 +29,7 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 1. Build and iterate the components standalone first — skills in `.claude/skills/`, hooks in settings — until they work reliably.
 2. Create the plugin directory, optionally with a manifest: `.claude-plugin/plugin.json` — if present, `name` is its only required field; without one, Claude Code auto-discovers components and derives the plugin name from the directory (only `plugin.json` ever goes inside `.claude-plugin/`).
 3. Move components to the plugin root: `skills/`, `hooks/hooks.json`, `agents/`, `.mcp.json` — each at the top level of the plugin directory.
-4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
+4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+, or a folder containing several plugins — each immediate subfolder with a manifest loads, v2.1.263+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
 5. Run `claude plugin validate .` and fix what it flags before sharing anything.
 
 ### Composing with Other Approaches (Intermediate)
@@ -42,6 +42,7 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 
 - **Internal marketplace**: a git repo with a marketplace manifest is a private plugin registry — teammates run `/plugin marketplace add your-org/your-marketplace` once and install from it like any marketplace. Keep it in a private repo for internal-only distribution.
 - **Community distribution**: submit for review via the in-app form at [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit); approved plugins are pinned to a commit SHA in the public `anthropics/claude-plugins-community` catalog and CI bumps the pin as you push.
+- **Score it before you ship it**: `claude plugin eval init` (v2.1.269+) asks what a good result looks like, then drafts a suite of test cases and the checks that grade them; `claude plugin eval .` runs the suite, by default re-running each case without the plugin too so the summary table shows the delta your plugin actually contributes, with per-run detail in `evals/results/report.html`. Every scored run, including any check that has a second model judge the reply, is a real model call on your account.
 - **Dependency constraints** (v2.1.110+): declare `dependencies` in `plugin.json` — a bare name tracks the marketplace's latest, while `{ "name": "secrets-vault", "version": "~2.1.0" }` pins a semver range so an upstream breaking release can't move the dependency under you. Resolution works off git tags named `{plugin}--v{version}`; create them with `claude plugin tag --push`. Cross-marketplace dependencies are blocked unless the root marketplace allowlists the source via `allowCrossMarketplaceDependenciesOn`.
 
 ## Common Pitfalls
