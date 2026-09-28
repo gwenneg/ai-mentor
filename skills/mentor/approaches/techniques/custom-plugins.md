@@ -29,8 +29,9 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 1. Build and iterate the components standalone first — skills in `.claude/skills/`, hooks in settings — until they work reliably.
 2. Create the plugin directory, optionally with a manifest: `.claude-plugin/plugin.json` — if present, `name` is its only required field; without one, Claude Code auto-discovers components and derives the plugin name from the directory (only `plugin.json` ever goes inside `.claude-plugin/`).
 3. Move components to the plugin root: `skills/`, `hooks/hooks.json`, `agents/`, `.mcp.json` — each at the top level of the plugin directory.
-4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
+4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+, or a folder of plugins — it loads each immediate subfolder with a manifest, v2.1.263+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
 5. Run `claude plugin validate .` and fix what it flags before sharing anything.
+6. Once the plugin does something worth measuring, run `claude plugin eval init` from its root directory — Claude proposes test cases and grading checks and writes them to `evals/`; `claude plugin eval .` then scores every case, by default re-running each once without the plugin so you can see what it actually contributes, and writes a per-run report to `evals/results/report.html` (v2.1.269+). Every run is a real model call on your account.
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -55,6 +56,7 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 
 - [Create plugins](https://code.claude.com/docs/en/plugins) — Official guide for building plugins, structure, testing, and distribution
 - [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) — Creating and distributing marketplaces, including private and community options
+- [Test plugins with evals](https://code.claude.com/docs/en/plugin-evals) — Official docs for `claude plugin eval` and `claude plugin eval init`
 
 ## Signals
 
