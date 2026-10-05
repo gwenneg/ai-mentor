@@ -29,8 +29,9 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 1. Build and iterate the components standalone first — skills in `.claude/skills/`, hooks in settings — until they work reliably.
 2. Create the plugin directory, optionally with a manifest: `.claude-plugin/plugin.json` — if present, `name` is its only required field; without one, Claude Code auto-discovers components and derives the plugin name from the directory (only `plugin.json` ever goes inside `.claude-plugin/`).
 3. Move components to the plugin root: `skills/`, `hooks/hooks.json`, `agents/`, `.mcp.json` — each at the top level of the plugin directory.
-4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
+4. Test locally: `claude --plugin-dir ./my-plugin` (the flag also accepts a `.zip` archive, v2.1.128+, or a folder of plugins — it loads each immediate subfolder that has a manifest, v2.1.269+), then `/reload-plugins` as you iterate — or scaffold with `claude plugin init` and keep the plugin in `~/.claude/skills/`, where it auto-loads every session with no flag or marketplace step. Remember your skills are now namespaced: `/my-plugin:release-notes`.
 5. Run `claude plugin validate .` and fix what it flags before sharing anything.
+6. Score what the plugin actually contributes with `claude plugin eval`: from the plugin's root, `claude plugin eval init` interviews you for what a good result looks like, drafts a suite of test cases and graders, and runs it once; `claude plugin eval .` then scores every case against the plugin, re-runs each case without it by default, and reports the delta — printed as a summary table, with per-run detail in `evals/results/report.html` (v2.1.269+). Every run and every judge-graded check is a real, billed model call.
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -55,6 +56,7 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 
 - [Create plugins](https://code.claude.com/docs/en/plugins) — Official guide for building plugins, structure, testing, and distribution
 - [Plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces) — Creating and distributing marketplaces, including private and community options
+- [Test plugins with evals](https://code.claude.com/docs/en/plugin-evals) — Official docs for `claude plugin eval` and `claude plugin eval init`
 
 ## Signals
 

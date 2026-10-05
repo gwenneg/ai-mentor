@@ -57,6 +57,7 @@ Steps:
 - **Forked context with `context: fork`**: Run a skill in an isolated subagent context so it does not pollute your main session's context window. The forked skill does not see your conversation history, so its instructions must be self-contained; it executes, returns a summary, and your main session stays clean. Useful for skills that read many files. Since v2.1.218, skills with `context: fork` run in the background by default — opt out per skill with `background: false`.
 - **Skills with reference docs**: Bundle project-specific reference material (API schemas, style guides, architecture docs) in the skill directory. The skill instructions tell Claude to read these before generating code, ensuring output matches your conventions without relying on the main context.
 - **Argument parsing patterns**: Use structured argument formats in your SKILL.md to handle multiple parameters: `/create-endpoint POST /api/users CreateUserRequest`. Use positional substitutions — `$0` for the method, `$1` for the path, `$2` for the request type — instead of asking Claude to parse the raw `$ARGUMENTS` string. Better still, name them: an `arguments: [method, path, request]` frontmatter field maps names to positions so the skill body can say `$method` and `$path`.
+- **Auditing your skill collection**: every skill in the listing adds to context on every turn whether or not Claude ever uses it — run `/skill-doctor` to see what each of yours costs in context and how often it actually gets invoked, then disable the ones that are not earning their keep (in `-p` mode it prints the report as text instead of opening the Stats tab).
 
 ## Common Pitfalls
 
@@ -69,6 +70,7 @@ Steps:
 
 - [Claude Code Skills](https://code.claude.com/docs/en/skills) — Official docs for creating custom skills in .claude/skills/ directories
 - [Skill authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) — Official guidance on writing effective SKILL.md instructions across Claude products
+- [Find unused skills](https://code.claude.com/docs/en/skills#find-unused-skills) — Official docs for `/skill-doctor`
 
 ## Signals
 

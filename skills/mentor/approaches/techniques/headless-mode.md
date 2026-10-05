@@ -42,6 +42,8 @@ Headless mode turns Claude from an interactive assistant into a Unix-style comma
 - **`--bare` for reproducible runs**: The `--bare` flag skips auto-discovery of `CLAUDE.md`, auto memory, hooks, skills, plugins, and MCP servers, so a run behaves the same on every machine regardless of local configuration. Docs recommend it for all scripted calls, and it will become the default for `-p`.
 - **Structured streaming**: Use `--output-format stream-json` to get a stream of JSON events as Claude works. Events carry a top-level type (`system`, `assistant`, `user`, `result`), with tool calls and results inside the message content, allowing your pipeline to react to intermediate steps — for example, logging tool invocations in real time. Add `--forward-subagent-text` (or set `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT`, v2.1.207+) to include subagent text and thinking blocks in that stream too, instead of only the orchestrator's own output.
 - **MCP server integration**: Headless Claude can connect to MCP servers with `--mcp-config`, giving it access to databases, APIs, or custom tools without any interactive setup: `claude -p "Query the staging database for users created today" --mcp-config mcp-servers.json`
+- **Restricted mode for untrusted drivers**: `--restricted` (or `CLAUDE_CODE_RESTRICTED=1`) starts Claude Code without the tools that run commands or code, drops `WebFetch`, confines the file tools to the working directories, loads only managed settings plus `--settings`, and refuses `bypassPermissions` — built for an evaluation harness or other automated driver on a shared machine, where you want the automation to run but not to inherit the machine's full reach. Pass `--tools` to allowlist specific tools back in (its `default` preset does not restore the removed ones).
+- **Resilient mid-stream recovery**: in non-interactive sessions — `-p` runs, Agent SDK runs, and cloud sessions — Claude Code now continues a response a server error, dropped connection, or stall cut off mid-stream, as long as the partial response has text and no unfinished tool call. One less class of pipeline failure to special-case in your retry logic.
 
 ## Common Pitfalls
 
@@ -96,6 +98,7 @@ The first week, the team notices Claude is flagging style issues they do not car
 - [Claude Code GitHub Actions](https://code.claude.com/docs/en/github-actions) — CI/CD integration with GitHub Actions
 - [Claude Code GitLab CI/CD](https://code.claude.com/docs/en/gitlab-ci-cd) — Beta GitLab pipeline integration maintained by GitLab
 - [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference) — CLI reference covering -p flag and non-interactive options
+- [Week 35 digest](https://code.claude.com/docs/en/whats-new/2026-w35) — Official announcement of restricted mode and mid-stream response recovery
 
 ## Signals
 
