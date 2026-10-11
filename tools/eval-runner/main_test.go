@@ -1391,3 +1391,166 @@ func realSuiteIDs(t *testing.T) map[string]bool {
 	}
 	return known
 }
+
+// fileToolCalls traces every Read/Write/Edit path in call order and marks a
+// failed tool_result; other tools and path-less calls are ignored.
+func TestFileToolCalls(t *testing.T) {
+	out := `{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"/home/runner/.ai-mentor/profile.md"}},{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"ls"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":"permission denied"}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t3","name":"Write","input":{"file_path":"~/.ai-mentor/profile.md","content":"x"}},{"type":"tool_use","id":"t4","name":"Edit","input":{}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t3","content":"ok"}]}}
+{"type":"result","result":"done"}`
+	got := fileToolCalls(out)
+	want := []string{"Read(/home/runner/.ai-mentor/profile.md) -> error", "Write(~/.ai-mentor/profile.md)"}
+	if !slices.Equal(got, want) {
+		t.Errorf("fileToolCalls = %v, want %v", got, want)
+	}
+	if got := fileToolCalls(`{"type":"result","result":"hi"}`); got != nil {
+		t.Errorf("a transcript without file tools must yield nil, got %v", got)
+	}
+}
+
+// Only profile paths outside the isolated HOME are foreign: the sandbox
+// path, a literal ~ or $HOME path, and non-profile files all stay out.
+func TestForeignProfileCalls(t *testing.T) {
+	home := "/tmp/eval-home-1"
+	calls := []string{
+		"Read(" + home + "/.ai-mentor/profile.md)",
+		"Read(~/.ai-mentor/profile.md)",
+		"Write($HOME/.ai-mentor/profile.md)",
+		"Read(/tmp/eval-fixture-1/orders.go)",
+		"Read(/home/runner/.ai-mentor/profile.md) -> error",
+		"Write(/home/runner/.ai-mentor/profile.md)",
+		"Read(" + home + "-other/.ai-mentor/profile.md)",
+	}
+	got := foreignProfileCalls(calls, home)
+	want := []string{
+		"Read(/home/runner/.ai-mentor/profile.md) -> error",
+		"Write(/home/runner/.ai-mentor/profile.md)",
+		"Read(" + home + "-other/.ai-mentor/profile.md)",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("foreignProfileCalls = %v, want %v", got, want)
+	}
+	if got := foreignProfileCalls(nil, home); got != nil {
+		t.Errorf("no calls must yield nil, got %v", got)
+	}
+}
+
+func TestRenderReportForeignProfileLine(t *testing.T) {
+	c := evalCase{Group: "A", ID: "A23"}
+	perEpoch := []result{
+		{c: c, verdict: vPass},
+		{c: c, verdict: vFail, foreignProfile: []string{"Write(/home/runner/.ai-mentor/profile.md)"}},
+	}
+	folded := aggregateEpochs(slices.Clone(perEpoch), 2)
+	report := renderReport(folded, perEpoch)
+	if want := "Profile paths outside the sandbox: 1/2 epochs"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
+	}
+	if want := "- A23: Write(/home/runner/.ai-mentor/profile.md)"; !strings.Contains(report, want) {
+		t.Errorf("report missing foreign-path detail %q; got:\n%s", want, report)
+	}
+}
+
+// The file-call trace and its foreign subset survive the records round-trip,
+// and stay absent from records of epochs that touched no file.
+func TestWriteRecordsFileCalls(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "records.jsonl")
+	calls := []string{"Read(~/.ai-mentor/profile.md)", "Write(/home/runner/.ai-mentor/profile.md)"}
+	rs := []record{
+		toRecord(result{c: evalCase{Group: "A", ID: "A23"}, verdict: vFail, fileCalls: calls, foreignProfile: calls[1:]}, 1, 1),
+		toRecord(result{c: evalCase{Group: "A", ID: "A12"}, verdict: vPass}, 1, 1),
+	}
+	if err := writeRecords(path, rs); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(readFile(path)), "\n")
+	var rec record
+	if err := json.Unmarshal([]byte(lines[0]), &rec); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(rec.FileCalls, calls) || !slices.Equal(rec.ForeignProfile, calls[1:]) {
+		t.Errorf("file calls must round-trip: %+v", rec)
+	}
+	if strings.Contains(lines[1], "file_calls") || strings.Contains(lines[1], "foreign_profile_calls") {
+		t.Errorf("an epoch without file calls must omit both fields: %s", lines[1])
+	}
+}
+
+// The seal closes the real home and /root for the profile path, anchored at
+// the filesystem root, and never duplicates a rule.
+func TestSealHomeRules(t *testing.T) {
+	got := sealHomeRules("/home/runner/")
+	want := []string{
+		"Read(//home/runner/.ai-mentor/**)", "Edit(//home/runner/.ai-mentor/**)",
+		"Read(//root/.ai-mentor/**)", "Edit(//root/.ai-mentor/**)",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("sealHomeRules = %v, want %v", got, want)
+	}
+	if got := sealHomeRules("/root"); len(got) != 2 {
+		t.Errorf("a real home of /root must not duplicate its rules, got %v", got)
+	}
+	if got := sealHomeRules(""); len(got) != 2 || got[0] != "Read(//root/.ai-mentor/**)" {
+		t.Errorf("an unknown real home must still seal /root, got %v", got)
+	}
+}
+
+// Every subject invocation carries the seal as --disallowedTools; an empty
+// seal adds nothing.
+func TestInvokePassesSealRules(t *testing.T) {
+	var gotArgs []string
+	orig := runClaude
+	runClaude = func(_ context.Context, _ string, _ []string, args ...string) (string, error) {
+		gotArgs = args
+		return `{"type":"result","result":"ok"}`, nil
+	}
+	t.Cleanup(func() { runClaude = orig })
+	r := &runner{sealRules: sealHomeRules("/home/runner")}
+	if _, _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
+		t.Fatal(err)
+	}
+	i := slices.Index(gotArgs, "--disallowedTools")
+	if i < 0 || i+1 >= len(gotArgs) || !strings.Contains(gotArgs[i+1], "Edit(//home/runner/.ai-mentor/**)") {
+		t.Errorf("seal rules missing from the subject args: %v", gotArgs)
+	}
+	r.sealRules = nil
+	if _, _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(gotArgs, "--disallowedTools") {
+		t.Errorf("an empty seal must add no flag: %v", gotArgs)
+	}
+}
+
+// The permission mode comes from the init line alone; a transcript without
+// one (older CLI) yields "", and the report prints the per-mode tally.
+func TestPermissionMode(t *testing.T) {
+	out := `{"type":"system","subtype":"init","permissionMode":"auto","cwd":"/tmp/x"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"hi"}]}}
+{"type":"result","result":"hi"}`
+	if got := permissionMode(out); got != "auto" {
+		t.Errorf("permissionMode = %q, want auto", got)
+	}
+	if got := permissionMode(`{"type":"result","result":"hi"}`); got != "" {
+		t.Errorf("no init line must yield empty, got %q", got)
+	}
+	c := evalCase{Group: "A", ID: "A01"}
+	perEpoch := []result{
+		{c: c, verdict: vPass, permissionMode: "auto"},
+		{c: c, verdict: vPass, permissionMode: "default"},
+		{c: c, verdict: vPass, permissionMode: "auto"},
+	}
+	report := renderReport(aggregateEpochs(slices.Clone(perEpoch), 3), perEpoch)
+	if want := "Permission mode: auto 2, default 1 of 3 epochs"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
+	}
+	if strings.Contains(renderReport(aggregateEpochs([]result{{c: c, verdict: vPass}}, 1), []result{{c: c, verdict: vPass}}), "Permission mode:") {
+		t.Error("report must omit the mode line when no epoch carried one")
+	}
+	rec := toRecord(result{c: c, verdict: vPass, permissionMode: "auto"}, 1, 1)
+	if rec.PermissionMode != "auto" {
+		t.Errorf("record must carry the mode: %+v", rec)
+	}
+}

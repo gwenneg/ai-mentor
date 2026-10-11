@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -256,6 +257,12 @@ type result struct {
 	profile  string   // after-run profile content, for records
 	judgeRaw string   // judge's raw reply, for records / calibration review
 	denials  []string // denied tool names from the CLI result envelope (S11: observed, never gated yet)
+	// fileCalls is every Read/Write/Edit path the subject touched, in order;
+	// foreignProfile is the subset that hit an .ai-mentor/profile.md outside
+	// the isolated HOME (observed, never gated).
+	fileCalls      []string
+	foreignProfile []string
+	permissionMode string // the session's permission mode from the init line (observed)
 	// instrumentGap marks an epoch whose conditions the harness itself
 	// broke (e.g. the subject never got to read its seeded profile) —
 	// labeled so such epochs aren't read as behavior regressions.
@@ -608,6 +615,30 @@ type runner struct {
 	ground        groundTruth       // capability + fixture facts inlined into judge prompts
 	specs         map[string]v2Spec // machine expectations — the V2 deterministic contract
 	today         string            // YYYY-MM-DD
+	sealRules     []string          // --disallowedTools rules closing the real home's profile path (sealHomeRules)
+}
+
+// sealHomeRules builds the permission deny rules that keep every case inside
+// its isolated HOME. The subject sometimes guesses the runner's real home
+// for the profile (/home/runner, /root) instead of the literal ~ path; when
+// the CLI allows that call, every concurrent case shares one file, the
+// subject sees rows it never earned, and its own rows vanish from the file
+// the harness inspects. A deny rule beats any allow rule, so such a guess
+// fails loudly (a denial in the result envelope) exactly as it did on the
+// CLI versions the suite's history was measured on. The double slash
+// anchors at the filesystem root — a single one is project-root-relative.
+func sealHomeRules(realHome string) []string {
+	var rules []string
+	seen := map[string]bool{}
+	for _, h := range []string{realHome, "/root"} {
+		h = strings.Trim(h, "/")
+		if h == "" || seen[h] {
+			continue
+		}
+		seen[h] = true
+		rules = append(rules, "Read(//"+h+"/.ai-mentor/**)", "Edit(//"+h+"/.ai-mentor/**)")
+	}
+	return rules
 }
 
 // runCase executes one case in a fresh temp HOME and returns its judged result.
@@ -641,21 +672,35 @@ func (r *runner) runCase(c evalCase) result {
 	}
 	var responses []string
 	var denials []string
+	var fileCalls []string
+	var mode string
 	profileRead := false
 	for _, p := range prompts {
-		resp, den, pread, err := r.invoke(p, workdir, env)
+		resp, den, calls, pread, pm, err := r.invoke(p, workdir, env)
 		if err != nil {
 			return errResult(c, err)
 		}
 		responses = append(responses, resp)
 		denials = append(denials, den...)
+		fileCalls = append(fileCalls, calls...)
 		profileRead = profileRead || pread
+		if pm != "" {
+			mode = pm
+		}
 	}
 	// Profile-blind instrument gap: the case seeded a profile the subject
 	// never managed to read (every attempt denied — the wrong-home path
 	// artifact exists only under the sandbox's temp HOME). Labeled on
 	// every return below; never verdict-affecting.
 	gap := profileGap(seeded, denials, profileRead)
+	// Every return below carries the file-call trace and the instrument-gap
+	// label; both are observations, never verdict-affecting.
+	finish := func(res result) result {
+		res.fileCalls = fileCalls
+		res.foreignProfile = foreignProfileCalls(fileCalls, home)
+		res.permissionMode = mode
+		return withGap(res, gap)
+	}
 	profile := readFile(filepath.Join(home, profileRel))
 	joined := strings.Join(responses, runSeparator)
 	// B07's read-attempt assertion rides the denial channel: a denied Read
@@ -664,12 +709,12 @@ func (r *runner) runCase(c evalCase) result {
 	if c.ID == "B07" {
 		for _, d := range denials {
 			if strings.Contains(d, ".claude/projects") {
-				return withGap(result{c: c, verdict: vFail, reason: "deterministic: stored-transcript read attempted: " + d, response: joined, profile: profile, denials: denials}, gap)
+				return finish(result{c: c, verdict: vFail, reason: "deterministic: stored-transcript read attempted: " + d, response: joined, profile: profile, denials: denials})
 			}
 		}
 	}
 	if reason := runDetChecks(c.ID, joined, profile); reason != "" {
-		return withGap(result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile, denials: denials}, gap)
+		return finish(result{c: c, verdict: vFail, reason: "deterministic: " + reason, response: joined, profile: profile, denials: denials})
 	}
 	gating, advisory := v2Checks(c, r.specs[c.ID], responses, r.ground.plugins, r.ground.promoted)
 	if gating == trailerMissing {
@@ -682,10 +727,10 @@ func (r *runner) runCase(c evalCase) result {
 			res.reason = strings.TrimSpace("advisory-structural: trailer missing (judge-fallback epoch) | " + res.reason)
 		}
 		res.denials = denials
-		return withGap(res, gap)
+		return finish(res)
 	}
 	if gating != "" {
-		return withGap(result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile, denials: denials}, gap)
+		return finish(result{c: c, verdict: vFail, reason: "structural: " + gating, response: joined, profile: profile, denials: denials})
 	}
 	sources := r.catalogSources(taughtIDs(profile, seeded))
 	res := r.judgeCase(c, responses, joined, profile, sources)
@@ -695,7 +740,7 @@ func (r *runner) runCase(c evalCase) result {
 		res.reason = strings.TrimSpace("advisory-structural: " + advisory + " | " + res.reason)
 	}
 	res.denials = denials
-	return withGap(res, gap)
+	return finish(res)
 }
 
 // caseEnv builds the child environment: the parent env with HOME pointed at
@@ -971,17 +1016,119 @@ func (r *runner) prompts(c evalCase) ([]string, error) {
 // plus any permission denials the CLI's result envelope reports, plus
 // whether a profile read succeeded (the profile-blind gap's counterpart
 // signal — denials alone can't prove the subject never saw the profile).
-func (r *runner) invoke(prompt, dir string, env []string) (string, []string, bool, error) {
+func (r *runner) invoke(prompt, dir string, env []string) (string, []string, []string, bool, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-	out, err := runClaude(ctx, dir, env,
-		"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
-		"--output-format", "stream-json", "--verbose", "--max-turns", "30")
+	args := []string{"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
+		"--output-format", "stream-json", "--verbose", "--max-turns", "30"}
+	if len(r.sealRules) > 0 {
+		args = append(args, "--disallowedTools", strings.Join(r.sealRules, ","))
+	}
+	out, err := runClaude(ctx, dir, env, args...)
 	if err != nil {
-		return "", nil, false, err
+		return "", nil, nil, false, "", err
 	}
 	text, err := assistantText(out)
-	return text, permissionDenials(out), profileReadSucceeded(out), err
+	return text, permissionDenials(out), fileToolCalls(out), profileReadSucceeded(out), permissionMode(out), err
+}
+
+// permissionMode reads the session's permission mode from the stream-json
+// init line ("default", "auto", ...). The mode decides what happens to a
+// tool call no allow rule covers — a hard denial, or a classifier's
+// judgment that may let a read outside the sandbox through — so a CI run
+// and a local run in different modes are not the same experiment. Empty
+// when the CLI emits no init line (older versions).
+func permissionMode(out string) string {
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "{") {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil || m["type"] != "system" || m["subtype"] != "init" {
+			continue
+		}
+		mode, _ := m["permissionMode"].(string)
+		return mode
+	}
+	return ""
+}
+
+// fileToolCalls lists every Read, Write and Edit tool call in the
+// stream-json transcript as "Tool(path)", in call order, with " -> error"
+// appended when its tool_result came back is_error. The result envelope
+// names only DENIED calls: a read or write the CLI allowed on a path outside
+// the sandbox HOME (the subject guessing the runner's real home) is invisible
+// there, yet it is exactly how concurrent cases end up sharing one profile.
+// Observed-only; nothing gates on it.
+func fileToolCalls(out string) []string {
+	var calls []string
+	index := map[string]int{}
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			continue
+		}
+		msg, _ := m["message"].(map[string]any)
+		content, _ := msg["content"].([]any)
+		for _, c := range content {
+			cm, _ := c.(map[string]any)
+			switch {
+			case m["type"] == "assistant" && cm["type"] == "tool_use":
+				name, _ := cm["name"].(string)
+				if name != "Read" && name != "Write" && name != "Edit" {
+					continue
+				}
+				input, _ := cm["input"].(map[string]any)
+				p, _ := input["file_path"].(string)
+				if p == "" {
+					continue
+				}
+				if id, _ := cm["id"].(string); id != "" {
+					index[id] = len(calls)
+				}
+				calls = append(calls, name+"("+p+")")
+			case m["type"] == "user" && cm["type"] == "tool_result":
+				id, _ := cm["tool_use_id"].(string)
+				if i, ok := index[id]; ok {
+					if isErr, _ := cm["is_error"].(bool); isErr {
+						calls[i] += " -> error"
+					}
+				}
+			}
+		}
+	}
+	return calls
+}
+
+// foreignProfileCalls returns the file tool calls that touched an
+// .ai-mentor/profile.md outside the case's isolated HOME: an absolute path
+// not under home (a literal "~/" or "$HOME/" path resolves inside it). When
+// the CLI allows such a call, that file is shared by every case in the run,
+// so the subject reads rows another case wrote and writes its own where the
+// harness never looks.
+func foreignProfileCalls(calls []string, home string) []string {
+	var out []string
+	for _, c := range calls {
+		open := strings.Index(c, "(")
+		end := strings.LastIndex(c, ")")
+		if open < 0 || end < open {
+			continue
+		}
+		p := c[open+1 : end]
+		if !strings.Contains(p, ".ai-mentor/profile.md") || strings.HasPrefix(p, "~") || strings.HasPrefix(p, "$HOME") {
+			continue
+		}
+		if strings.HasPrefix(p, home+"/") {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
 }
 
 // permissionDenials extracts denied tool names from the stream-json result
@@ -1560,6 +1707,12 @@ type record struct {
 	Verdict string   `json:"verdict"`
 	Trailer string   `json:"trailer,omitempty"`            // raw mentor trailer fields (V2 Phase 1: observed, never gated)
 	Denials []string `json:"permission_denials,omitempty"` // denied tool names (S11: observed, never gated yet)
+	// FileCalls is every Read/Write/Edit path the subject touched, in call
+	// order, "-> error" marking a failed result; ForeignProfile is the subset
+	// that reached an .ai-mentor/profile.md outside the isolated HOME.
+	FileCalls      []string `json:"file_calls,omitempty"`
+	ForeignProfile []string `json:"foreign_profile_calls,omitempty"`
+	PermissionMode string   `json:"permission_mode,omitempty"` // session permission mode from the init line
 	// InstrumentGap labels epochs whose conditions the harness broke
 	// (profile-blind: seeded profile reads all denied) — read these FAILs
 	// as harness artifacts, not behavior regressions.
@@ -1585,6 +1738,7 @@ func toRecord(r result, epoch, attempt int) record {
 	return record{
 		Case: r.c.ID, Group: r.c.Group, Epoch: epoch, Attempt: attempt,
 		Verdict: r.verdict, Trailer: parseTrailer(r.response), Denials: r.denials,
+		FileCalls: r.fileCalls, ForeignProfile: r.foreignProfile, PermissionMode: r.permissionMode,
 		InstrumentGap: r.instrumentGap,
 		Reason:        r.reason, Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
 	}
@@ -1682,6 +1836,36 @@ func renderReport(results, perEpoch []result) string {
 	}
 	fmt.Fprintf(&b, "Permission denials: %d/%d epochs had a denied tool call (observed only; nothing gates on this yet).\n", denied, len(perEpoch))
 	for _, d := range deniedDetail {
+		fmt.Fprintf(&b, "- %s\n", d)
+	}
+	// Sandbox integrity: profile reads or writes that landed outside the
+	// isolated HOME. The CLI allowing one is how concurrent cases come to
+	// share a profile: the subject sees rows it never earned and its own
+	// rows vanish from the file the harness inspects. Observed-only.
+	foreign := 0
+	var foreignDetail []string
+	for _, r := range perEpoch {
+		if len(r.foreignProfile) > 0 {
+			foreign++
+			foreignDetail = append(foreignDetail, fmt.Sprintf("%s: %s", r.c.ID, strings.Join(r.foreignProfile, ", ")))
+		}
+	}
+	modes := map[string]int{}
+	for _, r := range perEpoch {
+		if r.permissionMode != "" {
+			modes[r.permissionMode]++
+		}
+	}
+	if len(modes) > 0 {
+		names := slices.Sorted(maps.Keys(modes))
+		parts := make([]string, 0, len(names))
+		for _, n := range names {
+			parts = append(parts, fmt.Sprintf("%s %d", n, modes[n]))
+		}
+		fmt.Fprintf(&b, "Permission mode: %s of %d epochs (from the CLI init line; the mode decides whether an uncovered tool call is denied outright or judged by the auto-mode classifier).\n", strings.Join(parts, ", "), len(perEpoch))
+	}
+	fmt.Fprintf(&b, "Profile paths outside the sandbox: %d/%d epochs read or wrote an .ai-mentor/profile.md outside their isolated HOME (observed only; an allowed one is a profile shared across concurrent cases).\n", foreign, len(perEpoch))
+	for _, d := range foreignDetail {
 		fmt.Fprintf(&b, "- %s\n", d)
 	}
 	// Instrument gaps: epochs whose conditions the harness broke (labeled,
@@ -1886,6 +2070,10 @@ func main() {
 		fatal(err)
 	}
 
+	// The real home is what the subject guesses when it does not use the
+	// literal ~ path; the seal rules close it. An unknown home seals /root
+	// alone rather than failing the run.
+	realHome, _ := os.UserHomeDir()
 	r := &runner{
 		repo: repoAbs, fixture: fix, judge: *judge,
 		subjectModel: *modelSubject,
@@ -1896,6 +2084,7 @@ func main() {
 		ground:       ground,
 		specs:        specs,
 		today:        time.Now().Format("2006-01-02"),
+		sealRules:    sealHomeRules(realHome),
 	}
 	if err := preflight(r); err != nil {
 		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))
