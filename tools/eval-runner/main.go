@@ -613,6 +613,30 @@ type runner struct {
 	ground        groundTruth       // capability + fixture facts inlined into judge prompts
 	specs         map[string]v2Spec // machine expectations — the V2 deterministic contract
 	today         string            // YYYY-MM-DD
+	sealRules     []string          // --disallowedTools rules closing the real home's profile path (sealHomeRules)
+}
+
+// sealHomeRules builds the permission deny rules that keep every case inside
+// its isolated HOME. The subject sometimes guesses the runner's real home
+// for the profile (/home/runner, /root) instead of the literal ~ path; when
+// the CLI allows that call, every concurrent case shares one file, the
+// subject sees rows it never earned, and its own rows vanish from the file
+// the harness inspects. A deny rule beats any allow rule, so such a guess
+// fails loudly (a denial in the result envelope) exactly as it did on the
+// CLI versions the suite's history was measured on. The double slash
+// anchors at the filesystem root — a single one is project-root-relative.
+func sealHomeRules(realHome string) []string {
+	var rules []string
+	seen := map[string]bool{}
+	for _, h := range []string{realHome, "/root"} {
+		h = strings.Trim(h, "/")
+		if h == "" || seen[h] {
+			continue
+		}
+		seen[h] = true
+		rules = append(rules, "Read(//"+h+"/.ai-mentor/**)", "Edit(//"+h+"/.ai-mentor/**)")
+	}
+	return rules
 }
 
 // runCase executes one case in a fresh temp HOME and returns its judged result.
@@ -988,9 +1012,12 @@ func (r *runner) prompts(c evalCase) ([]string, error) {
 func (r *runner) invoke(prompt, dir string, env []string) (string, []string, []string, bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
-	out, err := runClaude(ctx, dir, env,
-		"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
-		"--output-format", "stream-json", "--verbose", "--max-turns", "30")
+	args := []string{"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
+		"--output-format", "stream-json", "--verbose", "--max-turns", "30"}
+	if len(r.sealRules) > 0 {
+		args = append(args, "--disallowedTools", strings.Join(r.sealRules, ","))
+	}
+	out, err := runClaude(ctx, dir, env, args...)
 	if err != nil {
 		return "", nil, nil, false, err
 	}
@@ -1999,6 +2026,10 @@ func main() {
 		fatal(err)
 	}
 
+	// The real home is what the subject guesses when it does not use the
+	// literal ~ path; the seal rules close it. An unknown home seals /root
+	// alone rather than failing the run.
+	realHome, _ := os.UserHomeDir()
 	r := &runner{
 		repo: repoAbs, fixture: fix, judge: *judge,
 		subjectModel: *modelSubject,
@@ -2009,6 +2040,7 @@ func main() {
 		ground:       ground,
 		specs:        specs,
 		today:        time.Now().Format("2006-01-02"),
+		sealRules:    sealHomeRules(realHome),
 	}
 	if err := preflight(r); err != nil {
 		fatal(fmt.Errorf("auth pre-flight failed — expired login or missing credentials? %w", err))

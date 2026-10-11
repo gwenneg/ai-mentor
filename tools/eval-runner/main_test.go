@@ -1477,3 +1477,49 @@ func TestWriteRecordsFileCalls(t *testing.T) {
 		t.Errorf("an epoch without file calls must omit both fields: %s", lines[1])
 	}
 }
+
+// The seal closes the real home and /root for the profile path, anchored at
+// the filesystem root, and never duplicates a rule.
+func TestSealHomeRules(t *testing.T) {
+	got := sealHomeRules("/home/runner/")
+	want := []string{
+		"Read(//home/runner/.ai-mentor/**)", "Edit(//home/runner/.ai-mentor/**)",
+		"Read(//root/.ai-mentor/**)", "Edit(//root/.ai-mentor/**)",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("sealHomeRules = %v, want %v", got, want)
+	}
+	if got := sealHomeRules("/root"); len(got) != 2 {
+		t.Errorf("a real home of /root must not duplicate its rules, got %v", got)
+	}
+	if got := sealHomeRules(""); len(got) != 2 || got[0] != "Read(//root/.ai-mentor/**)" {
+		t.Errorf("an unknown real home must still seal /root, got %v", got)
+	}
+}
+
+// Every subject invocation carries the seal as --disallowedTools; an empty
+// seal adds nothing.
+func TestInvokePassesSealRules(t *testing.T) {
+	var gotArgs []string
+	orig := runClaude
+	runClaude = func(_ context.Context, _ string, _ []string, args ...string) (string, error) {
+		gotArgs = args
+		return `{"type":"result","result":"ok"}`, nil
+	}
+	t.Cleanup(func() { runClaude = orig })
+	r := &runner{sealRules: sealHomeRules("/home/runner")}
+	if _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
+		t.Fatal(err)
+	}
+	i := slices.Index(gotArgs, "--disallowedTools")
+	if i < 0 || i+1 >= len(gotArgs) || !strings.Contains(gotArgs[i+1], "Edit(//home/runner/.ai-mentor/**)") {
+		t.Errorf("seal rules missing from the subject args: %v", gotArgs)
+	}
+	r.sealRules = nil
+	if _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(gotArgs, "--disallowedTools") {
+		t.Errorf("an empty seal must add no flag: %v", gotArgs)
+	}
+}
