@@ -1391,3 +1391,89 @@ func realSuiteIDs(t *testing.T) map[string]bool {
 	}
 	return known
 }
+
+// fileToolCalls traces every Read/Write/Edit path in call order and marks a
+// failed tool_result; other tools and path-less calls are ignored.
+func TestFileToolCalls(t *testing.T) {
+	out := `{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"/home/runner/.ai-mentor/profile.md"}},{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"ls"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":"permission denied"}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t3","name":"Write","input":{"file_path":"~/.ai-mentor/profile.md","content":"x"}},{"type":"tool_use","id":"t4","name":"Edit","input":{}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t3","content":"ok"}]}}
+{"type":"result","result":"done"}`
+	got := fileToolCalls(out)
+	want := []string{"Read(/home/runner/.ai-mentor/profile.md) -> error", "Write(~/.ai-mentor/profile.md)"}
+	if !slices.Equal(got, want) {
+		t.Errorf("fileToolCalls = %v, want %v", got, want)
+	}
+	if got := fileToolCalls(`{"type":"result","result":"hi"}`); got != nil {
+		t.Errorf("a transcript without file tools must yield nil, got %v", got)
+	}
+}
+
+// Only profile paths outside the isolated HOME are foreign: the sandbox
+// path, a literal ~ or $HOME path, and non-profile files all stay out.
+func TestForeignProfileCalls(t *testing.T) {
+	home := "/tmp/eval-home-1"
+	calls := []string{
+		"Read(" + home + "/.ai-mentor/profile.md)",
+		"Read(~/.ai-mentor/profile.md)",
+		"Write($HOME/.ai-mentor/profile.md)",
+		"Read(/tmp/eval-fixture-1/orders.go)",
+		"Read(/home/runner/.ai-mentor/profile.md) -> error",
+		"Write(/home/runner/.ai-mentor/profile.md)",
+		"Read(" + home + "-other/.ai-mentor/profile.md)",
+	}
+	got := foreignProfileCalls(calls, home)
+	want := []string{
+		"Read(/home/runner/.ai-mentor/profile.md) -> error",
+		"Write(/home/runner/.ai-mentor/profile.md)",
+		"Read(" + home + "-other/.ai-mentor/profile.md)",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("foreignProfileCalls = %v, want %v", got, want)
+	}
+	if got := foreignProfileCalls(nil, home); got != nil {
+		t.Errorf("no calls must yield nil, got %v", got)
+	}
+}
+
+func TestRenderReportForeignProfileLine(t *testing.T) {
+	c := evalCase{Group: "A", ID: "A23"}
+	perEpoch := []result{
+		{c: c, verdict: vPass},
+		{c: c, verdict: vFail, foreignProfile: []string{"Write(/home/runner/.ai-mentor/profile.md)"}},
+	}
+	folded := aggregateEpochs(slices.Clone(perEpoch), 2)
+	report := renderReport(folded, perEpoch)
+	if want := "Profile paths outside the sandbox: 1/2 epochs"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
+	}
+	if want := "- A23: Write(/home/runner/.ai-mentor/profile.md)"; !strings.Contains(report, want) {
+		t.Errorf("report missing foreign-path detail %q; got:\n%s", want, report)
+	}
+}
+
+// The file-call trace and its foreign subset survive the records round-trip,
+// and stay absent from records of epochs that touched no file.
+func TestWriteRecordsFileCalls(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "records.jsonl")
+	calls := []string{"Read(~/.ai-mentor/profile.md)", "Write(/home/runner/.ai-mentor/profile.md)"}
+	rs := []record{
+		toRecord(result{c: evalCase{Group: "A", ID: "A23"}, verdict: vFail, fileCalls: calls, foreignProfile: calls[1:]}, 1, 1),
+		toRecord(result{c: evalCase{Group: "A", ID: "A12"}, verdict: vPass}, 1, 1),
+	}
+	if err := writeRecords(path, rs); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(readFile(path)), "\n")
+	var rec record
+	if err := json.Unmarshal([]byte(lines[0]), &rec); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(rec.FileCalls, calls) || !slices.Equal(rec.ForeignProfile, calls[1:]) {
+		t.Errorf("file calls must round-trip: %+v", rec)
+	}
+	if strings.Contains(lines[1], "file_calls") || strings.Contains(lines[1], "foreign_profile_calls") {
+		t.Errorf("an epoch without file calls must omit both fields: %s", lines[1])
+	}
+}
