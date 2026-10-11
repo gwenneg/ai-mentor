@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -261,6 +262,7 @@ type result struct {
 	// the isolated HOME (observed, never gated).
 	fileCalls      []string
 	foreignProfile []string
+	permissionMode string // the session's permission mode from the init line (observed)
 	// instrumentGap marks an epoch whose conditions the harness itself
 	// broke (e.g. the subject never got to read its seeded profile) —
 	// labeled so such epochs aren't read as behavior regressions.
@@ -671,9 +673,10 @@ func (r *runner) runCase(c evalCase) result {
 	var responses []string
 	var denials []string
 	var fileCalls []string
+	var mode string
 	profileRead := false
 	for _, p := range prompts {
-		resp, den, calls, pread, err := r.invoke(p, workdir, env)
+		resp, den, calls, pread, pm, err := r.invoke(p, workdir, env)
 		if err != nil {
 			return errResult(c, err)
 		}
@@ -681,6 +684,9 @@ func (r *runner) runCase(c evalCase) result {
 		denials = append(denials, den...)
 		fileCalls = append(fileCalls, calls...)
 		profileRead = profileRead || pread
+		if pm != "" {
+			mode = pm
+		}
 	}
 	// Profile-blind instrument gap: the case seeded a profile the subject
 	// never managed to read (every attempt denied — the wrong-home path
@@ -692,6 +698,7 @@ func (r *runner) runCase(c evalCase) result {
 	finish := func(res result) result {
 		res.fileCalls = fileCalls
 		res.foreignProfile = foreignProfileCalls(fileCalls, home)
+		res.permissionMode = mode
 		return withGap(res, gap)
 	}
 	profile := readFile(filepath.Join(home, profileRel))
@@ -1009,7 +1016,7 @@ func (r *runner) prompts(c evalCase) ([]string, error) {
 // plus any permission denials the CLI's result envelope reports, plus
 // whether a profile read succeeded (the profile-blind gap's counterpart
 // signal — denials alone can't prove the subject never saw the profile).
-func (r *runner) invoke(prompt, dir string, env []string) (string, []string, []string, bool, error) {
+func (r *runner) invoke(prompt, dir string, env []string) (string, []string, []string, bool, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 	args := []string{"-p", prompt, "--model", r.subjectModel, "--plugin-dir", r.repo,
@@ -1019,10 +1026,32 @@ func (r *runner) invoke(prompt, dir string, env []string) (string, []string, []s
 	}
 	out, err := runClaude(ctx, dir, env, args...)
 	if err != nil {
-		return "", nil, nil, false, err
+		return "", nil, nil, false, "", err
 	}
 	text, err := assistantText(out)
-	return text, permissionDenials(out), fileToolCalls(out), profileReadSucceeded(out), err
+	return text, permissionDenials(out), fileToolCalls(out), profileReadSucceeded(out), permissionMode(out), err
+}
+
+// permissionMode reads the session's permission mode from the stream-json
+// init line ("default", "auto", ...). The mode decides what happens to a
+// tool call no allow rule covers — a hard denial, or a classifier's
+// judgment that may let a read outside the sandbox through — so a CI run
+// and a local run in different modes are not the same experiment. Empty
+// when the CLI emits no init line (older versions).
+func permissionMode(out string) string {
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "{") {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil || m["type"] != "system" || m["subtype"] != "init" {
+			continue
+		}
+		mode, _ := m["permissionMode"].(string)
+		return mode
+	}
+	return ""
 }
 
 // fileToolCalls lists every Read, Write and Edit tool call in the
@@ -1683,6 +1712,7 @@ type record struct {
 	// that reached an .ai-mentor/profile.md outside the isolated HOME.
 	FileCalls      []string `json:"file_calls,omitempty"`
 	ForeignProfile []string `json:"foreign_profile_calls,omitempty"`
+	PermissionMode string   `json:"permission_mode,omitempty"` // session permission mode from the init line
 	// InstrumentGap labels epochs whose conditions the harness broke
 	// (profile-blind: seeded profile reads all denied) — read these FAILs
 	// as harness artifacts, not behavior regressions.
@@ -1708,7 +1738,7 @@ func toRecord(r result, epoch, attempt int) record {
 	return record{
 		Case: r.c.ID, Group: r.c.Group, Epoch: epoch, Attempt: attempt,
 		Verdict: r.verdict, Trailer: parseTrailer(r.response), Denials: r.denials,
-		FileCalls: r.fileCalls, ForeignProfile: r.foreignProfile,
+		FileCalls: r.fileCalls, ForeignProfile: r.foreignProfile, PermissionMode: r.permissionMode,
 		InstrumentGap: r.instrumentGap,
 		Reason:        r.reason, Judge: r.judgeRaw, Response: r.response, Profile: r.profile,
 	}
@@ -1819,6 +1849,20 @@ func renderReport(results, perEpoch []result) string {
 			foreign++
 			foreignDetail = append(foreignDetail, fmt.Sprintf("%s: %s", r.c.ID, strings.Join(r.foreignProfile, ", ")))
 		}
+	}
+	modes := map[string]int{}
+	for _, r := range perEpoch {
+		if r.permissionMode != "" {
+			modes[r.permissionMode]++
+		}
+	}
+	if len(modes) > 0 {
+		names := slices.Sorted(maps.Keys(modes))
+		parts := make([]string, 0, len(names))
+		for _, n := range names {
+			parts = append(parts, fmt.Sprintf("%s %d", n, modes[n]))
+		}
+		fmt.Fprintf(&b, "Permission mode: %s of %d epochs (from the CLI init line; the mode decides whether an uncovered tool call is denied outright or judged by the auto-mode classifier).\n", strings.Join(parts, ", "), len(perEpoch))
 	}
 	fmt.Fprintf(&b, "Profile paths outside the sandbox: %d/%d epochs read or wrote an .ai-mentor/profile.md outside their isolated HOME (observed only; an allowed one is a profile shared across concurrent cases).\n", foreign, len(perEpoch))
 	for _, d := range foreignDetail {

@@ -1508,7 +1508,7 @@ func TestInvokePassesSealRules(t *testing.T) {
 	}
 	t.Cleanup(func() { runClaude = orig })
 	r := &runner{sealRules: sealHomeRules("/home/runner")}
-	if _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
+	if _, _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
 		t.Fatal(err)
 	}
 	i := slices.Index(gotArgs, "--disallowedTools")
@@ -1516,10 +1516,41 @@ func TestInvokePassesSealRules(t *testing.T) {
 		t.Errorf("seal rules missing from the subject args: %v", gotArgs)
 	}
 	r.sealRules = nil
-	if _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
+	if _, _, _, _, _, err := r.invoke("/ai-mentor:mentor", t.TempDir(), nil); err != nil {
 		t.Fatal(err)
 	}
 	if slices.Contains(gotArgs, "--disallowedTools") {
 		t.Errorf("an empty seal must add no flag: %v", gotArgs)
+	}
+}
+
+// The permission mode comes from the init line alone; a transcript without
+// one (older CLI) yields "", and the report prints the per-mode tally.
+func TestPermissionMode(t *testing.T) {
+	out := `{"type":"system","subtype":"init","permissionMode":"auto","cwd":"/tmp/x"}
+{"type":"assistant","message":{"content":[{"type":"text","text":"hi"}]}}
+{"type":"result","result":"hi"}`
+	if got := permissionMode(out); got != "auto" {
+		t.Errorf("permissionMode = %q, want auto", got)
+	}
+	if got := permissionMode(`{"type":"result","result":"hi"}`); got != "" {
+		t.Errorf("no init line must yield empty, got %q", got)
+	}
+	c := evalCase{Group: "A", ID: "A01"}
+	perEpoch := []result{
+		{c: c, verdict: vPass, permissionMode: "auto"},
+		{c: c, verdict: vPass, permissionMode: "default"},
+		{c: c, verdict: vPass, permissionMode: "auto"},
+	}
+	report := renderReport(aggregateEpochs(slices.Clone(perEpoch), 3), perEpoch)
+	if want := "Permission mode: auto 2, default 1 of 3 epochs"; !strings.Contains(report, want) {
+		t.Errorf("report missing %q; got:\n%s", want, report)
+	}
+	if strings.Contains(renderReport(aggregateEpochs([]result{{c: c, verdict: vPass}}, 1), []result{{c: c, verdict: vPass}}), "Permission mode:") {
+		t.Error("report must omit the mode line when no epoch carried one")
+	}
+	rec := toRecord(result{c: c, verdict: vPass, permissionMode: "auto"}, 1, 1)
+	if rec.PermissionMode != "auto" {
+		t.Errorf("record must carry the mode: %+v", rec)
 	}
 }
