@@ -110,9 +110,24 @@ jobs:
         with:
           node-version: '24'
 
+      # Pinned, not floating. The 2026-10-11 release gate (run 38160018917)
+      # went red on five cases that were 3/3 in every previous gate; the one
+      # non-content change was this install moving from 2.1.263 to 2.1.296.
+      # Two effects, measured by dispatch runs on this branch family:
+      #   1. Under 2.1.296 the CI session runs in auto mode and the
+      #      classifier let the subject's guessed real-home profile path
+      #      (/home/runner/.ai-mentor/profile.md) through, so concurrent
+      #      cases shared one profile (run 38166542852: 16 allowed reads,
+      #      16 allowed edits). The runner now seals that path with deny
+      #      rules; run 38169275900 confirmed zero allowed foreign calls.
+      #   2. With the seal in place, 2.1.296 still produced A23 misroutes
+      #      and a B03 declined-name leak (run 38169275900, gate red) that
+      #      2.1.263 did not (run 38171872870, 3/3 on both, gate green).
+      # Hold the last known-good version until the behavior shift under the
+      # newer CLI is understood or absorbed; then float again.
       - name: Install Claude Code CLI
         if: steps.scope.outputs.mode != 'skip'
-        run: npm install -g @anthropic-ai/claude-code
+        run: npm install -g @anthropic-ai/claude-code@2.1.263
 
       # Rate-tier history: the last release-gate runs' records, downloaded
       # read-only (loop-proof, unlike committing history back to the repo).
