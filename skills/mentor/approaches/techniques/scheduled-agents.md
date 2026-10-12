@@ -35,6 +35,7 @@ Work that runs automatically happens every time; work that requires initiative h
 ### Composing with Other Approaches (Intermediate)
 
 - **Routines plus MCP connectors**: a triage routine reads new Slack reports and files Linear issues — your claude.ai connectors are available during runs (all included by default; remove the ones a routine doesn't need).
+- **Routines plus Artifacts**: a scheduled or Run-now routine can publish a new private artifact, or update one you already own, without asking (v2.1.292) — a living status page a nightly run keeps current. The one thing that still asks is an artifact that requests connectors or other access beyond the routine's own.
 - **Routines plus headless CI**: they overlap but split cleanly — GitHub Actions for checks tied to your pipeline and secrets, routines for account-level work spanning repos and external services with no CI config at all.
 - **API trigger plus Cloud Sessions**: wire your monitoring tool to the routine's `/fire` endpoint with the alert body as `text` (the endpoint requires the `anthropic-beta: experimental-cc-routine-2026-04-01` header, and the generated token is shown only once) — the run correlates the stack trace with recent commits and opens a draft PR as a full cloud session on-call can open and continue, instead of starting from a blank terminal.
 

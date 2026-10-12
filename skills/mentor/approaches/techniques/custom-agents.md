@@ -61,6 +61,8 @@ and a recommended fix. If you find nothing, say so — do not invent issues.
 - **Model-tiered agent families**: Define the same agent at different cost levels. A `quick-review` agent uses haiku and checks for obvious issues in seconds. A `deep-review` agent uses opus and performs thorough analysis. Developers choose based on the stakes — haiku for draft PRs, opus for release candidates.
 - **Agent Teams** (experimental — requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var): define agents as teammates that share a task list and coordinate via peer messages — see Subagent Delegation for when a team beats simple subagents.
 - **Custom agents as background sessions**: To run several custom agents at once (five reviewers on five services), dispatch each as its own background session with `claude --agent <name> --bg "<task>"`, then run `claude agents` to monitor them all from one screen and step in when one needs input.
+- **Running without your CLAUDE.md**: Set `omitClaudeMd: true` in frontmatter (or in a `--agents` JSON definition, v2.1.271) to have that agent skip your user, project, and local CLAUDE.md files entirely — managed policy files still load. Useful for a narrowly-scoped agent (a formatter, a one-off data script) where your project's broader conventions would only add noise or risk conflicting with the agent's own instructions.
+- **Skill preload limit**: A subagent definition's `skills` field preloads at most 32 skills, each once (v2.1.295); past that, an agent with the Skill tool can still invoke the rest on demand. If an agent's definition lists more than 32, trim the list to the ones it actually needs up front.
 
 ## Common Pitfalls
 

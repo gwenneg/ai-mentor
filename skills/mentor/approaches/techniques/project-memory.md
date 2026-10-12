@@ -27,11 +27,11 @@ Writing knowledge down once converts a per-session cost into a one-time cost —
 
 ### Basic (Beginner)
 
-1. Run `/init` in your project. Claude analyzes the codebase and generates a starter `CLAUDE.md` with build commands, test instructions, and discovered conventions. If one already exists, it suggests improvements instead of overwriting.
+1. Run `/init` in your project. Claude analyzes the codebase and generates a starter `CLAUDE.md` with build commands, test instructions, and discovered conventions. If one already exists, it suggests improvements instead of overwriting. If a project has no `CLAUDE.md` at all, Claude Code reads `AGENTS.md` as a fallback instead (v2.1.277; toggle which file it reads under "Project instructions" in `/config`) — since v2.1.281 this fallback also works on Amazon Bedrock, Google Vertex AI, Microsoft Foundry, LLM gateways, and telemetry-disabled sessions, not just the direct Anthropic API.
 2. Add the facts you'd otherwise re-explain, written to be verifiable: "Run `npm test` before committing", "API handlers live in `src/api/handlers/`" — not "test your changes" or "keep files organized".
 3. Keep it under 200 lines with markdown headers — longer files consume more context and reduce adherence.
 4. Auto memory works on its own (enabled by default): Claude saves build quirks, debugging insights, and preferences it discovers to `~/.claude/projects/<project>/memory/` and recalls them next session.
-5. Run `/memory` anytime to see every loaded instruction file, open one in your editor, or toggle auto memory.
+5. Run `/memory` anytime to see every loaded instruction file, open one in your editor, or toggle auto memory. Since v2.1.285, auto memory can only be turned *off* from a background session or one of Claude Code's own tool-started sessions — turning it on requires an interactive session you're driving directly.
 
 ### Composing with Other Approaches (Intermediate)
 
