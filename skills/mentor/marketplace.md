@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-09-28 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
+*Last synced: 2026-10-12 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -57,7 +57,7 @@ Drop-in LSP integrations for code intelligence: `clangd-lsp` (C/C++), `csharp-ls
 
 ### Specialty
 
-Rarely relevant to everyday engineering, listed for completeness (☑️ desk-checked): `math-olympiad` (competition math solving with adversarial proof verification) and `cwc-makers` (onboarding for the Code-with-Claude Makers Cardputer hardware kit).
+Rarely relevant to everyday engineering, listed for completeness (☑️ desk-checked): `math-olympiad` (competition math solving with adversarial proof verification), `math-proof` (hard-proof workflows via `/math-proof:solo` and the judge/worker `/math-proof:siege`; added 2026-10-12, not yet exercised), and `cwc-makers` (onboarding for the Code-with-Claude Makers Cardputer hardware kit).
 
 ## External plugins (partner-maintained)
 
@@ -191,7 +191,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `codspeed` | CodSpeed performance benchmarking, flamegraphs, and profiling via MCP | CodSpeed | `performance` | ☑️ desk-checked 2026-07-08 — MCP server + 2 skills; active 2026-06; needs CodSpeed account |
 | `confidence` | Access Confidence feature flags, experiments, and migration tools | Spotify Confidence | `release-management` | ☑️ desk-checked 2026-07-08 — MCP server + 11 skills + 5 commands; active 2026-06; needs Confidence account |
 | `data` | Apache Airflow and Astronomer data engineering: DAG authoring, debugging, lineage, migration | unlabeled | `devops` | ☑️ desk-checked 2026-07-08 — 26 skills + bundled Airflow MCP server; active 2026-07; needs Airflow/Astronomer environment |
-| `data-agent-kit-starter-pack` | GCP data engineering skills for pipelines, dbt, BigQuery SQL, and workflow orchestration | Google LLC | `devops` | ☑️ desk-checked 2026-07-07 — 20 skills + MCP server; active 2026-07; needs GCP account |
+| `data-agent-kit` | GCP data engineering skills for pipelines, dbt transforms, Spark/BigQuery SQL notebooks, and workflow orchestration across GCP's data ecosystem | Google LLC | `devops` | ☑️ desk-checked 2026-10-12 — added via catalog sync, not yet exercised; likely successor to `data-agent-kit-starter-pack` (removed from the manifest the same sync, same publisher and scope); needs a GCP account |
 | `datarobot-agent-skills` | DataRobot skills for model training, deployment, predictions, monitoring, and explainability | DataRobot | `devops` | ☑️ desk-checked 2026-07-07 — 13 skills; active 2026-07; needs DataRobot account |
 | `deepeval` | Skills for adding DeepEval evaluations, tracing, datasets, Confident AI reports, and iterative improvement loops to AI applications | Confident AI | `llm-features` | ☑️ desk-checked 2026-07-20 — needs a DeepEval/Confident AI setup to exercise evaluation and tracing workflows |
 | `dominodatalab` | Domino Data Lab platform support for workspaces, jobs, model deployment, experiment tracking | Domino Data Lab | `devops` | ☑️ desk-checked 2026-07-07 — 23 skills + 4 commands + 3 agents + hooks + MCP servers; active 2026-06; needs Domino platform |

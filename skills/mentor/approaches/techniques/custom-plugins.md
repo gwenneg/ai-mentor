@@ -3,7 +3,7 @@
 
 ## What It Is
 
-Custom Plugins are how you package your own AI workflow — skills, hooks, agent definitions, MCP configuration — into a single versioned unit that anyone can install. What starts as personal configuration in one project's `.claude/` directory becomes `/plugin install your-toolkit` for your whole team, or for the community through a marketplace. Building a plugin is a different activity from using one: you are the author and maintainer, not the consumer.
+Custom Plugins are how you package your own AI workflow — skills, hooks, agent definitions, MCP configuration — into a single versioned unit that anyone can install. What starts as personal configuration in one project's `.claude/` directory becomes `/plugin install your-toolkit` for your whole team, or for the community through a marketplace. Building a plugin is a different activity from using one: you are the author and maintainer, not the consumer. A plugin can also bundle a Claude Mod — JavaScript/TypeScript code that runs inside Claude Code itself to draw UI or intercept tool calls, a materially different (and riskier) capability than the skills/hooks/agents/MCP config this file covers; see Claude Mods.
 
 ## Why It Works
 
@@ -44,6 +44,7 @@ Team knowledge compounds only when it's distributable: versioned releases ship a
 - **Internal marketplace**: a git repo with a marketplace manifest is a private plugin registry — teammates run `/plugin marketplace add your-org/your-marketplace` once and install from it like any marketplace. Keep it in a private repo for internal-only distribution.
 - **Community distribution**: submit for review via the in-app form at [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit); approved plugins are pinned to a commit SHA in the public `anthropics/claude-plugins-community` catalog and CI bumps the pin as you push.
 - **Dependency constraints** (v2.1.110+): declare `dependencies` in `plugin.json` — a bare name tracks the marketplace's latest, while `{ "name": "secrets-vault", "version": "~2.1.0" }` pins a semver range so an upstream breaking release can't move the dependency under you. Resolution works off git tags named `{plugin}--v{version}`; create them with `claude plugin tag --push`. Cross-marketplace dependencies are blocked unless the root marketplace allowlists the source via `allowCrossMarketplaceDependenciesOn`.
+- **Smoother first install**: `claude plugin install <plugin> --marketplace <source>` (v2.1.292) adds the marketplace first if it isn't already registered, then installs — one command instead of a separate `marketplace add` step first. `claude plugin configure <plugin>` (v2.1.285) shows a plugin's options and which are still unset, and `--values-stdin` saves new values read from stdin, for scripting setup rather than walking an interactive prompt.
 
 ## Common Pitfalls
 

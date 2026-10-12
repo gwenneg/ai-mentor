@@ -26,10 +26,10 @@ Embarrassingly parallel problems decompose into independent units processed in p
 
 ### Basic (Beginner)
 
-1. Ask for a workflow in your prompt — say "use a workflow to ..." or include the keyword `ultracode` — and Claude writes the orchestration script (v2.1.154+, paid plans; on Pro, enable Dynamic workflows in `/config`). `/effort ultracode` makes the opt-in session-wide: Claude plans a workflow for each substantive task instead of waiting to be asked. The bundled `/deep-research` command is a ready-made workflow of this shape
+1. Ask for a workflow in your prompt — say "use a workflow to ..." or include the keyword `ultracode` — and Claude writes the orchestration script (v2.1.154+, paid plans; on Pro, enable Dynamic workflows in `/config`). Since v2.1.284, `ultracode` is its own toggle in `/effort` (Tab, or `/effort ultracode [on|off]`) rather than a setting tied to `xhigh`: turning it on makes it session-wide at any effort level, so Claude plans a workflow for each substantive task instead of waiting to be asked. The bundled `/deep-research` command is a ready-made workflow of this shape
 2. In the script, `agent()` spawns individual workers with specific prompts
 3. `parallel()` runs a batch and waits for all results; `pipeline()` runs one agent per item in a list
-4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory medium size guideline — aim for fewer than 15 agents (v2.1.219+); pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key
+4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory size guideline — medium (fewer than 10 agents, lowered from 15 in v2.1.271) except on Pro, which defaults to small; pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key. If you hit your usage limit mid-run, the workflow pauses and continues automatically once it resets (v2.1.271) instead of dropping the affected agents
 
 Example — review three services in parallel:
 ```javascript
@@ -58,6 +58,7 @@ const verified = await parallel(findings.map(f =>
 - **Per-item pipelines**: Use `pipeline(items, fn)` to run one agent per item in a list; chain multiple `agent()` calls inside `fn` when an item needs staged processing.
 - **Structured output with schema**: Pass a `schema` option to `agent()` to get validated JSON output. The runtime validates the output against the schema, so you get parseable, typed results.
 - **Budget-aware loops**: Use `loop-until-dry` patterns where agents keep finding issues until a round produces zero new findings, with a budget cap to prevent runaway costs.
+- **Pinning every agent to one model**: Set `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` (v2.1.296) to run every workflow agent on that one model, overriding per-call model choices in the script — useful for a cost cap or a consistency requirement across a whole run, while other (non-workflow) subagents in the session keep their own models.
 
 ## Common Pitfalls
 

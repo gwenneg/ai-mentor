@@ -16,7 +16,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 - Self-reviewing your own changes before pushing — catch bugs your eyes skipped after hours of writing the code
 - Reviewing a teammate's PR when you want a structured first pass before doing your own read-through — `/code-review <pr#>` reviews it by number (since v2.1.223 `/review` is an alias of `/code-review`, not a separate command)
 - Post-refactoring cleanup — run `/simplify` after a large restructuring to find and apply missed deduplication (it applies its fixes; since v2.1.154 it deliberately doesn't hunt for bugs — that's `/code-review`'s job)
-- Confirming a nontrivial change actually works before committing — `/verify` drives the affected flow end-to-end instead of trusting typecheck and unit tests alone
+- Confirming a nontrivial change actually works before committing — `/verify` drives the affected flow end-to-end instead of trusting typecheck and unit tests alone. If your project or user skills include one named `verify`, Claude is now prompted to run it right before committing on its own, except for docs-only and tests-only commits (v2.1.286)
 - CI integration — run reviews automatically on every PR via GitHub Actions
 
 ## When NOT to Use It
@@ -34,9 +34,10 @@ A reviewer following a defined methodology catches more than one who "just reads
    - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
    - High: broader coverage, may surface uncertain findings — good for thorough review
    - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
-3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level
+3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level. On a model with no tuned review settings of its own (v2.1.274) — including Opus 5.5 and Sonnet 5.5 — `/code-review` instead runs leaner inline review prompts rather than spawning many review subagents, and at medium effort also reports cleanup and CLAUDE.md-conventions findings on top of correctness bugs (v2.1.290).
 4. Optionally, add `--fix` to have Claude auto-apply its findings: `/code-review --fix`
 5. Or add `--comment` to post findings as inline PR comments: `/code-review --comment`
+6. Pass `--max-findings <n>` (or `--max-findings all`) to change how many findings it reports; the choice sticks until you pass `--max-findings default` (v2.1.288).
 
 ### Composing with Other Approaches (Intermediate)
 
