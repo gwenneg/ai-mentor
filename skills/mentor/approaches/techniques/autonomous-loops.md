@@ -45,6 +45,7 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 - **Compound conditions**: Goal conditions can be up to 4,000 characters. Use this to set multi-part goals: `/goal all tests pass AND no eslint errors AND no TypeScript errors`. The evaluator checks all parts.
 - **Background work inside a goal loop**: If a turn dispatches background work (a subagent or a background session) and the goal is otherwise waiting on it, Claude checks in after 30 minutes rather than blocking indefinitely, then keeps checking in at growing intervals, at most three idle check-ins per goal between your prompts (v2.1.234+); set `CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0` to opt out.
 - **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it or when Claude decides the work is done. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence. Both run in the open session on this machine — for recurring work that must survive a closed laptop, use `/schedule` (see Scheduled Agents).
+- **Detaching without stopping the loop**: at the idle prompt of an attached background session running `/loop`, a single Ctrl+C leaves the pending wakeup alone and just detaches you — press it twice to detach, or press Esc to actually stop the loop (v2.1.295+).
 
 ## Common Pitfalls
 

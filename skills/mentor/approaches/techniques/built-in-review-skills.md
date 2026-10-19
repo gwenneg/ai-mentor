@@ -34,9 +34,10 @@ A reviewer following a defined methodology catches more than one who "just reads
    - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
    - High: broader coverage, may surface uncertain findings — good for thorough review
    - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
-3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level
+3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level. On models without tuned review settings — including Opus 5.5 and Sonnet 5.5 — medium effort also reports cleanup and CLAUDE.md-conventions findings alongside correctness bugs, since v2.1.290
 4. Optionally, add `--fix` to have Claude auto-apply its findings: `/code-review --fix`
 5. Or add `--comment` to post findings as inline PR comments: `/code-review --comment`
+6. `--max-findings <n>|all` (v2.1.288+) reports more or fewer findings than the usual limit; the choice sticks until you pass `--max-findings default`
 
 ### Composing with Other Approaches (Intermediate)
 

@@ -31,7 +31,7 @@ Writing knowledge down once converts a per-session cost into a one-time cost —
 2. Add the facts you'd otherwise re-explain, written to be verifiable: "Run `npm test` before committing", "API handlers live in `src/api/handlers/`" — not "test your changes" or "keep files organized".
 3. Keep it under 200 lines with markdown headers — longer files consume more context and reduce adherence.
 4. Auto memory works on its own (enabled by default): Claude saves build quirks, debugging insights, and preferences it discovers to `~/.claude/projects/<project>/memory/` and recalls them next session.
-5. Run `/memory` anytime to see every loaded instruction file, open one in your editor, or toggle auto memory.
+5. Run `/memory` anytime to see every loaded instruction file, open one in your editor, or toggle auto memory. Since v2.1.285, `/memory` can no longer turn auto memory *on* from a background session or from a session one of Claude Code's own tools started — turning it off still works there; toggle it on from an attended session instead.
 
 ### Composing with Other Approaches (Intermediate)
 
