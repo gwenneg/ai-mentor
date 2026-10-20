@@ -11,27 +11,43 @@ It is deliberately **person-level, not per-repo**: knowledge belongs to the engi
 
 The file is machine-local (never committed, never leaves the machine) and plain markdown the engineer can open, edit, or delete at any time — the skill should mention the path when it first creates it. A hand-edit by the user is authoritative and overrides anything the mentor inferred.
 
-## Permissions: zero prompts, via skill frontmatter
+## Permissions: zero prompts, via two frontmatter hook entries
 
 The location is `~/.ai-mentor/`, **not** `~/.claude/`, for a reason verified empirically (2026-07-03, Claude Code v2.x): *writes* to files under `~/.claude/` are treated as sensitive, and that built-in protection **overrides even an exactly-matching allow rule at any settings level** — every profile write there would prompt, forever. (*Reads* under `~/.claude/` respect allow rules normally; the protection is edit-specific.) Outside `~/.claude/`, standard allow rules silence prompts completely.
 
-The whole permission story fits in the mentor's own frontmatter — verified to work, including auto-creating the missing `~/.ai-mentor/` directory on the first write:
+The whole permission story fits in the mentor's own frontmatter. The first version used `allowed-tools` (`Read(~/.ai-mentor/**)`, `Edit(~/.ai-mentor/**)`), which worked for the invoking turn, including auto-creating the missing `~/.ai-mentor/` directory on the first write — but an `allowed-tools` grant clears on the user's next message (documented), so every profile update recorded on a follow-up turn prompted, several times per conversation in manual mode. The grant now lives in two `hooks` entries instead, which Claude Code keeps registered for the rest of the session once the skill is invoked:
 
 ```yaml
-allowed-tools:
-  - Read(~/.ai-mentor/**)
-  - Edit(~/.ai-mentor/**)
+hooks:
+  PreToolUse:
+    - matcher: "Read"
+      hooks:
+        - type: command
+          if: "Read(~/.ai-mentor/**)"
+          command: >-
+            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"ai-mentor: profile read"}}'
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          if: "Edit(~/.ai-mentor/profile.md)"
+          command: >-
+            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"ai-mentor: profile update"}}'
+        - type: command
+          if: "Write(~/.ai-mentor/profile.md)"
+          command: >-
+            echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"ai-mentor: profile update"}}'
 ```
 
-No settings.json change, no consent prompt, no setup step: the grant is scoped to this skill's execution only, which is least-privilege by construction. For transparency, the mentor still announces the file on first creation ("I keep a profile at `~/.ai-mentor/profile.md` so I never re-teach you things — it's yours to edit or delete").
+Each entry is one permission rule (the `if`, which Claude Code evaluates itself) plus a constant "allow" — no script, no logic, nothing to audit beyond these lines, and it never denies, so a user's own deny/ask rules still win (verified 2026-09-06/07 from skill frontmatter: the entries fired on the invoking turn for a read, an edit, an overwrite and a first-time creation of the profile, each with zero denials). The write allowance is the one file by exact path, not the directory: widening it would silently widen README's "exactly one file" promise. No settings.json change, no consent prompt, no setup step; where no shell exists to run `echo` (Windows without Git Bash is the known case) the profile prompts as any other file would. Two scopes fall outside the hooks by construction: the entries register when the skill is invoked, so a conversation resumed with `claude --resume` has none until `/mentor` runs again in it (verified 2026-09-07), and plugin-file reads on follow-up turns stay on the `allowed-tools` one-turn grant — see the read-ahead rule. For transparency, the mentor still announces the file on first creation ("I keep a profile at `~/.ai-mentor/profile.md` so I never re-teach you things — it's yours to edit or delete").
 
 Facts future maintainers must not "fix" (each verified by test, not assumption):
 
-- The rule family must be `Edit(...)`: path-scoped `Edit` rules cover all file-editing tools including Write, whereas a path-scoped `Write(...)` rule does not match and is silently ineffective.
+- Rule families differ between the two mechanisms. In `allowed-tools` and settings rules, `Edit(path)` covers every file-editing tool including Write, and a `Write(path)` rule is never consulted. Inside a hook `if`, the tool name is literal: `Edit(...)` fires for the Edit tool only, `Write(...)` for the Write tool only — and creating the profile on a first meeting is a Write. Both entries are required (verified 2026-09-07: with only the Edit rule, every first-meeting profile creation was denied).
 - The `~/` anchor works in frontmatter and settings rules alike and keeps rules portable across users — do not expand it to an absolute path. Conversely, a rule built from `${CLAUDE_PLUGIN_ROOT}` needs a leading `/` (yielding `//abs/path`), because a single leading slash is project-root-relative.
 - The *tool calls* must use the literal `~/.ai-mentor/...` path too, never an absolute home path inferred from repo paths in context (verified 2026-07-07: in an isolated-HOME session the model guessed `/Users/<name>/...` from the plugin path, the `~`-anchored grant expanded against the real `$HOME` and did not match, and every profile read/write was denied). The file tools expand `~` against the session's `$HOME`, which is always the profile's true location.
 - Never use Bash `mkdir` for the profile directory — the Write tool creates missing parents under the same Edit rule; a `mkdir` would trigger a separate Bash prompt.
-- Write the profile immediately when a status changes, within the mentor's own flow — never defer to "session end". Writes are silent, so there is nothing to batch, and the frontmatter grant is only guaranteed active while the skill is executing; a deferred flush many turns later would be betting on unverified permission-scope semantics.
+- Write the profile immediately when a status changes, within the mentor's own flow — never defer to "session end". Writes are silent, so there is nothing to batch, and a deferred flush is lost whenever the session ends first.
+- The profile rules live in `hooks`, not `allowed-tools`, on purpose: one source of truth, and `tools/catalog-lint` fails if a `~/.ai-mentor` rule reappears under `allowed-tools`.
 
 ## Format
 

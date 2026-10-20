@@ -17,7 +17,7 @@ The mentor keeps one small markdown file at `~/.ai-mentor/profile.md`: one line 
 
 ## Security & privacy
 
-Reading your setup is the product: the mentor finds the gap between what Claude Code offers and what you already use, and it can only do that by looking at your configuration. Everything it touches is declared up front in the skill's `allowed-tools` frontmatter — the pre-authorized surface is exactly this list, and nothing more:
+Reading your setup is the product: the mentor finds the gap between what Claude Code offers and what you already use, and it can only do that by looking at your configuration. Everything it touches is declared up front in the skill's frontmatter: `allowed-tools` for the reads, and for the profile two declarative hook entries, each a permission rule plus a constant "allow" that keeps the profile prompt-free on later turns of a conversation too (no script ships with the plugin). The pre-authorized surface is exactly this list, and nothing more:
 
 **Reads (local, read-only):**
 
