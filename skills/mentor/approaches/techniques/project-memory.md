@@ -43,6 +43,7 @@ Writing knowledge down once converts a per-session cost into a one-time cost —
 
 - **Path-scoped rules**: split instructions into `.claude/rules/*.md` files with `paths:` frontmatter (glob patterns like `src/api/**/*.ts`). The rule loads only when Claude works on matching files — modular for teams, cheaper on context. Personal rules in `~/.claude/rules/` apply across every project on your machine.
 - **Imports**: `@path/to/file` syntax pulls other files into CLAUDE.md at launch (up to four hops). Use `@AGENTS.md` to share one instruction file with other coding agents, plus Claude-specific lines below the import.
+- **AGENTS.md with no CLAUDE.md at all**: in a project that has no CLAUDE.md, Claude Code reads AGENTS.md directly instead (v2.1.277+) — useful if your team already standardized on the cross-agent filename and doesn't want a separate Claude-specific file; change which one Claude Code looks for under "Project instructions" in `/config`.
 - **Scope layering**: `~/.claude/CLAUDE.md` for personal preferences everywhere, `./CLAUDE.md` for team-shared project facts, gitignored `./CLAUDE.local.md` for personal project-specific notes, and `claudeMdExcludes` to skip other teams' files in a monorepo.
 
 ## Common Pitfalls

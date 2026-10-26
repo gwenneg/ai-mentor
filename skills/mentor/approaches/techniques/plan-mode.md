@@ -50,6 +50,7 @@ Separating analysis from execution catches flawed assumptions at the outline sta
 - **Over-planning simple tasks**: If you use Plan Mode for a one-line fix, you waste time reviewing a plan that is more complex than the change itself. Reserve it for tasks where a wrong approach has real cost.
 - **Rubber-stamping plans**: The value comes from actually reading and questioning the plan. If you approve without reviewing, you get the latency cost of planning with none of the safety benefit.
 - **Stale context after replanning**: If you reject a plan and redirect multiple times, the conversation can get long and confused. Consider starting a fresh session with your refined requirements.
+- **Assuming plan mode always gets a review step after approval**: if `bypassPermissions` mode is available for the session, approving a plan to execute in it skips the usual per-edit and per-command asks — Claude Code now shows a one-time note explaining this when it applies (v2.1.299+), but the safety guarantee people associate with Plan Mode (propose, then review before each change) only holds in the other execution modes.
 
 ## Sources
 

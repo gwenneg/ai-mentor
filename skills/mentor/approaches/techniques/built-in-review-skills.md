@@ -31,12 +31,13 @@ A reviewer following a defined methodology catches more than one who "just reads
 
 1. Make your code changes and stage them (or leave them unstaged — both work)
 2. Run `/code-review` in your Claude Code session — optionally pass an effort level and a target — a path, PR number, branch name, or ref range like `main...my-feature` (`/code-review high src/api/`). With no effort level it reuses the level you typed last (v2.1.223+). Effort levels:
-   - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
+   - Low/Medium: fewer findings, higher confidence — good for quick sanity checks (since v2.1.290, medium effort also reports cleanup and CLAUDE.md-convention findings on models without tuned review settings, including Opus 5.5 and Sonnet 5.5)
    - High: broader coverage, may surface uncertain findings — good for thorough review
    - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
 3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level
 4. Optionally, add `--fix` to have Claude auto-apply its findings: `/code-review --fix`
 5. Or add `--comment` to post findings as inline PR comments: `/code-review --comment`
+6. Pass `--max-findings <n>|all` to raise or lower how many findings get reported — the choice is reused on later runs until you pass `--max-findings default` (v2.1.288+)
 
 ### Composing with Other Approaches (Intermediate)
 
@@ -48,7 +49,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 
 - **CI pipeline integration**: For automatic reviews on every PR with inline comments and no CI step at all, the managed **Code Review** product (research preview, Team/Enterprise) integrates via the Claude GitHub App and responds to `@claude review`. To run reviews in your own CI infrastructure instead, use the `claude-code-action` GitHub Action with a review skill as the prompt. From any CI script, `claude ultrareview` runs the deep cloud review non-interactively.
 - **Targeted review with context**: Before running the review, tell Claude about specific concerns: "This change modifies our rate limiter. Run /security-review with extra attention to bypass vectors." The skill uses your context to focus its analysis.
-- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits — see the ultrareview docs for current pricing. Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively, and `/code-review ultra --fix` applies the verified findings to your working tree when they arrive back.
+- **Ultrareview for pre-merge confidence** (research preview, v2.1.86+): `/code-review ultra` launches a fleet of reviewer agents in a cloud sandbox — every finding is independently reproduced and verified, so results skew toward real bugs rather than style notes. Reviews your branch diff or a PR (`/code-review ultra 1234`), takes ~5-10 minutes in the background, and bills to usage credits — see the ultrareview docs for current pricing. Requires claude.ai auth; unavailable on Bedrock, Google Cloud's Agent Platform, and Microsoft Foundry, and to Zero Data Retention orgs. From CI, `claude ultrareview` runs the same review non-interactively, and `/code-review ultra --fix` applies the verified findings to your working tree when they arrive back. Since v2.1.309, `claude ultrareview` requires workspace trust: it asks when run from a terminal and otherwise refuses outright — scripts pass the no-value `--trust-workspace` flag (put a PR number or base branch before it on the command line) or set `CLAUDE_CODE_DISABLE_ULTRAREVIEW_TRUST_CHECK=1`.
 
 ## Common Pitfalls
 

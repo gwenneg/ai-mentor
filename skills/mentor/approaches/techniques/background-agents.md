@@ -43,7 +43,7 @@ Alternate entry points: `claude --bg "fix the flaky SettingsChangeDetector test"
 ### Advanced Patterns
 
 - **Fleet dispatch**: dispatch several sessions from agent view in a row — one per module, one per bug — and use `claude agents --cwd <path>` to filter the board per project. `@<repo>` in a dispatch prompt targets a child repository from a parent directory, and `! <command>` runs a plain shell command as a monitored background job on the same board — no model in the loop.
-- **Shell-first management**: skip the board entirely — `claude attach`, `claude logs`, `claude stop`, `claude respawn`, and `claude rm` manage background sessions straight from your shell, and `claude daemon status` checks on the machinery running them.
+- **Shell-first management**: skip the board entirely — `claude attach`, `claude logs`, `claude stop`, `claude respawn`, and `claude rm` manage background sessions straight from your shell, and `claude daemon status` checks on the machinery running them. `claude attach <name>` and `claude logs <name>` accept part of a session name in place of the full id or name (v2.1.290+).
 - **Finish-line automation**: background sessions commit and push to preserve work, open a draft PR only when the task calls for one (v2.1.221 — before that they always opened one, v2.1.198+), follow your CLAUDE.md git instructions, and always end by reporting where the work lives.
 - **Notification wiring**: while agent view is open, blocked or finished sessions fire the `Notification` hook with `agent_needs_input` / `agent_completed` events — wire it to a desktop notification or Slack webhook, park the board in a spare tab, and stop watching it.
 
