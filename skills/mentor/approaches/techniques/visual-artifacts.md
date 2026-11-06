@@ -49,7 +49,7 @@ Some information is spatial, not linear: layout carries meaning terminal text ca
 ## Common Pitfalls
 
 - **Treating the artifact as the source of truth**: The page is a rendered view. If the content matters, commit it to the repo as Markdown and regenerate the artifact from it — otherwise the canonical copy lives outside version control.
-- **Linking external assets**: Artifact pages block requests to external hosts (CDN scripts, remote images, web fonts). Everything must be inlined; a page that looks fine in a local preview can silently break when published.
+- **Linking external assets**: Artifact pages block requests to external hosts (CDN scripts, remote images, web fonts) — with one documented exception since v2.1.281: scripts loaded from unpkg.com are allowed. Everything else must still be inlined; a page that looks fine in a local preview can silently break when published.
 - **Publishing a wall of text**: Rendering prose to HTML does not make it scannable. The value comes from structure — tables, diagrams, severity groupings — so ask for the layout, not just "make it a page."
 - **Forgetting the content leaves the machine**: Publishing uploads the page to claude.ai hosting. For proprietary code excerpts or unreleased plans, confirm that is acceptable before rendering.
 

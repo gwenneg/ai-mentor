@@ -57,7 +57,7 @@ Example — auto-format after every file edit:
 
 ### Advanced Patterns
 
-- **Layered protection**: Stack PreToolUse hooks — one blocks `.env` edits, another requires confirmation for database migration files, a third rejects any `rm -rf` command. Each layer catches what the others miss.
+- **Layered protection**: Stack PreToolUse hooks — one blocks `.env` edits, another requires confirmation for database migration files, a third rejects any `rm -rf` command. Each layer catches what the others miss. Set `onFailure: "block"` (v2.1.295) on a command or HTTP hook so that if the hook itself can't start, times out, or exits with an unexpected code, the action it was guarding is blocked rather than let through — without it, a broken hook silently fails open.
 - **Async notification hooks**: Fire Slack webhooks or desktop notifications when Claude finishes a task, without blocking the session. Useful for long-running autonomous work.
 - **Goal evaluation via Stop hooks**: When Claude finishes responding, a Stop hook can run a validation script — and exit with code 2 to block the stop, feeding the failure back so Claude keeps working until acceptance criteria are met. This turns informal "is it done?" into automated verification.
 
