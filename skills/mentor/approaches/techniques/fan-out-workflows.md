@@ -29,7 +29,7 @@ Embarrassingly parallel problems decompose into independent units processed in p
 1. Ask for a workflow in your prompt — say "use a workflow to ..." or include the keyword `ultracode` — and Claude writes the orchestration script (v2.1.154+, paid plans; on Pro, enable Dynamic workflows in `/config`). `/effort ultracode` makes the opt-in session-wide: Claude plans a workflow for each substantive task instead of waiting to be asked. The bundled `/deep-research` command is a ready-made workflow of this shape
 2. In the script, `agent()` spawns individual workers with specific prompts
 3. `parallel()` runs a batch and waits for all results; `pipeline()` runs one agent per item in a list
-4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory medium size guideline — aim for fewer than 15 agents (v2.1.219+); pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key
+4. Approve the run when prompted, then track progress with `/workflows` while your session stays responsive — and if the run is worth repeating, save it from that view as a reusable command (stored in `.claude/workflows/` for the project, or `~/.claude/workflows/` for yourself). Workflows default to an advisory medium size guideline — aim for fewer than 10 agents, down from 15 (v2.1.271+); Pro plans now default to the smaller "small" size guideline instead of medium — pick another size or unrestricted with "Dynamic workflow size" in `/config`, or set it from any settings file with the `workflowSizeGuideline` key
 
 Example — review three services in parallel:
 ```javascript
@@ -58,6 +58,7 @@ const verified = await parallel(findings.map(f =>
 - **Per-item pipelines**: Use `pipeline(items, fn)` to run one agent per item in a list; chain multiple `agent()` calls inside `fn` when an item needs staged processing.
 - **Structured output with schema**: Pass a `schema` option to `agent()` to get validated JSON output. The runtime validates the output against the schema, so you get parseable, typed results.
 - **Budget-aware loops**: Use `loop-until-dry` patterns where agents keep finding issues until a round produces zero new findings, with a budget cap to prevent runaway costs.
+- **Pinning the model**: set `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` to run every workflow agent on one model while other, non-workflow subagents in the same session keep their own (v2.1.296+) — useful when you want a cheaper or more capable model consistently across a large fan-out run without touching the script.
 
 ## Common Pitfalls
 
