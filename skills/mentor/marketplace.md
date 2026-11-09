@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-10-12 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
+*Last synced: 2026-11-09 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -48,6 +48,7 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
 | `receipts` | Generates a personal Claude Code impact report from local session transcripts cross-referenced against git history — what you shipped and each project's usage share — for a self-review or manager report | `devops` | ☑️ desk-checked 2026-07-20 — mining runs locally against `~/.claude/projects` transcripts and read-only git commands; only an aggregate summary (counts, project names) leaves the machine to write the report |
+| `champion-kit` | Helps Claude Code champions run hackathons and office hours, find patterns worth sharing, help teammates climb the steps of AI adoption, and write a shareable AI maturity report | `onboarding` | ☑️ desk-checked 2026-11-09 — added via catalog sync, not yet exercised; aimed at an internal champion/enablement role rather than day-to-day coding |
 
 ### Language servers (LSPs)
 
@@ -260,6 +261,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `unity` | Unity's official plugin: curated skills for game development, monetization, and performance optimization | Unity Technologies | `greenfield` | ☑️ desk-checked 2026-08-31 — added via catalog sync, not yet exercised |
 | `unreal-engine-skills-for-claude-code` | Control Unreal Editor via MCP: actors, blueprints, materials, Sequencer, testing | Epic Games | `greenfield` | ☑️ desk-checked 2026-07-08 — 3 skills + hooks (MCP server hosted inside Unreal Editor, no bundled .mcp.json); active 2026-06; needs Unreal Editor with Unreal MCP enabled |
 | `wix` | Build, manage, and deploy Wix sites and apps with CLI skills and MCP | unlabeled | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 7 skills; active 2026-07; needs Wix account |
+| `xcode` | Work with Xcode projects from Claude Code: build, run, and test schemes, render SwiftUI previews, drive simulators and devices, read build logs and diagnostics, and search Apple developer documentation | Apple Inc. | `greenfield` | ☑️ desk-checked 2026-11-09 — added via catalog sync, not yet exercised; needs Xcode and the `xcrun` toolchain on macOS |
 | `zoom-plugin` | Plan, build, and debug Zoom integrations across APIs, SDKs, webhooks, bots | unlabeled | `api-design` | ☑️ desk-checked 2026-07-08 — MCP server + 32 skills; active 2026-05; needs Zoom developer account |
 
 ### Learning
