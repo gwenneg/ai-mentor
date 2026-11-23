@@ -1,5 +1,5 @@
 # Marketplace Directory
-*Last synced: 2026-10-12 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
+*Last synced: 2026-11-23 · Source: [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official) marketplace manifest*
 
 The lookup directory for official-marketplace plugins that have NOT been promoted to the solutions catalog — consulted by grep on stack or goal relevance ("user said SAPUI5 → grep"), never enumerated or read whole. All plugins here are installable via `/plugin install <name>@claude-plugins-official`; none are installed by default. Scope decision (2026-07-03): externally-maintained plugins listed in the official marketplace ARE in scope — "official" means Anthropic-curated, not Anthropic-authored.
 
@@ -42,12 +42,14 @@ The mentor recommends ✅ plugins freely, offers ☑️ ones with the "not hands
 |--------|-------------|--------------|---------|
 | `skill-creator` | Creates and improves skills, measures skill performance | `building-skills-plugins` | ☑️ desk-checked — in active daily use by this catalog's maintainer, which is stronger evidence than most desk checks |
 | `mcp-tunnels` | Connects Claude to a private MCP server through an Anthropic MCP tunnel | `building-mcp-integrations` | ☑️ desk-checked — needs Docker Compose infrastructure to exercise |
+| `theme-examples` | Example plugin to read, copy, and change: animated backdrops behind the chat in the Claude Desktop app, one per project or session | `building-skills-plugins` | ☑️ desk-checked 2026-11-23 — added via catalog sync, not yet exercised; needs a version of Claude Desktop that draws a plugin's backdrop |
 
 ### Project & session management
 
 | Plugin | What it does | Relevant goal | Verdict |
 |--------|-------------|--------------|---------|
 | `receipts` | Generates a personal Claude Code impact report from local session transcripts cross-referenced against git history — what you shipped and each project's usage share — for a self-review or manager report | `devops` | ☑️ desk-checked 2026-07-20 — mining runs locally against `~/.claude/projects` transcripts and read-only git commands; only an aggregate summary (counts, project names) leaves the machine to write the report |
+| `champion-kit` | Helps Claude Code champions run hackathons and office hours, find patterns worth sharing, help teammates climb the steps of AI adoption, and write a shareable AI maturity report | `onboarding` | ☑️ desk-checked 2026-11-23 — added via catalog sync, not yet exercised |
 
 ### Language servers (LSPs)
 
@@ -167,7 +169,6 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | Plugin | What it does | Author | Relevant goal | Verdict |
 |--------|-------------|--------|--------------|---------|
 | `agentforce-adlc` | Author, scaffold, deploy, test, and optimize Salesforce Agentforce .agent files | unlabeled | `building-agents` | ☑️ desk-checked 2026-07-08 — 4 skills + 4 agents + hooks; active 2026-06; needs Salesforce Agentforce org |
-| `airwallex-dev` | Generates Airwallex payment integration code: checkout, card elements, KYC onboarding, subscription billing | Airwallex | `greenfield` | ☑️ desk-checked 2026-08-31 — added via catalog sync, not yet exercised; needs an Airwallex account |
 | `amd-skills` | AMD's verified skills: route image/audio through local AI on Ryzen AI, serve LLMs on AMD Instinct GPUs with vLLM, and analyze GPU kernel/PyTorch trace performance | AMD | `performance` | ☑️ desk-checked 2026-07-20 — 4 skills (local-ai-use, local-ai-app-integration, serving-llms-on-instinct, tracelens-analysis-orchestrator) per manifest; needs AMD Ryzen AI or Instinct GPU hardware |
 | `apollo-skills` | Apollo GraphQL skills for Client, Server, Federation, Router, Rover, and MCP server | Apollo GraphQL | `api-design` | ☑️ desk-checked 2026-07-08 — MCP server + LSP config + 14 skills; active 2026-07 |
 | `appwrite` | Appwrite SDK skills, MCP servers, and deployment commands | Appwrite | `devops` | ☑️ desk-checked 2026-07-08 — MCP server + 11 SDK skills + 2 deploy commands; active 2026-04; needs Appwrite account |
@@ -237,7 +238,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `salesforce-development` | Build Salesforce apps and agents: metadata, Apex, deploy/retrieve, security, reporting | Salesforce | `greenfield` | ☑️ desk-checked 2026-08-31 — added via catalog sync, not yet exercised; needs a Salesforce org |
 | `sanity` | Sanity CMS MCP, skills, and commands for GROQ queries, schemas, content authoring | Sanity | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server + 7 skills + 4 commands; active 2026-06; needs Sanity account |
 | `sap-cds-mcp` | SAP CAP development assistant searching CDS models and CAP documentation | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server; active 2026-06 |
-| `sap-fiori-mcp-server` | MCP server for building and modifying SAP Fiori applications | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server + 5 skills; active 2026-07 |
+| `sap-ux-fiori-tools` | MCP server and skills for SAP Fiori development: build, modify, and test SAP Fiori Elements applications | SAP SE | `greenfield` | ☑️ desk-checked 2026-11-23 — added via catalog sync, not yet exercised; likely successor to `sap-fiori-mcp-server` (removed from the manifest the same sync, same publisher and scope) |
 | `sap-mdk-server` | MCP server for SAP Mobile Development Kit app building and scaffolding | SAP SE | `greenfield` | ☑️ desk-checked 2026-07-07 — MCP server; active 2026-06 |
 | `scandit-sdk` | Scandit Data Capture SDK integration guides for barcode scanning, ID capture, and smart label capture | Scandit | `greenfield` | ☑️ desk-checked 2026-08-31 — added via catalog sync, not yet exercised |
 | `servicenow-sdk` | Create, edit, and deploy ServiceNow applications with the Fluent SDK | ServiceNow | `greenfield` | ☑️ desk-checked 2026-07-07 — 1 skill; active 2026-06; needs ServiceNow instance |
@@ -260,6 +261,7 @@ Plugins listed in the marketplace manifest whose source lives in the author's ow
 | `unity` | Unity's official plugin: curated skills for game development, monetization, and performance optimization | Unity Technologies | `greenfield` | ☑️ desk-checked 2026-08-31 — added via catalog sync, not yet exercised |
 | `unreal-engine-skills-for-claude-code` | Control Unreal Editor via MCP: actors, blueprints, materials, Sequencer, testing | Epic Games | `greenfield` | ☑️ desk-checked 2026-07-08 — 3 skills + hooks (MCP server hosted inside Unreal Editor, no bundled .mcp.json); active 2026-06; needs Unreal Editor with Unreal MCP enabled |
 | `wix` | Build, manage, and deploy Wix sites and apps with CLI skills and MCP | unlabeled | `greenfield` | ☑️ desk-checked 2026-07-08 — MCP server + 7 skills; active 2026-07; needs Wix account |
+| `xcode` | Build, run, and test Xcode schemes, render SwiftUI previews, drive simulators and devices, read build logs, and search Apple developer documentation | Apple Inc. | `greenfield` | ☑️ desk-checked 2026-11-23 — added via catalog sync, not yet exercised; resolves via a local `xcrun` command rather than a git-subdir pull, so it needs Xcode installed on macOS |
 | `zoom-plugin` | Plan, build, and debug Zoom integrations across APIs, SDKs, webhooks, bots | unlabeled | `api-design` | ☑️ desk-checked 2026-07-08 — MCP server + 32 skills; active 2026-05; needs Zoom developer account |
 
 ### Learning
