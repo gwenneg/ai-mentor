@@ -46,6 +46,8 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 - **Background work inside a goal loop**: If a turn dispatches background work (a subagent or a background session) and the goal is otherwise waiting on it, Claude checks in after 30 minutes rather than blocking indefinitely, then keeps checking in at growing intervals, at most three idle check-ins per goal between your prompts (v2.1.234+); set `CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0` to opt out.
 - **Know when you want `/loop` instead**: `/goal` starts the next turn as soon as the previous one finishes and stops when the evaluator confirms the condition; `/loop` re-runs a prompt on a time interval and stops when you stop it or when Claude decides the work is done. Use `/loop` for time-triggered work like polling a deploy, and `/goal` for condition-driven convergence. Both run in the open session on this machine — for recurring work that must survive a closed laptop, use `/schedule` (see Scheduled Agents).
 - **A self-paced `/loop` moved to the background**: since v2.1.295, Esc no longer stops a self-paced `/loop` just because `←` moved the session to the background — it keeps running there, and cancelling its next pending wakeup now shows a notice instead of silently disappearing; at the idle prompt of an attached background session, pressing Ctrl+C twice detaches (leaving the loop's pending wakeup alone) rather than stopping it, so use Esc there to actually stop the loop. Self-paced `/loop` status updates, and the final outcome when it stops, are now written as visible text rather than sometimes staying buried in Claude's own reasoning (v2.1.284).
+- **A self-paced loop can stop silently**: since v2.1.319, if an iteration ends without Claude scheduling the next wakeup, the loop just stops there instead of falling back to a rescheduled check — set `CLAUDE_CODE_LOOP_KEEPALIVE=1` to get one extra iteration about 20 minutes later instead. Recurring session-scoped tasks (including `/loop`) also auto-expire after 7 days by default; as of v2.1.330 a task created on that version or later can run up to 30 days instead while its session keeps running, and says when it will end — tasks created before v2.1.330 still expire at 7 days.
+- **Let Claude use Monitor instead of polling**: when the Monitor tool is available, Claude may use it directly for a dynamically-scheduled `/loop` instead of re-running the prompt on an interval — it streams a background script's output back as it's produced, which is usually more token-efficient and responsive than polling.
 
 ## Common Pitfalls
 
@@ -58,6 +60,8 @@ Many development tasks have a clear, machine-verifiable definition of "done" —
 
 - [Keep Claude Working Toward a Goal](https://code.claude.com/docs/en/goal) — Official docs for /goal: setting, checking, and clearing goals, and how the evaluator works
 - [Choose a Permission Mode](https://code.claude.com/docs/en/permission-modes) — Official docs on auto mode and the other permission modes that let loop turns run unattended
+- [Run prompts on a schedule](https://code.claude.com/docs/en/scheduled-tasks) — Official docs for `/loop`, fixed vs. self-paced intervals, stopping a loop, and the seven-day expiry
+- [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) — v2.1.330: "Changed recurring scheduled tasks and `/loop` to run up to 30 days instead of 7 while their session keeps running"
 
 ## Signals
 

@@ -34,7 +34,7 @@ A reviewer following a defined methodology catches more than one who "just reads
    - Low/Medium: fewer findings, higher confidence — good for quick sanity checks
    - High: broader coverage, may surface uncertain findings — good for thorough review
    - xhigh/max: the deepest local levels — exhaustive coverage for critical changes (available levels depend on the model)
-3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level. On a model with no tuned review settings of its own (v2.1.274) — including Opus 5.5 and Sonnet 5.5 — `/code-review` instead runs leaner inline review prompts rather than spawning many review subagents, and at medium effort also reports cleanup and CLAUDE.md-conventions findings on top of correctness bugs (v2.1.290).
+3. Claude analyzes the diff and reports findings grouped by severity — since v2.1.218 low/medium-effort reviews run as a background subagent, and since v2.1.232 high, xhigh, and max effort do too, so the review work doesn't fill your conversation at any effort level. On a model with no tuned review settings of its own (v2.1.274) — including Opus 5.5 and Sonnet 5.5 — `/code-review` instead runs leaner inline review prompts rather than spawning many review subagents, and at medium effort also reports cleanup and CLAUDE.md-conventions findings on top of correctness bugs (v2.1.290). As of v2.1.327, `/code-review` on most models reports only correctness bugs and CLAUDE.md violations — run `/simplify` separately for reuse, simplification, and efficiency cleanups — and marks each finding Important, Pre-existing, or Nit, ending the summary with a suggested fix; a clean review now reads "Code review found no issues."
 4. Optionally, add `--fix` to have Claude auto-apply its findings: `/code-review --fix`
 5. Or add `--comment` to post findings as inline PR comments: `/code-review --comment`
 6. Pass `--max-findings <n>` (or `--max-findings all`) to change how many findings it reports; the choice sticks until you pass `--max-findings default` (v2.1.288).
@@ -67,6 +67,7 @@ A reviewer following a defined methodology catches more than one who "just reads
 - [Commands](https://code.claude.com/docs/en/commands) — Reference for /code-review effort levels and --fix/--comment flags, plus /simplify, /security-review, /verify, and /run
 - [Find bugs with ultrareview](https://code.claude.com/docs/en/ultrareview) — Official docs for /code-review ultra: cloud fleet review, pricing, and the CI subcommand
 - [claude-code-security-review](https://github.com/anthropics/claude-code-security-review) — Source of the /security-review prompt, including its exclusion of outdated third-party-library findings
+- [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) — v2.1.327: "Changed `/code-review` on most models to report only bugs and CLAUDE.md violations; run `/simplify` for reuse, simplification and efficiency cleanups" and "Changed `/code-review` to mark each finding Important, Pre-existing or Nit on most models, and to end each summary with a suggested fix"
 
 ## Signals
 

@@ -3,7 +3,7 @@
 
 ## What It Is
 
-Scheduled & Recurring Agents run Claude Code without you starting it. A routine packages a prompt, one or more repositories, and a set of connectors, then runs on Anthropic-managed cloud infrastructure whenever a trigger fires: on a schedule (hourly, nightly, weekly, or a one-off timestamp), on an HTTP call from your own systems, or on GitHub events like a PR opening. Your laptop can be closed; the work happens anyway.
+Scheduled & Recurring Agents run Claude Code without you starting it. A cloud scheduled task — the official docs' current name for what was called a "routine," and which some UI labels and the `/routines` CLI alias still call that — packages a prompt, one or more repositories, and a set of connectors, then runs on Anthropic-managed cloud infrastructure whenever a trigger fires: on a schedule (hourly, nightly, weekly, or a one-off timestamp), on an HTTP call from your own systems, or on GitHub events like a PR opening. Your laptop can be closed; the work happens anyway.
 
 ## Why It Works
 
